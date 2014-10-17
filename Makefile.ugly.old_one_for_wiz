@@ -1,0 +1,92 @@
+# rRootage makefile(MinGW 2.0.0)
+# $Id: Makefile,v 1.6 2003/08/10 03:21:28 kenta Exp $
+
+NAME   = rr
+O      = o
+RM     = rm -f
+#senquack
+#CC     = /usr/local/gp2xdev/bin/gp2x-gcc
+#CXX    = /usr/local/gp2xdev/bin/gp2x-g++
+CC		= /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-gcc
+CXX	= /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-g++
+PROG   = $(NAME)
+
+#senquack
+#DEFAULT_CFLAGS = `/usr/local/gp2xdev/bin/sdl-config --cflags`  -I/src/gpu940/include/
+#LDFLAGS        =  -static  `/usr/local/gp2xdev/bin/sdl-config --libs` -lpng -L. -lbulletml -lSDL_mixer -lSDL_image -lpng -mwindows -lstdc++ -lGL -lm -lpthread -lz -lpng -ljpeg -lgpu940 -lsmpeg -lvorbisidec `/usr/local/gp2xdev/bin/sdl-config --libs`
+#DEFAULT_CFLAGS = `/opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/sdl-config --cflags` -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/include/ 
+#Wiz version:
+DEFAULT_CFLAGS = -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/include/SDL/ -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/include/ 
+#LDFLAGS        =  -static  `/opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/sdl-config --libs` -lpng -L. -lbulletml -lSDL_mixer -lSDL_image -lpng -lstdc++ -lGL -lm -lpthread -lz -lpng -ljpeg -lgpu940 -lsmpeg -lvorbisidec `/opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/sdl-config --libs` -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib/
+# WITH GC:
+#LDFLAGS        =  -static `/opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/sdl-config --libs` -lpng -L. -lbulletml -lSDL_mixer -lSDL_image -lpng -lstdc++ -lGL -lm -lpthread -lz -lpng -ljpeg -lgpu940 -lsmpeg -lvorbisidec `/opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/sdl-config --libs` -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib/
+#LDFLAGS        =  -static -L. -lbulletml -lSDL_mixer -lSDL_image -ljpeg -lpng12 -lz -lstdc++ -lGL -lSDL -lm -lgpu940 -lpthread -ldl -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib/
+
+#LDFLAGS        =  -static  -L. -lbulletml -lstdc++ -lGL -lgpu940 -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib \
+#						-Wl,-rpath,/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib -static -lSDL_image -ljpeg -lpng12 -lz \
+#						-lSDL_mixer -lsmpeg -lmikmod -lvorbisidec -lvorbisfile -lSDL -lpthread -lgcc -lm -lc -ldl
+
+#WORKING TREMOLO:
+#LDFLAGS        =  -static  -L. -lbulletml -lstdc++ -lGL -lgpu940 -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib \
+#						-Wl,-rpath,/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib -static -lSDL_image -ljpeg -lpng12 -lz \
+#						-lSDL_mixer -lTremolo006 -lvorbisfile -lSDL -lpthread -lgcc -lm -lc -ldl
+
+# WORKING TREMOR:
+#LDFLAGS        =  -static  -L. -lbulletml -lstdc++ -lGL -lgpu940 -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib \
+#						-Wl,-rpath,/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib -static -lSDL_image -ljpeg -lpng12 -lz \
+#						-lSDL_mixer -lvorbisidec -lvorbisfile -lSDL -lpthread -lgcc -lm -lc -ldl
+
+# WORKING WIZ VERSION (TREMOR):
+#LDFLAGS        =  -L. -lbulletml -lstdc++ -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib \
+#						-Wl,-rpath,/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib -lSDL_image -ljpeg -lpng12 -lz \
+#						-lSDL_mixer -lvorbisidec -lvorbisfile -lSDL13 -lGLUES_CM -lnanoGL -lwizGLES -lpthread -lgcc -lm -lc -ldl
+#LDFLAGS        =  -L. -lbulletml -lstdc++ -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib \
+#						-Wl,-rpath,/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib -lSDL_image -ljpeg -lpng12 -lz \
+#						-lSDL_mixer -lvorbisidec -lvorbisfile -lSDL13 -lnanoGL -lwizGLES -lopengles_lite -lpthread -lgcc -lm -lc -ldl 
+#LDFLAGS        =  -L. -lbulletml -lstdc++ -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib \
+#						-Wl,-rpath,/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib -lSDL_image -ljpeg -lpng12 -lz \
+#						-lSDL_mixer -lvorbisidec -lvorbisfile -lGLUES_CM -lopengles_lite -lSDL -lnanoGL -lwizGLES -lpthread -lgcc -lm -lc -ldl 
+#LDFLAGS        =  -L. -lbulletml -lstdc++ -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib \
+#						-Wl,-rpath,/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib -lSDL_image -ljpeg -lpng12 -lz \
+#						-lSDL_mixer -lvorbisidec -lvorbisfile -lSDL -lnanoGL -lwizGLES -lpthread -lgcc -lm -lc -ldl 
+LDFLAGS        =  -L. -lbulletml -lstdc++ -L/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib \
+						-Wl,-rpath,/opt/open2x/gcc-4.1.1-glibc-2.3.6/lib -lSDL_image -ljpeg -lpng12 -lz \
+						-lSDL_mixer -lvorbisidec -lvorbisfile -lSDL -lwizGLES -lopengles_lite -lpthread -lgcc -lm -lc -ldl 
+
+
+#-lglu32 -lopengl32 -lmingw32 -lmingwex
+#senquack:
+#MORE_CFLAGS = -DLINUX -O3 -Wall -g
+#MORE_CFLAGS = -DLINUX -O0 -Wall -g -msoft-float
+#MORE_CFLAGS = -DLINUX -O3 -Wall -msoft-float -ffast-math -fomit-frame-pointer -static
+#MORE_CFLAGS = -DLINUX -O3 -DNDEBUG -Wall -DGP2X -msoft-float -mcpu=arm920t -mtune=arm920 -funroll-loops -ffast-math -fstrict-aliasing -fexpensive-optimizations -fweb -frename-registers -fomit-frame-pointer -mstructure-size-boundary=32 -falign-functions=32 -falign-loops -falign-labels -falign-jumps -finline-functions 
+#MORE_CFLAGS = -DLINUX -O3 -DNDEBUG -Wall -DGP2X -msoft-float -mcpu=arm920t -mtune=arm920 -ffast-math -fstrict-aliasing -fexpensive-optimizations -fweb -frename-registers -fomit-frame-pointer -mstructure-size-boundary=32 -falign-functions=32 -falign-loops -falign-labels -falign-jumps -finline-functions 
+MORE_CFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGP2X -msoft-float -mcpu=arm920t -mtune=arm920 -ffast-math -fomit-frame-pointer \
+				  -fsingle-precision-constant 
+
+CFLAGS   = $(DEFAULT_CFLAGS) $(MORE_CFLAGS)
+CPPFLAGS = $(DEFAULT_CFLAGS) $(MORE_CFLAGS) -I./bulletml/
+
+#senquack - altered:
+#OBJS =	$(NAME).$(O) \
+#	foe.$(O) foecommand.$(O) barragemanager.$(O) boss.$(O) ship.$(O) laser.$(O) \
+#	frag.$(O) background.$(O) letterrender.$(O) shot.$(O) \
+#	screen.$(O) vector.$(O) degutil.$(O) rand.$(O) mt19937int.$(O) \
+#	soundmanager.$(O) attractmanager.$(O) minimal.$(O)
+#	# \
+#	#$(NAME)_res.$(O)
+OBJS =	$(NAME).$(O) \
+	foe.$(O) foecommand.$(O) barragemanager.$(O) boss.$(O) ship.$(O) laser.$(O) \
+	frag.$(O) background.$(O) letterrender.$(O) shot.$(O) \
+	screen.$(O) vector.$(O) degutil.$(O) rand.$(O) mt19937int.$(O) \
+	soundmanager.$(O) attractmanager.$(O) 
+	# \
+	#$(NAME)_res.$(O)
+
+$(PROG): $(OBJS)
+	$(CC) $(CFLAGS) -o $(PROG) $(OBJS) $(LDFLAGS)
+
+#$(NAME)_res.o: $(NAME).rc
+#	windres -i $(NAME).rc -o $(NAME)_res.o
+clean:
+	$(RM) $(PROG) *.$(O)

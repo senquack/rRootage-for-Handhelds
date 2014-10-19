@@ -34,51 +34,18 @@ typedef int GLfixed;
 
 #define NOT_EXIST_TMP (NOT_EXIST-1)
 
-//senquack - even more complete conversion to fixed point:
-//struct foe {
-//  Vector pos, vel, ppos, spos, mv;
-//  int d, spd;
-//  FoeCommand *cmd;
-////senquack - complete conversion to floats:
-////  double rank;
-//  float rank;
-//  int spc;
-//  int cnt, cntTotal;
-//  int xReverse;
-//  int fireCnt;
-//  int slowMvCnt;
-//  BulletMLParser *parser;
-//
-//  BulletMLParser *morphParser[MORPH_PATTERN_MAX];
-//  int morphCnt;
-//  int morphHalf;
-////senquack - complete conversion to floats:
-////  double morphRank;
-////  double speedRank;
-//  float morphRank;
-//  float speedRank;
-//
-//  int color;
-//  int shapeType;
-//  int bulletShape[3];
-////  float bulletSize[3];
-//  //senquack - fixed point version of above number to speed up rendering
-//  GLfixed fbulletSize[3];   
-//
-//  struct limiter *limiter;
-//
-//  int ikaType;
-//
-//  int grzRng;
-//};
+//senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 struct foe
 {
    Vector pos, vel, ppos, spos, mv;
    int d, spd;
    FoeCommand *cmd;
-//senquack - complete conversion to floats:
 //  double rank;
+#ifdef FIXEDMATH
    GLfixed frank;
+#else
+   float rank;
+#endif //FIXEDMATH
    int spc;
    int cnt, cntTotal;
    int xReverse;
@@ -92,17 +59,22 @@ struct foe
 //senquack - complete conversion to floats:
 //  double morphRank;
 //  double speedRank;
-//  float morphRank;
-//  float speedRank;
+#ifdef FIXEDMATH
    GLfixed fmorphRank;
    GLfixed fspeedRank;
+#else
+   float morphRank;
+   float speedRank;
+#endif //FIXEDMATH
 
    int color;
    int shapeType;
    int bulletShape[3];
-//  float bulletSize[3];
-   //senquack - fixed point version of above number to speed up rendering
+#ifdef FIXEDMATH
    GLfixed fbulletSize[3];
+#else
+   float bulletSize[3];
+#endif //FIXEDMATH
 
    struct limiter *limiter;
 
@@ -113,6 +85,7 @@ struct foe
 
 typedef struct foe Foe;
 
+//senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //senquack - complete conversion to floats/fixeds
 //Foe* addFoeBattery(int x, int y, double rank, int d, int spd, int xReverse, 
 //       BulletMLParser *morphParser[], int morphCnt, int morphHalf, double morphRank,
@@ -121,20 +94,23 @@ typedef struct foe Foe;
 //       struct limiter *limiter,
 //       int ikaType,
 //       BulletMLParser *parser);
-//senquack - even more complete conversion:
-//Foe* addFoeBattery(int x, int y, float rank, int d, int spd, int xReverse, 
-//       BulletMLParser *morphParser[], int morphCnt, int morphHalf, float morphRank,
-//       float speedRank,
-//       int color, int bulletShape[], GLfixed fbulletSize[],
-//       struct limiter *limiter,
-//       int ikaType,
-//       BulletMLParser *parser);
-Foe *addFoeBattery (int x, int y, GLfixed frank, int d, int spd, int xReverse,
+#ifdef FIXEDMATH
+Foe* addFoeBattery (int x, int y, GLfixed frank, int d, int spd, int xReverse,
                     BulletMLParser * morphParser[], int morphCnt,
                     int morphHalf, GLfixed fmorphRank, GLfixed fspeedRank,
                     int color, int bulletShape[], GLfixed fbulletSize[],
                     struct limiter *limiter, int ikaType,
                     BulletMLParser * parser);
+#else
+Foe* addFoeBattery(int x, int y, float rank, int d, int spd, int xReverse, 
+       BulletMLParser *morphParser[], int morphCnt, int morphHalf, float morphRank,
+       float speedRank,
+       int color, int bulletShape[], float bulletSize[],
+       struct limiter *limiter,
+       int ikaType,
+       BulletMLParser *parser);
+#endif //FIXEDMATH
+
 void addFoeActiveBullet (Foe * foe, int d, int spd, int color,
                          BulletMLState * state);
 void addFoeNormalBullet (Foe * foe, int d, int spd, int color);

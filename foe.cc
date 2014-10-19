@@ -31,7 +31,6 @@ extern "C"
 #include "shot.h"
 }
 
-  //senquack - tried tweaking this to fix hang:
 #define FOE_MAX 1024
 
 static Foe foe[FOE_MAX];
@@ -99,7 +98,6 @@ getNextFoe ()
    return &(foe[foeIdx]);
 }
 
-  //senquack - tried tweaking this to fix hang:
 static Foe *
 addFoe (Foe * foe, int d, int spd, int color)
 {
@@ -140,22 +138,12 @@ addFoe (Foe * foe, int d, int spd, int color)
    return fe;
 }
 
-//NOTE senquack - disabling these next several addFoe* functions led to quicker hangs and some
-//          segfaults
-
+//senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //senquack - complete conversion to floats/fixeds
 //Foe* addFoeBattery(int x, int y, double rank, int d, int spd, int xReverse, 
 //       BulletMLParser *morphParser[], int morphCnt, int morphHalf, double morphRank,
 //       double speedRank,
 //       int color, int bulletShape[], float bulletSize[],
-//       struct limiter *limiter,
-//       int ikaType,
-//       BulletMLParser *parser) {
-//senquack - more complete conversion to fixed point:
-//Foe* addFoeBattery(int x, int y, float rank, int d, int spd, int xReverse, 
-//       BulletMLParser *morphParser[], int morphCnt, int morphHalf, float morphRank,
-//       float speedRank,
-//       int color, int bulletShape[], GLfixed fbulletSize[],
 //       struct limiter *limiter,
 //       int ikaType,
 //       BulletMLParser *parser) {
@@ -170,8 +158,7 @@ addFoe (Foe * foe, int d, int spd, int color)
 //  foe.morphCnt = morphCnt; foe.morphHalf = morphHalf; foe.morphRank = morphRank;
 //  foe.speedRank = speedRank;
 //  for ( i=0 ; i<BULLET_TYPE_NUM ; i++ ) {
-////    foe.bulletShape[i] = bulletShape[i]; foe.bulletSize[i] = bulletSize[i];
-//    foe.bulletShape[i] = bulletShape[i]; foe.fbulletSize[i] = fbulletSize[i];
+//    foe.bulletShape[i] = bulletShape[i]; foe.bulletSize[i] = bulletSize[i];
 //  }
 //  foe.limiter = limiter;
 //  foe.ikaType = ikaType;
@@ -184,8 +171,8 @@ addFoe (Foe * foe, int d, int spd, int color)
 //  fe->fireCnt = randN(2);
 //  return fe;
 //}
-Foe *
-addFoeBattery (int x, int y, GLfixed frank, int d, int spd, int xReverse,
+#ifdef FIXEDMATH
+Foe* addFoeBattery (int x, int y, GLfixed frank, int d, int spd, int xReverse,
                BulletMLParser * morphParser[], int morphCnt, int morphHalf,
                GLfixed fmorphRank, GLfixed fspeedRank, int color,
                int bulletShape[], GLfixed fbulletSize[],
@@ -209,8 +196,7 @@ addFoeBattery (int x, int y, GLfixed frank, int d, int spd, int xReverse,
    foe.fspeedRank = fspeedRank;
    for (i = 0; i < BULLET_TYPE_NUM; i++) {
 //    foe.bulletShape[i] = bulletShape[i]; foe.bulletSize[i] = bulletSize[i];
-      foe.bulletShape[i] = bulletShape[i];
-      foe.fbulletSize[i] = fbulletSize[i];
+      foe.bulletShape[i] = bulletShape[i]; foe.fbulletSize[i] = fbulletSize[i];
    }
    foe.limiter = limiter;
    foe.ikaType = ikaType;
@@ -224,6 +210,40 @@ addFoeBattery (int x, int y, GLfixed frank, int d, int spd, int xReverse,
    fe->fireCnt = randN (2);
    return fe;
 }
+#else
+Foe* addFoeBattery (int x, int y, float rank, int d, int spd, int xReverse,
+               BulletMLParser * morphParser[], int morphCnt, int morphHalf,
+               float morphRank, float speedRank, int color,
+               int bulletShape[], float bulletSize[],
+               struct limiter * limiter, int ikaType, BulletMLParser * parser)
+{
+   Foe foe;
+   int i;
+   foe.pos.x = x;
+   foe.pos.y = y;
+   foe.rank = rank;
+   foe.xReverse = xReverse;
+   for (i = 0; i < MORPH_PATTERN_MAX; i++) {
+      foe.morphParser[i] = morphParser[i];
+   }
+   foe.morphCnt = morphCnt; foe.morphHalf = morphHalf; foe.morphRank = morphRank;
+   foe.speedRank = speedRank;
+   for (i = 0; i < BULLET_TYPE_NUM; i++) {
+      foe.bulletShape[i] = bulletShape[i]; foe.bulletSize[i] = bulletSize[i];
+   }
+   foe.limiter = limiter;
+   foe.ikaType = ikaType;
+   foe.cntTotal = 0;
+   Foe *fe = addFoe (&foe, d, spd, color);
+   if (!fe)
+      return NULL;
+   fe->cmd = new FoeCommand (parser, fe);
+   fe->spc = BATTERY;
+   fe->parser = parser;
+   fe->fireCnt = randN (2);
+   return fe;
+}
+#endif //FIXEDMATH
 
 void
 addFoeActiveBullet (Foe * foe, int d, int spd, int color,
@@ -271,8 +291,11 @@ addFoeNormalBullet (Foe * foe, int d, int spd, int color)
       if (!fe)
          return;
       fe->morphCnt--;
-//    fe->morphRank *= 0.77;
+#ifdef FIXEDMATH
       fe->fmorphRank = FMUL (fe->fmorphRank, 50463);
+#else
+      fe->morphRank *= 0.77;
+#endif //FIXEDMATH
       fe->cmd =
          new
          FoeCommand (foe->morphParser[fe->morphCnt & (MORPH_PATTERN_MAX - 1)],
@@ -309,46 +332,44 @@ addFoeNormalBullet (Foe * foe, int d, int spd, int color)
 //     -1, fe->mv.x, fe->mv.y);
 //  }
 //}
-//senquack - further conversion to fixed point for Wiz v1.1:
-//static void clearFoeShape(Foe *fe, int shape) {
-//  float x, y;
-//  int d;
-//  if ( fe->spc == BATTERY ) return;
-//  x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
-//  y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
-//  d = (fe->d * fe->xReverse)&1023;
-//  if ( shape ) {
-//    addShapeFrag(x, y, x2f(fe->fbulletSize[fe->shapeType]), d, fe->cnt, 
-//     fe->bulletShape[fe->shapeType], fe->mv.x, fe->mv.y);
-//  } else {
-//    addShapeFrag(x, y, x2f(fe->fbulletSize[fe->shapeType]), d, fe->cnt, 
-//     -1, fe->mv.x, fe->mv.y);
-//  }
-//}
 static void
 clearFoeShape (Foe * fe, int shape)
 {
+#ifdef FIXEDMATH
 //  float x, y;
    GLfixed x, y;
    int d;
    if (fe->spc == BATTERY)
       return;
+//senquack TODO: poss. optimization w/ inverse:
 //  x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
 //  y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
    x = f2x ((float) fe->pos.x / FIELD_SCREEN_RATIO);
    y = -f2x ((float) fe->pos.y / FIELD_SCREEN_RATIO);
    d = (fe->d * fe->xReverse) & 1023;
    if (shape) {
-//    addShapeFrag(x, y, x2f(fe->fbulletSize[fe->shapeType]), d, fe->cnt, 
-//     fe->bulletShape[fe->shapeType], fe->mv.x, fe->mv.y);
       addShapeFragx (x, y, fe->fbulletSize[fe->shapeType], d, fe->cnt,
                      fe->bulletShape[fe->shapeType], fe->mv.x, fe->mv.y);
    } else {
-//    addShapeFrag(x, y, x2f(fe->fbulletSize[fe->shapeType]), d, fe->cnt, 
-//     -1, fe->mv.x, fe->mv.y);
       addShapeFragx (x, y, fe->fbulletSize[fe->shapeType], d, fe->cnt,
                      -1, fe->mv.x, fe->mv.y);
    }
+#else
+   float x, y;
+   int d;
+   if ( fe->spc == BATTERY ) return;
+//senquack TODO: poss. optimization w/ inverse:
+   x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
+   y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+   d = (fe->d * fe->xReverse)&1023;
+   if ( shape ) {
+      addShapeFrag(x, y, fe->bulletSize[fe->shapeType], d, fe->cnt, 
+            fe->bulletShape[fe->shapeType], fe->mv.x, fe->mv.y);
+   } else {
+      addShapeFrag(x, y, fe->bulletSize[fe->shapeType], d, fe->cnt, 
+            -1, fe->mv.x, fe->mv.y);
+   }
+#endif //FIXEDMATH
 }
 
 #define SHIP_HIT_WIDTH 300*300
@@ -364,6 +385,7 @@ int processSpeedDownBulletsNum = DEFAULT_SPEED_DOWN_BULLETS_NUM;
 int nowait = 0;
 
 //senquack - conversion to fixed point
+// This is the original function, of which a lot of lines were commented out in the original source.. (wasn't me)
 //void moveFoes() {
 //  int i;
 //  Foe *fe;
@@ -564,17 +586,13 @@ moveFoes ()
       fe->cnt++;
       fe->cntTotal++;
       fe->ppos = fe->pos;
-//    mx = (int)(( ((sctbl[fe->d]    *fe->spd)>>8) + fe->vel.x) * fe->speedRank);
-//    my = (int)((-((sctbl[fe->d+256]*fe->spd)>>8) + fe->vel.y) * fe->speedRank);
-      mx =
-         FNUM2INT (FMUL
-                   (INT2FNUM ((sctbl[fe->d] * fe->spd >> 8) + fe->vel.x),
-                    fe->fspeedRank));
-      my =
-         FNUM2INT (FMUL
-                   (INT2FNUM
-                    (-((sctbl[fe->d + 256] * fe->spd) >> 8) + fe->vel.y),
-                    fe->fspeedRank));
+#ifdef FIXEDMATH
+      mx = FNUM2INT (FMUL (INT2FNUM ((sctbl[fe->d] * fe->spd >> 8) + fe->vel.x), fe->fspeedRank));
+      my = FNUM2INT (FMUL (INT2FNUM (-((sctbl[fe->d + 256] * fe->spd) >> 8) + fe->vel.y), fe->fspeedRank));
+#else
+      mx = (int)(( ((sctbl[fe->d]    *fe->spd)>>8) + fe->vel.x) * fe->speedRank);
+      my = (int)((-((sctbl[fe->d+256]*fe->spd)>>8) + fe->vel.y) * fe->speedRank);
+#endif //FIXEDMATH
       fe->mv.x = (mx * fe->xReverse);
       fe->mv.y = my;
       fe->pos.x += fe->mv.x;
@@ -769,22 +787,31 @@ drawBulletsWake ()
 {
    int i;
    Foe *fe;
-//  float x, y, sx, sy;
+#ifdef FIXEDMATH
    GLfixed x, y, sx, sy;
+#else
+   float x, y, sx, sy;
+#endif //FIXEDMATH
    for (i = 0; i < FOE_MAX; i++) {
       //if ( foe[i].spc == NOT_EXIST || foe[i].spc == BATTERY || foe[i].cnt >= 64 ) continue;
       //Changed the above line to the logic below, because it causes hangs -- Albert
       //(I know it sounds like gibberish, but it's true...)
       if (foe[i].spc != NOT_EXIST && foe[i].spc != BATTERY && foe[i].cnt < 64) {
          fe = &(foe[i]);
-//        x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
-//        y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+//senquack TODO: poss. optimization w/ inverse:
+#ifdef FIXEDMATH
          x = f2x ((float) fe->pos.x / FIELD_SCREEN_RATIO);
          y = f2x (-(float) fe->pos.y / FIELD_SCREEN_RATIO);
          sx = f2x ((float) fe->spos.x / FIELD_SCREEN_RATIO);
          sy = f2x (-(float) fe->spos.y / FIELD_SCREEN_RATIO);
-//        drawLine(x, y, 0, sx, sy, 0, 150, 180, 90, (63-fe->cnt)*3);        
          drawLinex (x, y, sx, sy, 150, 180, 90, (63 - fe->cnt) * 3);
+#else
+         x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
+         y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+         sx =  (float)fe->spos.x / FIELD_SCREEN_RATIO;
+         sy = -(float)fe->spos.y / FIELD_SCREEN_RATIO;
+         drawLine(x, y, 0, sx, sy, 0, 150, 180, 90, (63-fe->cnt)*3);        
+#endif //FIXEDMATH
       }
    }
 }
@@ -813,39 +840,6 @@ static int bulletColor[BULLET_COLOR_NUM][3] = {
 //        bt = fe->shapeType;
 //        if ( mode == IKA_MODE ) {
 //          drawShapeIka(x, y, fe->bulletSize[bt], d, fe->cnt&1, fe->bulletShape[bt], fe->color);
-//        } else {
-//          bc = fe->color%BULLET_COLOR_NUM;
-//          drawShape(x, y, fe->bulletSize[bt], d, fe->cnt, fe->bulletShape[bt],
-//          bulletColor[bc][0], bulletColor[bc][1], bulletColor[bc][2]); 
-//        }
-//    }
-//  }
-//}
-//senquack - sizes converted to fixed point for OpenGLES speedup
-//void drawBullets() {
-//  int i;
-//  Foe *fe;
-//  float x, y;
-//  int bc;
-//  int d, bt;
-//  for ( i=0 ; i<FOE_MAX ; i++ ) {
-//    //if ( foe[i].spc == NOT_EXIST || foe[i].spc == BATTERY ) continue;
-//    //Changed by Albert
-//    if (foe[i].spc != NOT_EXIST && foe[i].spc != BATTERY)
-//    {
-//        fe = &(foe[i]);
-//        x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
-//        y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
-//        d = 1023 - getDeg(fe->pos.x - fe->ppos.x, fe->pos.y - fe->ppos.y);
-//        bt = fe->shapeType;
-//        if ( mode == IKA_MODE ) {
-//          drawShapeIka(x, y, fe->bulletSize[bt], d, fe->cnt&1, fe->bulletShape[bt], fe->color);
-//        //senquack - experiment to isolate freezing in IKA mode:
-//        //senquack - OK changing the above line to the following two lines fixes freezes and 
-//        //            the jerky tranformations of the sides of the screen
-////          bc = fe->color%BULLET_COLOR_NUM;
-////          drawShape(x, y, fe->bulletSize[bt], d, fe->cnt&1, fe->bulletShape[bt], 
-////           bulletColor[bc][0], bulletColor[bc][1], bulletColor[bc][2]); 
 //        } else {
 //          bc = fe->color%BULLET_COLOR_NUM;
 //          drawShape(x, y, fe->bulletSize[bt], d, fe->cnt, fe->bulletShape[bt],
@@ -895,8 +889,11 @@ drawBullets ()
 
    int i;
    Foe *fe;
-//  float x, y;
+#ifdef FIXEDMATH
    GLfixed fx, fy;
+#else
+   float x, y;
+#endif //FIXEDMATH
    int bc;
    int d, bt;
    for (i = 0; i < FOE_MAX; i++) {
@@ -904,29 +901,34 @@ drawBullets ()
          continue;
       {
          fe = &(foe[i]);
-//        x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
-//        y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+#ifdef FIXEDMATH
          fx = (int) ((float) fe->pos.x * 6.5536f);  // roll fixed point conversion and division into one multiply
          fy = (int) (-(float) fe->pos.y * 6.5536f);
+#else
+//senquack TODO: poss. optimization w/ inverse:
+         x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
+         y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+#endif //FIXEDMATH
 
          d = 1023 - getDeg (fe->pos.x - fe->ppos.x, fe->pos.y - fe->ppos.y);
          bt = fe->shapeType;
          if (mode == IKA_MODE) {
-//          drawShapeIka(x, y, fe->bulletSize[bt], d, fe->cnt&1, fe->bulletShape[bt], fe->color);
-//          drawShapeIkax(f2x(x), f2x(y), fe->fbulletSize[bt], d, fe->cnt&1, fe->bulletShape[bt], fe->color);
-            drawShapeIkax (fx, fy, fe->fbulletSize[bt], d, fe->cnt & 1,
-                           fe->bulletShape[bt], fe->color);
+#ifdef FIXEDMATH
+            drawShapeIka(fx, fy, fe->fbulletSize[bt], d, fe->cnt & 1, fe->bulletShape[bt], fe->color);
+#else
+            drawShapeIka(x, y, fe->bulletSize[bt], d, fe->cnt&1, fe->bulletShape[bt], fe->color);
+#endif //FIXEDMATH
          } else {
 //          bc = fe->color%BULLET_COLOR_NUM;
-            bc = fe->color & 0x3;   // BULLET_COLOR_NUM is 4
+            bc = fe->color & 0x3;   // BULLET_COLOR_NUM is 4 (compiler probably already does this though)
 
-//          drawShape(x, y, fe->bulletSize[bt], d, fe->cnt, fe->bulletShape[bt],
-//          bulletColor[bc][0], bulletColor[bc][1], bulletColor[bc][2]); 
-//          drawShapex(f2x(x), f2x(y), fe->fbulletSize[bt], d, fe->cnt, fe->bulletShape[bt],
-//          bulletColor[bc][0], bulletColor[bc][1], bulletColor[bc][2]); 
-            drawShapex (fx, fy, fe->fbulletSize[bt], d, fe->cnt,
-                        fe->bulletShape[bt], bulletColor[bc][0],
-                        bulletColor[bc][1], bulletColor[bc][2]);
+#ifdef FIXEDMATH
+            drawShapex (fx, fy, fe->fbulletSize[bt], d, fe->cnt, fe->bulletShape[bt], 
+                  bulletColor[bc][0], bulletColor[bc][1], bulletColor[bc][2]);
+#else
+            drawShape(x, y, fe->bulletSize[bt], d, fe->cnt, fe->bulletShape[bt],
+                  bulletColor[bc][0], bulletColor[bc][1], bulletColor[bc][2]); 
+#endif //FIXEDMATH
          }
       }
    }

@@ -19,7 +19,7 @@ int tantbl[TAN_TABLE_SIZE + 2];
 
 int sctbl[SC_TABLE_SIZE + SC_TABLE_SIZE / 4];
 
-#if defined(ARM) || defined (GP2X)
+#if defined (FIXEDMATH) && (defined(ARM) || defined (GP2X))
 //senquack - fast ARM ASM 16:16 fixed point divide routine:
 //             Credit goes to Henry Thomas and the website is
 //             http://me.henri.net/fp-div.html
@@ -138,6 +138,7 @@ magic_sqrt (float number)
    return number * y;
 }
 
+#ifdef FIXEDMATH
 //senquack - credit for this fast sqrt goes to Wilco Dijkstra http://www.finesse.demon.co.uk/steven/sqrt.html
 #define iter1(N) \
     try = root + (1 << (N)); \
@@ -178,6 +179,7 @@ fpsqrt (unsigned int n)
 //    return root >> 1;
    return root << 7;            //senquack - convert to 16.16 fixed point
 }
+#endif //FIXEDMATH
 
 //// Fast integer square root adapted from algorithm, 
 //  // Martin Guy @ UKC, June 1985.
@@ -215,6 +217,7 @@ void
 initDegutil ()
 {
    int i, d = 0;
+   //senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //senquack - complete conversion to floats:
 //  double od = 6.28/DIV;
    float od = 6.28 / DIV;

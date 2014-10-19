@@ -20,6 +20,7 @@ extern int sctbl[];
 extern int tantbl[];
 
 //senquack - added for fixed-point stuff:
+#ifdef FIXEDMATH
 #define FNUM_PI (GLfixed)(3.14159f*65536)   // 2^16=65536
 //senquack - for wiz
 #define f2x(x) ((int)((x) * 65536.0f))
@@ -29,6 +30,7 @@ extern int tantbl[];
 #define INT2FNUM(x) ((x)<<16)
 // Convert from fixed math to int
 #define FNUM2INT(x) ((x)>>16)
+#endif //FIXEDMATH
 
 
 //#define FMUL(x,y) (int)(((x)*(y))>>16)
@@ -49,7 +51,8 @@ extern int tantbl[];
 
 //#define FDIV(x,y) ((x/y)>>16)
 //#define FDIV(x,y) (((long long)(x)<<16) / (y))
-#if defined(ARM) || defined(GP2X)
+#if defined(FIXEDMATH) 
+#if (defined(ARM) || defined(GP2X))
 #define FDIV(x,y) fpdiv(x,y)
 //senquack - fast ARM ASM 16:16 fixed point divide routine:
 //             Credit goes to Henry Thomas and the website is
@@ -58,12 +61,16 @@ int fpdiv (register int numerator, register int denominator);
 #else
 #define FDIV(x,y) (int32_t)(((int64_t)x << 16) / y)
 #endif
+#endif //FIXEDMATH
+
 
 //senquack - fast fixed point sqrt:
+#ifdef FIXEDMATH
 unsigned fpsqrt (unsigned n);
 #define FSQRT(x) fpsqrt(x)
 //#define FSQRT(x) fastSqrt(x)
 int fastSqrt (int n);
+#endif //FIXEDMATH
 
 //senquack - the famous Quake square root, for speed in our gluLookat implementation
 float magic_sqrt (float number);

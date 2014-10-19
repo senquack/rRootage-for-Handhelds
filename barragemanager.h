@@ -19,6 +19,7 @@
 typedef struct
 {
    BulletMLParser *bulletml;
+   //senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //senquack - complete conversion to floats:
 //  double maxRank, rank;
    float maxRank, rank;

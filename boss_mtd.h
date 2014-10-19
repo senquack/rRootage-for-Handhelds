@@ -11,6 +11,7 @@
  */
 #include "vector.h"
 
+//senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //senquack - complete conversion to floats:
 //void createBoss(int seed, double rank, int round);
 void createBoss (int seed, float rank, int round);

@@ -91,9 +91,10 @@ setBatteryGroupPos (BatteryGroup * right, BatteryGroup * left, int cx, int cy)
    }
 }
 
-//senquack - converting to fixed point:
 static float baseSize[] = { 0.4f, 0.36f, 0.3f };
 
+//senquack TODO: figure out why I left this commented-out in Wiz version, and if I should re-enabled it
+////senquack - converting to fixed point:
 //static GLfixed fbaseSize[] = {26214, 23593, 19661};
 
 static int shapePtn[3][8] =
@@ -129,14 +130,18 @@ setBatteryShape (BatteryShape * shape)
    for (i = 0; i < BULLET_TYPE_NUM; i++) {
       if (mode == IKA_MODE) {
          shape->bulletShape[i] = randN (2);
-//      shape->bulletSize[i] = baseSize[i] * ((float)(256+randN(72))/256.0f);
-         shape->fbulletSize[i] =
-            f2x (baseSize[i] * ((float) (256 + randN (72)) / 256.0f));
+#ifdef FIXEDMATH
+         shape->fbulletSize[i] = f2x (baseSize[i] * ((float) (256 + randN (72)) / 256.0f));
+#else
+         shape->bulletSize[i] = baseSize[i] * ((float)(256+randN(72))/256.0f);
+#endif //FIXEDMATH
       } else {
          shape->bulletShape[i] = shapePtn[i][randN (shapePtn[i][0] + 1)];
-//      shape->bulletSize[i] = baseSize[i] * ((float)(224+randN(96))/256.0f);
-         shape->fbulletSize[i] =
-            f2x (baseSize[i] * ((float) (224 + randN (96)) / 256.0f));
+#ifdef FIXEDMATH
+         shape->fbulletSize[i] = f2x (baseSize[i] * ((float) (224 + randN (96)) / 256.0f));
+#else
+         shape->bulletSize[i] = baseSize[i] * ((float)(224+randN(96))/256.0f);
+#endif //FIXEDMATH
       }
    }
 }
@@ -265,9 +270,12 @@ setAttackIndex (Attack * at, int center)
 //    break;
 //  }
 //}
+//senquack TODO: make sure converting rank paramter here to float from double didn't mess anything up in patterns:
+//senquack TODO ALSO: for gcw0 port, I went ahead and replaced all sqrts below to sqrtf's: (forgot to do that for Wiz)
 static void
 setAttackRank (Attack * at, float rank)
 {
+#ifdef FIXEDMATH
    if (rank <= 0.3) {
 //    at->rank = rank;
       at->frank = f2x (rank);
@@ -286,13 +294,13 @@ setAttackRank (Attack * at, float rank)
       rank /= (x2f (at->frank) + 2);
       if (mode == IKA_MODE) {
 //      at->speedRank = sqrt(rank)*(randN(80)+256)/256;
-         at->fspeedRank = f2x (sqrt (rank) * (randN (80) + 256) / 256);
+         at->fspeedRank = f2x (sqrtf (rank) * (randN (80) + 256) / 256);
       } else if (mode == GW_MODE) {
 //      at->speedRank = sqrt(rank)*(randN(92)+236)/256;
-         at->fspeedRank = f2x (sqrt (rank) * (randN (92) + 236) / 256);
+         at->fspeedRank = f2x (sqrtf (rank) * (randN (92) + 236) / 256);
       } else {
 //      at->speedRank = sqrt(rank)*(randN(128)+192)/256;
-         at->fspeedRank = f2x (sqrt (rank) * (randN (128) + 192) / 256);
+         at->fspeedRank = f2x (sqrtf (rank) * (randN (128) + 192) / 256);
       }
 //    if ( at->speedRank < 0.8 ) at->speedRank = 0.8;
       if (at->fspeedRank < f2x (0.8))
@@ -328,7 +336,9 @@ setAttackRank (Attack * at, float rank)
    }
    switch (mode) {
    case NORMAL_MODE:
-      //at->speedRank *= 0.7f;  //senquack - commented out in original source
+      //senquack - NOTE: this line was commented out in original rRootage source code (it wasn't me)
+      //at->speedRank *= 0.7f;  
+
 //    at->morphRank *= 0.7f;
 //    at->speedRank *= 0.8f;
       at->fmorphRank = FMUL (at->fmorphRank, f2x (0.7));
@@ -339,7 +349,9 @@ setAttackRank (Attack * at, float rank)
       at->fspeedRank = FMUL (at->fspeedRank, f2x (0.72));
       break;
    case IKA_MODE:
-      //at->speedRank *= 0.74f; //senquack - commented out in original source
+      //senquack - NOTE: this line was commented out in original rRootage source code (it wasn't me)
+      //at->speedRank *= 0.74f;
+
 //    at->morphRank *= 0.8f;
 //    at->speedRank *= 0.77f;
       at->fmorphRank = FMUL (at->fmorphRank, f2x (0.8));
@@ -350,9 +362,77 @@ setAttackRank (Attack * at, float rank)
       at->fspeedRank = FMUL (at->fspeedRank, f2x (0.8));
       break;
    }
+#else
+   if ( rank <= 0.3 ) {
+      at->rank = rank;
+      at->morphCnt = 0;
+      at->speedRank = 1;
+   } else {
+      at->rank = rank*(90+randN(38))/256.0;
+      if ( at->rank > 0.8 ) {
+         at->rank = 0.2*(randN(8)+1)/8.0 + 0.8;
+      }
+      rank /= (at->rank+2);
+      if ( mode == IKA_MODE ) {
+//         at->speedRank = sqrt(rank)*(randN(80)+256)/256;
+         at->speedRank = sqrtf(rank)*(randN(80)+256)/256;
+      } else if ( mode == GW_MODE ) {
+//         at->speedRank = sqrt(rank)*(randN(92)+236)/256;
+         at->speedRank = sqrtf(rank)*(randN(92)+236)/256;
+      } else {
+//         at->speedRank = sqrt(rank)*(randN(128)+192)/256;
+         at->speedRank = sqrtf(rank)*(randN(128)+192)/256;
+      }
+      if ( at->speedRank < 0.8 ) at->speedRank = 0.8;
+      at->morphRank = rank / at->speedRank;
+      at->morphCnt = 0;
+      while ( at->morphRank > 1 ) {
+         at->morphCnt++;
+         at->morphRank /= 3;
+      }
+   }
+   at->morphType = -1; 
+   if ( at->barrageType == SIMPLE_BARRAGE ) {
+      if ( at->morphCnt == 0 ) at->morphCnt++;
+      at->morphType = MORPH_HEAVY_BARRAGE;
+      at->morphIdx[(at->morphCnt-1)&(MORPH_PATTERN_MAX-1)] = 
+         randN(barragePatternNum[MORPH_HEAVY_BARRAGE]);
+   }
+   if ( at->morphCnt == 0 ) {
+      switch ( mode ) {
+         case PSY_MODE:
+            at->morphCnt = 1;
+            at->morphType = PSY_MORPH_BARRAGE;
+            at->morphIdx[0] = randN(barragePatternNum[PSY_MORPH_BARRAGE]);
+            break;
+      }
+      at->morphRank = 0.5+randN(6)*0.1;
+   }
+   switch ( mode ) {
+      case NORMAL_MODE:
+         //senquack - NOTE: this line was commented out in original rRootage source code (it wasn't me)
+         //at->speedRank *= 0.7f;
+         at->morphRank *= 0.7f;
+         at->speedRank *= 0.8f;
+         break;
+      case PSY_MODE:
+         at->speedRank *= 0.72f;
+         break;
+      case IKA_MODE:
+         //senquack - NOTE: this line was commented out in original rRootage source code (it wasn't me)
+         //at->speedRank *= 0.74f;
+         at->morphRank *= 0.8f;
+         at->speedRank *= 0.77f;
+         break;
+      case GW_MODE:
+         at->speedRank *= 0.8f;
+         break;
+   }
+#endif //FIXEDMATH
 }
 
 //senquack - complete conversion to floats:
+//senquack TODO: double-check this conversion to float didn't screw up barrages:
 //static void setAttack(Attack *at, double rank, int center) {
 static void
 setAttack (Attack * at, float rank, int center)
@@ -458,20 +538,20 @@ setFoeBattery (Boss * bs, Battery * bt, Attack * at,
    xr = at->xReverse;
    if (at->xrAlter && (idx & 1) == 1)
       xr = -xr;
-//  bt->foe = addFoeBattery(bs->x+bt->x, bs->y+bt->y, at->rank, 512, 0, xr,
-//         mrp,
-//         at->morphCnt, at->morphHalf, at->morphRank, at->speedRank,
-//         sp->color, sp->bulletShape, sp->fbulletSize,
-//         lt,
-//         at->ikaType,
-//         barragePattern[at->barrageType][at->barrageIdx].bulletml);
+#ifdef FIXEDMATH
    bt->foe =
       addFoeBattery (bs->x + bt->x, bs->y + bt->y, at->frank, 512, 0, xr, mrp,
                      at->morphCnt, at->morphHalf, at->fmorphRank,
                      at->fspeedRank, sp->color, sp->bulletShape,
                      sp->fbulletSize, lt, at->ikaType,
-                     barragePattern[at->barrageType][at->
-                                                     barrageIdx].bulletml);
+                     barragePattern[at->barrageType][at->barrageIdx].bulletml);
+#else
+   bt->foe = addFoeBattery(bs->x+bt->x, bs->y+bt->y, at->rank, 512, 0, xr, mrp,
+                           at->morphCnt, at->morphHalf, at->morphRank, 
+                           at->speedRank, sp->color, sp->bulletShape, 
+                           sp->bulletSize, lt, at->ikaType,
+                           barragePattern[at->barrageType][at->barrageIdx].bulletml);
+#endif //FIXEDMATH
 }
 
 //senquack - converting to fixed point:
@@ -495,31 +575,28 @@ setBossWing (BossWing * lw, BossWing * rw, int size, int num)
 {
    int i, j;
    lw->wingNum = rw->wingNum = num;
-//  lw->size = rw->size = 0;
+#ifdef FIXEDMATH
    lw->fsize = rw->fsize = 0;
+#else
+   lw->size = rw->size = 0;
+#endif //FIXEDMATH
    for (i = 0; i < num; i++) {
       for (j = 0; j < 2; j++) {
-//      lw->x[i][j] = ((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1);
-//      lw->y[i][j] = ((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1);
-//      lw->z[i][j] = ((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1);
-         lw->fx[i][j] =
-            f2x (((float) (randN (size >> 1) + (size >> 1)) /
-                  FIELD_SCREEN_RATIO) * (randN (2) * 2 - 1));
-         lw->fy[i][j] =
-            f2x (((float) (randN (size >> 1) + (size >> 1)) /
-                  FIELD_SCREEN_RATIO) * (randN (2) * 2 - 1));
-         lw->fz[i][j] =
-            f2x (((float) (randN (size >> 1) + (size >> 1)) /
-                  FIELD_SCREEN_RATIO) * (randN (2) * 2 - 1));
-//      lw->fx[i][j] = f2x(((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1));
-//      lw->fy[i][j] = f2x(((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1));
-//      lw->fz[i][j] = f2x(((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1));
-//      rw->x[i][j] = -lw->x[i][j];
-//      rw->y[i][j] =  lw->y[i][j];
-//      rw->z[i][j] =  lw->z[i][j];
+#ifdef FIXEDMATH
+         lw->fx[i][j] = f2x(((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1));
+         lw->fy[i][j] = f2x(((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1));
+         lw->fz[i][j] = f2x(((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1));
          rw->fx[i][j] = -lw->fx[i][j];
          rw->fy[i][j] = lw->fy[i][j];
          rw->fz[i][j] = lw->fz[i][j];
+#else
+         lw->x[i][j] = ((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1);
+         lw->y[i][j] = ((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1);
+         lw->z[i][j] = ((float)(randN(size/2)+size/2) / FIELD_SCREEN_RATIO) * (randN(2)*2-1);
+         rw->x[i][j] = -lw->x[i][j];
+         rw->y[i][j] =  lw->y[i][j];
+         rw->z[i][j] =  lw->z[i][j];
+#endif //FIXEDMATH
       }
    }
 }
@@ -574,18 +651,21 @@ setBossTree (BatteryGroup * bg, BossTree * left, BossTree * right)
    for (i = 0; i < bn; i++) {
       cx += bg->battery[i].x;
       cy += bg->battery[i].y;
-//    left->ex[i] = (float)bg->battery[i].x / FIELD_SCREEN_RATIO;
-//    left->ey[i] = (float)bg->battery[i].y / FIELD_SCREEN_RATIO;
-//    left->ez[i] = 0;
+#ifdef FIXEDMATH
       left->fex[i] = f2x ((float) bg->battery[i].x / FIELD_SCREEN_RATIO);
       left->fey[i] = f2x ((float) bg->battery[i].y / FIELD_SCREEN_RATIO);
       left->fez[i] = 0;
-//    right->ex[i] = -(float)bg->battery[i].x / FIELD_SCREEN_RATIO;
-//    right->ey[i] =  (float)bg->battery[i].y / FIELD_SCREEN_RATIO;
-//    right->ez[i] = 0;
       right->fex[i] = f2x (-(float) bg->battery[i].x / FIELD_SCREEN_RATIO);
       right->fey[i] = f2x ((float) bg->battery[i].y / FIELD_SCREEN_RATIO);
       right->fez[i] = 0;
+#else
+      left->ex[i] = (float)bg->battery[i].x / FIELD_SCREEN_RATIO;
+      left->ey[i] = (float)bg->battery[i].y / FIELD_SCREEN_RATIO;
+      left->ez[i] = 0;
+      right->ex[i] = -(float)bg->battery[i].x / FIELD_SCREEN_RATIO;
+      right->ey[i] =  (float)bg->battery[i].y / FIELD_SCREEN_RATIO;
+      right->ez[i] = 0;
+#endif //FIXEDMATH
       setBossWing (&(left->eWing[i]), &(right->eWing[i]), 5000, 1);
    }
    cx /= bn;
@@ -599,22 +679,31 @@ setBossTree (BatteryGroup * bg, BossTree * left, BossTree * right)
    cy /= tn;
    for (i = 0; i <= tn; i++) {
       if (i == 0) {
-//      left->x[i] = left->y[i] = left->z[i] = 0;
+#ifdef FIXEDMATH
          left->fx[i] = left->fy[i] = left->fz[i] = 0;
+#else
+         left->x[i] = left->y[i] = left->z[i] = 0;
+#endif //FIXEDMATH
       } else {
-//      left->x[i] = (float)(x+randNS(2000)) / FIELD_SCREEN_RATIO;
-//      left->y[i] = (float)(y+randNS(2000)) / FIELD_SCREEN_RATIO;
-//      left->z[i] = (float)randNS(3000) / FIELD_SCREEN_RATIO;
+#ifdef FIXEDMATH
          left->fx[i] = f2x ((float) (x + randNS (2000)) / FIELD_SCREEN_RATIO);
          left->fy[i] = f2x ((float) (y + randNS (2000)) / FIELD_SCREEN_RATIO);
          left->fz[i] = f2x ((float) randNS (3000) / FIELD_SCREEN_RATIO);
+#else
+         left->x[i] = (float)(x+randNS(2000)) / FIELD_SCREEN_RATIO;
+         left->y[i] = (float)(y+randNS(2000)) / FIELD_SCREEN_RATIO;
+         left->z[i] = (float)randNS(3000) / FIELD_SCREEN_RATIO;
+#endif //FIXEDMATH
       }
-//    right->x[i] = -left->x[i];
-//    right->y[i] =  left->y[i];
-//    right->z[i] =  left->z[i];
+#ifdef FIXEDMATH
       right->fx[i] = -left->fx[i];
       right->fy[i] = left->fy[i];
       right->fz[i] = left->fz[i];
+#else
+      right->x[i] = -left->x[i];
+      right->y[i] =  left->y[i];
+      right->z[i] =  left->z[i];
+#endif //FIXEDMATH
       x += cx;
       y += cy;
       setBossWing (&(left->wing[i]), &(right->wing[i]), 10000, 2);
@@ -637,6 +726,7 @@ createBoss (int seed, float rank, int round)
    int bn, bgn = 0, lbn, bgni = 0;
    int i, j;
    int wx, wy, cx, cy;
+   //senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //senquack - complete conversion to floats:
 //  double tr, sr, sra;
    float tr, sr, sra;
@@ -756,6 +846,7 @@ createBoss (int seed, float rank, int round)
       sra = tr / vbgn;
       for (i = 0; i < bgn; i++) {
          if (tr > 0 && vbg[i]) {
+   //senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //senquack - complete conversion to floats:
 // sr = ((double)randN(((int)(sra*256+1))))/256 + sra/2;
             sr = ((float) randN (((int) (sra * 256 + 1)))) / 256 + sra / 2;
@@ -874,11 +965,13 @@ createBoss (int seed, float rank, int round)
 static void
 addBossTreeFrag (BossTree * bt)
 {
+#ifdef FIXEDMATH
    int i, dst, deg;
    int ox, oy;
 //  float x, y;
    GLfixed fx, fy;
    int bpn;
+   //senquack TODO: this can be optimized probably:
 //  x =  (float)boss.x / FIELD_SCREEN_RATIO;
 //  y = -(float)boss.y / FIELD_SCREEN_RATIO;
    fx = f2x ((float) boss.x / FIELD_SCREEN_RATIO);
@@ -908,6 +1001,7 @@ addBossTreeFrag (BossTree * bt)
 //    -((bt->fy[i+1]+bt->fy[i])>>1) + fy,
 //    (bt->fz[i+1]+bt->fz[i])>>1, 
 //    INT2FNUM(dst>>9), deg);
+//senquack TODO: figure out why I used FDIV here instead of shifting: .. also clean the crap above it
       addBossFragx (((bt->fx[i + 1] + bt->fx[i]) >> 1) + fx,
                     -((bt->fy[i + 1] + bt->fy[i]) >> 1) + fy,
                     (bt->fz[i + 1] + bt->fz[i]) >> 1,
@@ -936,11 +1030,43 @@ addBossTreeFrag (BossTree * bt)
 //    -((bt->fey[i]+bt->fy[bpn])>>1) + fy,
 //    (bt->fez[i]+bt->fz[bpn])>>1, 
 //    INT2FNUM(dst>>9), deg);
+//senquack TODO: figure out why I used FDIV here instead of shifting: .. also clean the crap above it
       addBossFragx (((bt->fex[i] + bt->fx[bpn]) >> 1) + fx,
                     -((bt->fey[i] + bt->fy[bpn]) >> 1) + fy,
                     (bt->fez[i] + bt->fz[bpn]) >> 1,
                     FDIV (INT2FNUM (dst), 33554432), deg);
    }
+#else
+  int i, dst, deg;
+  int ox, oy;
+  float x, y;
+  int bpn;
+  x =  (float)boss.x / FIELD_SCREEN_RATIO;
+  y = -(float)boss.y / FIELD_SCREEN_RATIO;
+  bpn = bt->posNum-1;
+  for ( i=0 ; i<bpn ; i++ ) {
+    ox =  (int)((bt->x[i+1]-bt->x[i])*256);
+    oy = -(int)((bt->y[i+1]-bt->y[i])*256);
+    dst = getDistance(ox, oy);
+    deg = getDeg(ox, oy);
+    //senquack TODO: can probably optimize the dst/512 here:
+    addBossFrag((bt->x[i+1]+bt->x[i])/2 + x,
+       -(bt->y[i+1]+bt->y[i])/2 + y,
+       (bt->z[i+1]+bt->z[i])/2, 
+       (float)dst/512, deg);
+  }
+  for ( i=0 ; i<bt->epNum ; i++ ) {
+    ox =  (int)((bt->ex[i]-bt->x[bpn])*256);
+    oy = -(int)((bt->ey[i]-bt->y[bpn])*256);
+    dst = getDistance(ox, oy);
+    deg = getDeg(ox, oy);
+    //senquack TODO: can probably optimize the dst/512 here:
+    addBossFrag((bt->ex[i]+bt->x[bpn])/2 + x,
+       -(bt->ey[i]+bt->y[bpn])/2 + y,
+       (bt->ez[i]+bt->z[bpn])/2, 
+       (float)dst/512, deg);
+  }
+#endif //FIXEDMATH
 }
 
 static void
@@ -1412,14 +1538,18 @@ moveBoss ()
       for (i = 0; i < boss.batteryGroupNum; i++) {
          BossTree *bt = &(bossShape.tree[i]);
          for (j = 0; j < bt->posNum; j++) {
-// bt->wing[j].size *= 0.99;
+#ifdef FIXEDMATH
             bt->wing[j].fsize = FMUL (bt->wing[j].fsize, 64881);
-// bt->wing[j].fsize = f2x(x2f(bt->wing[j].fsize) * 0.99f);
+#else
+            bt->wing[j].size *= 0.99;
+#endif //FIXEDMATH
          }
          for (j = 0; j < boss.batteryGroup[i].batteryNum; j++) {
-// bt->eWing[j].size *= 0.985;
+#ifdef FIXEDMATH
             bt->eWing[j].fsize = FMUL (bt->eWing[j].fsize, 64553);
-// bt->eWing[j].fsize = f2x(x2f(bt->eWing[j].fsize) * 0.985f);
+#else
+            bt->eWing[j].size *= 0.985;
+#endif //FIXEDMATH
          }
       }
       if (boss.stateCnt <= 0) {
@@ -1523,13 +1653,14 @@ damageBoss (int dmg)
    if (tn < boss.batteryGroupNum) {
       bt = &(bossShape.tree[tn]);
       pn = randN (bt->posNum);
-//    bt->wing[pn].size *= 0.996;
-      bt->wing[pn].fsize = FMUL (bt->wing[pn].fsize, 65274);
-//    bt->wing[pn].fsize = f2x(x2f(bt->wing[pn].fsize) * 0.996);
       bn = randN (boss.batteryGroup[tn].batteryNum);
-//    bt->eWing[bn].size *= 0.996;
+#ifdef FIXEDMATH
+      bt->wing[pn].fsize = FMUL (bt->wing[pn].fsize, 65274);
       bt->eWing[bn].fsize = FMUL (bt->eWing[bn].fsize, 65274);
-//    bt->eWing[bn].fsize = f2x(x2f(bt->eWing[bn].fsize) * 0.996);
+#else
+      bt->wing[pn].size *= 0.996;
+      bt->eWing[bn].size *= 0.996;
+#endif //FIXEDMATH
    }
    boss.shield -= dmg;
    boss.damaged = 1;
@@ -1542,12 +1673,18 @@ damageBoss (int dmg)
             for (j = 0; j < 4; j++)
                addBossTreeFrag (bt);
             for (j = 0; j < bt->posNum; j++) {
-//   bt->wing[j].size = 0;
+#ifdef FIXEDMATH
                bt->wing[j].fsize = 0;
+#else
+               bt->wing[j].size = 0;
+#endif //FIXEDMATH
             }
             for (j = 0; j < boss.batteryGroup[i].batteryNum; j++) {
-//   bt->eWing[j].size = 0;
+#ifdef FIXEDMATH
                bt->eWing[j].fsize = 0;
+#else
+               bt->eWing[j].size = 0;
+#endif //FIXEDMATH
             }
          }
          boss.state = CHANGE;
@@ -1611,6 +1748,8 @@ checkHitUpside ()
    return boss.y + boss.collisionYUp;
 }
 
+//senquack - TODO: clean up this cruft from figuring out GP2X freezing was ultimately bug in line drawing in GPU940:
+                  /// ALSO: clean up all these old iterations left commented-out as I worked on Wiz version!
 //senquack - one of the 2 causes of freezing is in drawBossWing 
 //static void drawBossWing(float x1, float y1, float z1, float x2, float y2, float z2,
 //        BossWing *wg) {
@@ -1658,12 +1797,15 @@ checkHitUpside ()
 ////         boss.r, boss.g, boss.b);
 //  }
 //}
+//senquack TODO: these probably can be shrunk down greatly from the Wiz version, since I noted below that
+//       only 400 total vertices ever seems to be drawn:
+#ifdef FIXEDMATH
 static GLfixed wingvertices[1024 * 2];
 static GLubyte wingcolors[1024 * 4];
 static GLfixed *wingvertptr;
 static GLubyte *wingcolptr;
 
-//senquack - added this
+//senquack - added this for GLES1.1 fixed-point
 static void
 prepareDrawBossWingsx (void)
 {
@@ -1671,7 +1813,7 @@ prepareDrawBossWingsx (void)
    wingcolptr = &(wingcolors[0]);
 }
 
-//senquack - added this
+//senquack - added this for GLES1.1 fixed-point
 static void
 finishDrawBossWingsx (void)
 {
@@ -1684,6 +1826,7 @@ finishDrawBossWingsx (void)
    glDrawArrays (GL_TRIANGLES, 0, numwingvertices);
 }
 
+//senquack - added this for GLES1.1 fixed-point
 static void
 drawBossWingx (GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, BossWing * wg)
 {
@@ -1696,30 +1839,13 @@ drawBossWingx (GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, BossWing * wg)
       tmpx = x1 + FMUL (wg->fx[i][0], sz);
       tmpy = y1 + FMUL (wg->fy[i][0], sz);
 
-      *wingcolptr++ = r;
-      *wingcolptr++ = g;
-      *wingcolptr++ = b;
-      *wingcolptr++ = 64;
-      *wingcolptr++ = r;
-      *wingcolptr++ = g;
-      *wingcolptr++ = b;
-      *wingcolptr++ = 64;
-      *wingcolptr++ = r;
-      *wingcolptr++ = g;
-      *wingcolptr++ = b;
-      *wingcolptr++ = 64;
-      *wingcolptr++ = r;
-      *wingcolptr++ = g;
-      *wingcolptr++ = b;
-      *wingcolptr++ = 64;
-      *wingcolptr++ = r;
-      *wingcolptr++ = g;
-      *wingcolptr++ = b;
-      *wingcolptr++ = 64;
-      *wingcolptr++ = r;
-      *wingcolptr++ = g;
-      *wingcolptr++ = b;
-      *wingcolptr++ = 64;
+      //senquack TODO: optimize RGBA here, interleave also
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
       *wingvertptr++ = x2;
       *wingvertptr++ = y2;
       *wingvertptr++ = x1;
@@ -1734,8 +1860,73 @@ drawBossWingx (GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, BossWing * wg)
       *wingvertptr++ = y2 + FMUL (wg->fy[i][1], sz);
    }
 }
+#else
+//senquack TODO: these probably can be shrunk down greatly from the Wiz version, since I noted below that
+//       only 400 total vertices ever seems to be drawn:
+static GLfloat wingvertices[1024 * 2];
+static GLubyte wingcolors[1024 * 4];
+static GLfloat *wingvertptr;
+static GLubyte *wingcolptr;
+
+//senquack - added this for GLES1.1 float-point
+static void
+prepareDrawBossWings(void)
+{
+   wingvertptr = &(wingvertices[0]);
+   wingcolptr = &(wingcolors[0]);
+}
+
+//senquack - added this for GLES1.1 float-point
+static void
+finishDrawBossWings(void)
+{
+   //senquack TODO: this is not the best way, because what if we're running on a 64-bit CPU?:
+   int numwingvertices = ((unsigned int) wingcolptr - (unsigned int) &(wingcolors[0])) >> 2;
+   //senquack - never seemed to go over 400 vertices total:
+// printf("Drawing wings with %d vertices\n", numwingvertices);
+   glVertexPointer (2, GL_FLOAT, 0, wingvertices);
+   glColorPointer (4, GL_UNSIGNED_BYTE, 0, wingcolors);
+   glDrawArrays (GL_TRIANGLES, 0, numwingvertices);
+}
+
+//senquack - added this for GLES1.1 fixed-point
+static void
+drawBossWing(GLfoat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWing * wg)
+{
+   int i;
+   GLfloat sz = wg->size;
+   GLubyte r = boss.r, g = boss.g, b = boss.b;
+   GLfloat tmpx, tmpy;
+   for (i = 0; i < wg->wingNum; i++) {
+
+      tmpx = x1 + wg->x[i][0] * sz;
+      tmpy = y1 + wg->y[i][0] * sz;
+
+      //senquack TODO: optimize RGBA here, interleave also
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
+      *wingvertptr++ = x2;
+      *wingvertptr++ = y2;
+      *wingvertptr++ = x1;
+      *wingvertptr++ = y1;
+      *wingvertptr++ = tmpx;
+      *wingvertptr++ = tmpy;
+      *wingvertptr++ = x1;
+      *wingvertptr++ = y1;
+      *wingvertptr++ = tmpx;
+      *wingvertptr++ = tmpy;
+      *wingvertptr++ = x2 + wg->x[i][1] * sz;
+      *wingvertptr++ = y2 + wg->y[i][1] * sz;
+   }
+}
+#endif //FIXEDMATH
 
 
+//senquack TODO: clean this up!!!
 //senquack - optimizing for wiz v1.1
 //void drawBoss() {
 //  float x, y;
@@ -2043,9 +2234,228 @@ drawBossWingx (GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, BossWing * wg)
 ////  drawCorex(f2x(x), f2x(y), boss.cnt, boss.r, boss.g, boss.b);
 //  drawCorex(fx, fy, boss.cnt, boss.r, boss.g, boss.b);
 //}
-void
-drawBoss ()
+// ----------------------------------
+//senquack TODO: this last commented-out function is the one I used for Wiz 1.1.. I have cleaned it up down below 
+//for the fixed-point version of the github port version:
+// -------------------------------
+//void
+//drawBoss ()
+//{
+//   prepareDrawBossWingsx ();
+//
+////  float x, y;
+////  float x1, y1, z1, x2, y2, z2;
+//   GLfixed fx, fy;
+////  GLfixed fx1, fy1, fz1, fx2, fy2, fz2;
+//   GLfixed fx1, fy1, fx2, fy2;
+//   int i, j;
+//   int df;
+//   int crBpn, crBpl;
+//   int bpn;
+//   crBpn = crBpl = 0;
+//
+////  x =  (float)boss.x / FIELD_SCREEN_RATIO;
+////  y = -(float)boss.y / FIELD_SCREEN_RATIO;
+////  fx =  f2x((float)boss.x / FIELD_SCREEN_RATIO);
+////  fy = f2x(-(float)boss.y / FIELD_SCREEN_RATIO);
+//   fx = FDIV (INT2FNUM (boss.x), FIELD_SCREEN_RATIO_X);
+//   //senquack - y positions tend to overflow with fixed point
+////  fy = f2x(-(float)boss.y / FIELD_SCREEN_RATIO);
+//   fy = (int) (-(float) boss.y * 6.5536f);  // roll division and fixed point conversion into one multiply
+//
+//   if (bossShape.diffuse > 0 && boss.state < DESTROIED) {
+//      df = bossShape.diffuse;
+////    drawStar(1, x, y, 0, df, df, df, (float)(df+256)/500.0f);
+////    drawStar(1, x, y, 0, df, df, df, (float)(df+randN(256))/500.0f);
+//      drawStarx (1, fx, fy, df, df, df,
+//                 FDIV (INT2FNUM (df + 256), INT2FNUM (500)));
+//      drawStarx (1, fx, fy, df, df, df,
+//                 FDIV (INT2FNUM (df + randN (256)), INT2FNUM (500)));
+//   }
+//
+//   for (i = 0; i < boss.batteryGroupNum; i++) {
+//      BossTree *bt = &(bossShape.tree[i]);
+//      bpn = bt->posNum - 1;
+////    x1 = x; y1 = y; z1 = 0;
+////    fx1 = fx; fy1 = fy; fz1 = 0;
+//      fx1 = fx;
+//      fy1 = fy;
+//      switch (boss.state) {
+//      case CREATING:
+//      case CHANGE:
+//         crBpn =
+//            (bpn + 1) * (BOSS_PATTERN_CHANGE_CNT - boss.stateCnt -
+//                         1) / BOSS_PATTERN_CHANGE_CNT;
+//         crBpl =
+//            255 -
+//            (boss.stateCnt % (BOSS_PATTERN_CHANGE_CNT / (bpn + 1)) * 256) /
+//            (BOSS_PATTERN_CHANGE_CNT / (bpn + 1));
+//         break;
+//      }
+//      for (j = 0; j < bpn; j++) {
+//
+////      x2 =  x + bt->x[j+1];
+////      y2 =  y - bt->y[j+1];
+////      z2 =  bt->z[j+1];
+//         fx2 = fx + bt->fx[j + 1];
+//         fy2 = fy - bt->fy[j + 1];
+//         //senquack - no need for z axis
+////      fz2 =  bt->fz[j+1];
+//
+//         switch (boss.state) {
+//         case ATTACKING:
+//         case LAST_ATTACK:
+//         case DESTROIED:
+//// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
+//// drawLinex(fx1, fy1, fz1, fx2, fy2, fz2, bossShape.r, bossShape.g, bossShape.b, 240);
+//            drawLinex (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+//                       bossShape.b, 240);
+////  glColor4hack(bossShape.r, bossShape.g, bossShape.b, 240);
+////  glBegin(GL_LINE_LOOP);
+////  glVertex3f(x1, y1, z1);
+////  glVertex3f(x2, y2, z2);
+////  glEnd();
+//
+//// drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
+//// drawBossWingx(fx1, fy1, fx2, fy2, &(bt->wing[j]));
+//// drawBossWingx(fx1, fy1, 0, fx2, fy2, 0, &(bt->wing[j]));
+//// drawBossWingx(fx1, fy1, fz1, fx2, fy2, fz2, &(bt->wing[j]));
+//            drawBossWingx (fx1, fy1, fx2, fy2, &(bt->wing[j]));
+//            break;
+//         case CREATING:
+//            if (j == crBpn) {
+////   drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240, crBpl);
+//               //senquack - don't need 3D vertices for this
+//               drawLinePartx (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+//                              bossShape.b, 240, crBpl);
+//            } else if (j < crBpn) {
+////   drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
+//               drawLinex (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+//                          bossShape.b, 240);
+////   glColor4hack(bossShape.r, bossShape.g, bossShape.b, 240);
+////   glBegin(GL_LINE_LOOP);
+////   glVertex3f(x1, y1, z1);
+////   glVertex3f(x2, y2, z2);
+////   glEnd();
+//            }
+//            if (crBpn == bpn) {
+////   bt->wing[j].size = (float)crBpl/255;
+////   bt->wing[j].fsize = INT2FNUM(crBpl>>8);
+////   bt->wing[j].fsize = f2x((float)crBpl/255.0f);
+////   bt->wing[j].fsize = FDIV(INT2FNUM(crBpl),16711680);
+//               bt->wing[j].fsize = FDIV (INT2FNUM (crBpl), 16711680);
+//
+////   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
+////   drawBossWingx(fx1, fy1, fx2, fy2, &(bt->wing[j]));
+////   drawBossWingx(fx1, fy1, 0, fx2, fy2, 0, &(bt->wing[j]));
+////   drawBossWingx(fx1, fy1, fz1, fx2, fy2, fz2, &(bt->wing[j]));
+//               drawBossWingx (fx1, fy1, fx2, fy2, &(bt->wing[j]));
+//            }
+//            break;
+//         case CHANGE:
+//            break;
+//         }
+//         if (bt->diffuse > 0 && boss.state != CHANGE
+//             && boss.state < DESTROIED) {
+//            df = bt->diffuse;
+//// drawStar(0, x2, y2, z2, df, df, df, (float)(df+256)/900.0f);
+//// drawStar(0, x2, y2, z2, df, df, df, (float)(df+randN(256))/900.0f);
+//         }
+////      x1 = x2; y1 = y2; z1 = z2;
+////      fx1 = fx2; fy1 = fy2; fz1 = fz2;
+//         fx1 = fx2;
+//         fy1 = fy2;
+//      }
+//
+////    x1 = x + bt->x[bpn];
+////    y1 = y - bt->y[bpn];
+////    z1 = bt->z[bpn];
+//      fx1 = fx + bt->fx[bpn];
+//      fy1 = fy - bt->fy[bpn];
+////    fz1 = bt->fz[bpn];
+//
+//      for (j = 0; j < bt->epNum; j++) {
+////      x2 = x + bt->ex[j];
+////      y2 = y - bt->ey[j];
+////      z2 = bt->ez[j];
+//         fx2 = fx + bt->fex[j];
+//         fy2 = fy - bt->fey[j];
+////      fz2 = bt->fez[j];
+//
+//         switch (boss.state) {
+//         case ATTACKING:
+//         case LAST_ATTACK:
+//         case DESTROIED:
+//// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
+//            drawLinex (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+//                       bossShape.b, 220);
+////   glColor4hack(bossShape.r, bossShape.g, bossShape.b, 220);
+////   glBegin(GL_LINE_LOOP);
+////   glVertex3f(x1, y1, z1);
+////   glVertex3f(x2, y2, z2);
+////   glEnd();
+//
+//// drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+//// drawBossWingx(fx1, fy1, fz1, fx2, fy2, fz2, &(bt->eWing[j]));
+//            drawBossWingx (fx1, fy1, fx2, fy2, &(bt->eWing[j]));
+//            break;
+//         case CREATING:
+//            if (crBpn == bpn) {
+////   drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
+//               drawLinePartx (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+//                              bossShape.b, 220, crBpl);
+////   bt->eWing[j].size = (float)crBpl/255;
+////   bt->eWing[j].fsize = INT2FNUM(crBpl>>8);
+////   bt->eWing[j].fsize =  f2x((float)crBpl/255.0f); 
+//               bt->eWing[j].fsize = FDIV (INT2FNUM (crBpl), 16711680);
+//
+////   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+////   drawBossWingx(fx1, fy1, fz1, fx2, fy2, fz2, &(bt->eWing[j]));
+//               drawBossWingx (fx1, fy1, fx2, fy2, &(bt->eWing[j]));
+//            }
+//            break;
+//         case CHANGE:
+//// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
+//            drawLinex (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+//                       bossShape.b, 220);
+////   glColor4hack(bossShape.r, bossShape.g, bossShape.b, 220);
+////   glBegin(GL_LINE_LOOP);
+////   glVertex3f(x1, y1, z1);
+////   glVertex3f(x2, y2, z2);
+////   glEnd();
+//
+//            if (crBpn == bpn) {
+////   bt->eWing[j].size = (float)crBpl/128;
+////   bt->eWing[j].fsize = INT2FNUM(crBpl>>7);
+////   bt->eWing[j].fsize = f2x((float)crBpl/128.0f);
+//               bt->eWing[j].fsize = FDIV (INT2FNUM (crBpl), 8388608);
+////   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+////   drawBossWingx(fx1, fy1, fz1, fx2, fy2, fz2, &(bt->eWing[j]));
+//               drawBossWingx (fx1, fy1, fx2, fy2, &(bt->eWing[j]));
+//            }
+//            break;
+//         }
+//         if (bt->diffuse > 0 && boss.state != CHANGE
+//             && boss.state < DESTROIED) {
+//            df = bt->diffuse;
+//// drawStar(1, x2, y2, z2, df, df, df, (float)(df+256)/640.0f);
+//// drawStar(1, x2, y2, z2, df, df, df, (float)(df+randN(256))/640.0f);
+//            drawStarx (1, fx2, fy2, df, df, df,
+//                       FDIV (INT2FNUM (df + 256), INT2FNUM (640)));
+//            drawStarx (1, fx2, fy2, df, df, df,
+//                       FDIV (INT2FNUM (df + randN (256)), INT2FNUM (640)));
+//         }
+//      }
+//   }
+//   finishDrawBossWingsx ();
+//
+////  drawCore(x, y, boss.cnt, boss.r, boss.g, boss.b);
+////  drawCorex(f2x(x), f2x(y), boss.cnt, boss.r, boss.g, boss.b);
+//   drawCorex (fx, fy, boss.cnt, boss.r, boss.g, boss.b);
+//}
+void drawBoss ()
 {
+#ifdef FIXEDMATH
    prepareDrawBossWingsx ();
 
 //  float x, y;
@@ -2163,13 +2573,15 @@ drawBoss ()
          if (bt->diffuse > 0 && boss.state != CHANGE
              && boss.state < DESTROIED) {
             df = bt->diffuse;
+            //senquack TODO: why did I leave these two commented-out for Wiz port? I re-enabled them again:
 // drawStar(0, x2, y2, z2, df, df, df, (float)(df+256)/900.0f);
 // drawStar(0, x2, y2, z2, df, df, df, (float)(df+randN(256))/900.0f);
+            drawStarx(0, x2, y2, df, df, df, FDIV(INT2FNUM(df+256), f2x(900.0)));
+            drawStarx(0, x2, y2, df, df, df, FDIV(INT2FNUM(df+randN(256)), f2x(900.0)));
          }
 //      x1 = x2; y1 = y2; z1 = z2;
 //      fx1 = fx2; fy1 = fy2; fz1 = fz2;
-         fx1 = fx2;
-         fy1 = fy2;
+         fx1 = fx2; fy1 = fy2;
       }
 
 //    x1 = x + bt->x[bpn];
@@ -2257,7 +2669,153 @@ drawBoss ()
 //  drawCore(x, y, boss.cnt, boss.r, boss.g, boss.b);
 //  drawCorex(f2x(x), f2x(y), boss.cnt, boss.r, boss.g, boss.b);
    drawCorex (fx, fy, boss.cnt, boss.r, boss.g, boss.b);
+#else
+   prepareDrawBossWings();
+  float x, y;
+  // senquack - converted to 2D for speedup:
+//  float x1, y1, z1, x2, y2, z2;
+   float x1, y1, x2, y2;
+
+   int i, j;
+   int df;
+   int crBpn, crBpl;
+   int bpn;
+   crBpn = crBpl = 0;
+
+   //senquack - BIG TODO: create constant float inverse of FIELD_SCREEN_RATIO and multiply instead of divide for this 
+   //       and many other sections of code, including fixed version of this above:
+   x =  (float)boss.x / FIELD_SCREEN_RATIO;
+   y = -(float)boss.y / FIELD_SCREEN_RATIO;
+
+   if (bossShape.diffuse > 0 && boss.state < DESTROIED) {
+      df = bossShape.diffuse;
+      // converted to 2D:
+//    drawStar(1, x, y, 0, df, df, df, (float)(df+256)/500.0f);
+//    drawStar(1, x, y, 0, df, df, df, (float)(df+randN(256))/500.0f);
+      drawStar(1, x, y, df, df, df, (float)(df+256)/500.0f);
+      drawStar(1, x, y, df, df, df, (float)(df+randN(256))/500.0f);
+   }
+
+   for (i = 0; i < boss.batteryGroupNum; i++) {
+      BossTree *bt = &(bossShape.tree[i]);
+      bpn = bt->posNum - 1;
+//    x1 = x; y1 = y; z1 = 0;
+      x1 = x; y1 = y;
+      switch (boss.state) {
+      case CREATING:
+      case CHANGE:
+         crBpn =
+            (bpn + 1) * (BOSS_PATTERN_CHANGE_CNT - boss.stateCnt -
+                         1) / BOSS_PATTERN_CHANGE_CNT;
+         crBpl =
+            255 -
+            (boss.stateCnt % (BOSS_PATTERN_CHANGE_CNT / (bpn + 1)) * 256) /
+            (BOSS_PATTERN_CHANGE_CNT / (bpn + 1));
+         break;
+      }
+      for (j = 0; j < bpn; j++) {
+
+      x2 =  x + bt->x[j+1];
+      y2 =  y - bt->y[j+1];
+//      z2 =  bt->z[j+1];
+
+         switch (boss.state) {
+         case ATTACKING:
+         case LAST_ATTACK:
+         case DESTROIED:
+// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
+            drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240);
+
+// drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
+            drawBossWing(x1, y1, x2, y2, &(bt->wing[j]));
+            break;
+         case CREATING:
+            if (j == crBpn) {
+//   drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240, crBpl);
+               drawLinePart(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240, crBpl);
+            } else if (j < crBpn) {
+//   drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
+               drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240);
+            }
+            if (crBpn == bpn) {
+               //senquack TODO: can we optimize this by shifting crBpl before divide?:
+               bt->wing[j].size = (float)crBpl/255;
+//   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
+               drawBossWing(x1, y1, x2, y2, &(bt->wing[j]));
+            }
+            break;
+         case CHANGE:
+            break;
+         }
+         if (bt->diffuse > 0 && boss.state != CHANGE && boss.state < DESTROIED) {
+            df = bt->diffuse;
+            //senquack TODO: why did I leave these two commented-out for Wiz port? I re-enabled them again:
+//            drawStar(0, x2, y2, z2, df, df, df, (float)(df+256)/900.0f);
+//            drawStar(0, x2, y2, z2, df, df, df, (float)(df+randN(256))/900.0f);
+            drawStar(0, x2, y2, df, df, df, (float)(df+256)/900.0f);
+            drawStar(0, x2, y2, df, df, df, (float)(df+randN(256))/900.0f);
+         }
+//      x1 = x2; y1 = y2; z1 = z2;
+         x1 = x2; y1 = y2; 
+      }
+
+      x1 = x + bt->x[bpn];
+      y1 = y - bt->y[bpn];
+//    z1 = bt->z[bpn];
+
+      for (j = 0; j < bt->epNum; j++) {
+         x2 = x + bt->ex[j];
+         y2 = y - bt->ey[j];
+//      z2 = bt->ez[j];
+
+         switch (boss.state) {
+         case ATTACKING:
+         case LAST_ATTACK:
+         case DESTROIED:
+// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
+            drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220);
+
+// drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+            drawBossWing(x1, y1, x2, y2, &(bt->eWing[j]));
+            break;
+         case CREATING:
+            if (crBpn == bpn) {
+//   drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
+               drawLinePart(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
+               //senquack TODO: possible optimization:
+               bt->eWing[j].size = (float)crBpl/255;
+
+//   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+               drawBossWing(x1, y1, x2, y2, &(bt->eWing[j]));
+            }
+            break;
+         case CHANGE:
+// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
+            drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220);
+
+            if (crBpn == bpn) {
+               bt->eWing[j].size = (float)crBpl/128;
+//   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+               drawBossWing(x1, y1, x2, y2, &(bt->eWing[j]));
+            }
+            break;
+         }
+         if (bt->diffuse > 0 && boss.state != CHANGE
+             && boss.state < DESTROIED) {
+            df = bt->diffuse;
+// drawStar(1, x2, y2, z2, df, df, df, (float)(df+256)/640.0f);
+// drawStar(1, x2, y2, z2, df, df, df, (float)(df+randN(256))/640.0f);
+            drawStar(1, x2, y2, df, df, df, (float)(df+256)/640.0f);
+            drawStar(1, x2, y2, df, df, df, (float)(df+randN(256))/640.0f);
+         }
+      }
+   }
+   finishDrawBossWings();
+
+   drawCore(x, y, boss.cnt, boss.r, boss.g, boss.b);
+#endif //FIXEDMATH
 }
+
 
 //senquack - some fixed point
 //void drawBossState() {
@@ -2304,10 +2862,15 @@ drawBossState ()
    } else {
       wd = boss.shield * 300 / BOSS_SHIELD_MAX;
    }
-//  drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
-//  drawBoxx(f2x(180+wd/2), f2x(24), f2x(wd>>1), f2x(6), 240, 240, 210);
+#ifdef FIXEDMATH
    drawBoxx (INT2FNUM (180 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1),
              INT2FNUM (6), 240, 240, 210);
+#else
+//   drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
+   drawBox((float)(180+wd/2), 24.0, (float)(wd/2), 6.0, 240, 240, 210);
+#endif //FIXEDMATH
+
+//senquack TODO: investigate why I changed 176+wd to 165 here: (probably to allow more stuff displayed up top at low-res)
 //  drawNumCenter(boss.shield, 176+wd, 10, 6, 210, 210, 240);
    drawNumCenter (boss.shield, 165 + wd, 10, 6, 210, 210, 240);
    cwd = boss.patternChangeShield * 300 / BOSS_SHIELD_MAX;
@@ -2340,10 +2903,15 @@ drawBossState_rotated ()
    } else {
       wd = boss.shield * 300 / BOSS_SHIELD_MAX;
    }
-//  drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
-//  drawBoxx(f2x(180+wd/2), f2x(24), f2x(wd>>1), f2x(6), 240, 240, 210);
+#ifdef FIXEDMATH
    drawBoxx (INT2FNUM (180 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1),
              INT2FNUM (6), 240, 240, 210);
+#else
+//  drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
+   drawBox((float)(180+wd/2), 24.0, (float)(wd/2), 6.0, 240, 240, 210);
+#endif //FIXEDMATH
+
+//senquack TODO: investigate why I changed 176+wd to 165 here: (probably to allow more stuff displayed up top at low-res)
 //  drawNumCenter(boss.shield, 176+wd, 10, 6, 210, 210, 240);
    drawNumCenter (boss.shield, 165 + wd, 10, 6, 210, 210, 240);
    cwd = boss.patternChangeShield * 300 / BOSS_SHIELD_MAX;

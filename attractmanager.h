@@ -14,11 +14,10 @@
 #define SAME_RANK_STAGE_NUM 4
 #define MODE_NUM 4
 
-typedef struct
-{
-   int score[MODE_NUM][STAGE_NUM];
-   int cleard[MODE_NUM][STAGE_NUM];
-   int stage, mode;
+typedef struct {
+  int score[MODE_NUM][STAGE_NUM];
+  int cleard[MODE_NUM][STAGE_NUM];
+  int stage, mode;
 } HiScore;
 
 extern int score, left, stage;
@@ -32,35 +31,35 @@ extern int bombUsed, shipUsed;
 
 extern int mode;
 
-void loadPreference ();
-void savePreference ();
-void initStageState (int stg);
-void initGameStateFirst ();
-void initGameState (int stg);
-void addScore (int s);
-int extendShip ();
-int decrementShip ();
-void addLeftBonus ();
-void setClearScore ();
-void setHiScore ();
-void showScore ();
-void drawScore ();
-void drawRPanel ();
+void loadPreference();
+void savePreference();
+void initStageState(int stg);
+void initGameStateFirst();
+void initGameState(int stg);
+void addScore(int s);
+int extendShip();
+int decrementShip();
+void addLeftBonus();
+void setClearScore();
+void setHiScore();
+void showScore();
+void drawScore();
+void drawRPanel();
 //senquack - screen-rotated version:
-void drawRPanel_rotated ();
-void initAttractManager ();
-int initTitleAtr ();
-void drawTitle ();
+void drawRPanel_rotated();
+void initAttractManager();
+int initTitleAtr();
+void drawTitle();
 //senquack - screen-rotated version:
-void drawTitle_rotated ();
-void drawTitleMenu ();
-void initGameoverAtr ();
-void moveGameover ();
-void drawGameover ();
-void moveTitleMenu ();
-void movePause ();
-void drawPause ();
-void drawTitle ();
-void initBossScoreAtr (int bs);
-void moveBossScoreAtr ();
-void drawBossScoreAtr ();
+void drawTitle_rotated();
+void drawTitleMenu();
+void initGameoverAtr();
+void moveGameover();
+void drawGameover();
+void moveTitleMenu();
+void movePause();
+void drawPause();
+void drawTitle();
+void initBossScoreAtr(int bs);
+void moveBossScoreAtr();
+void drawBossScoreAtr();

@@ -23,16 +23,24 @@
 //  int xn, yn;
 //  int r, g, b, a;
 //} Plane;
-typedef struct
-{
-   GLfixed fx, fy, fz, fox, foy;
-   GLfixed fmx, fmy;
-   int d1;
-   GLfixed fwidth, fheight;
-   int xn, yn;
-   int r, g, b, a;
+typedef struct {
+#ifdef FIXEDMATH
+  GLfixed fx, fy, fz, fox, foy;
+  GLfixed fmx, fmy;
+  int d1;
+  GLfixed fwidth, fheight;
+  int xn, yn;
+  int r, g, b, a;
+#else
+  float x, y, z, ox, oy;
+  float mx, my;
+  int d1;
+  float width, height;
+  int xn, yn;
+  int r, g, b, a;
+#endif //FIXEDMATH
 } Plane;
 
-void initBackground ();
-void moveBackground ();
-void drawBackground ();
+void initBackground();
+void moveBackground();
+void drawBackground();

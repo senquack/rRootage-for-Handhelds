@@ -22,6 +22,9 @@ extern "C"
 #include "ship.h"
 }
 
+//senquack BIG TODO: For Wiz, I had left all these member funcs as returning double.. I could probably convert them
+//       to floats for speedup:
+//senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 FoeCommand::FoeCommand (BulletMLParser * parser, Foe * f)
    :
 BulletMLRunner (parser)
@@ -66,15 +69,20 @@ FoeCommand::getDefaultSpeed ()
    return 1;
 }
 
-//senquack - converted to fixed point:
+//senquack - converted to fixed point: (not sure if this is even ever called)
+//senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //double FoeCommand::getRank() {
 //  return foe->rank;
 //}
 double
 FoeCommand::getRank ()
 {
-//  return foe->rank;
-   return (double) x2f (foe->frank);
+#ifdef FIXEDMATH
+//senquack TODO: poss. optimization, see if this is ever called:
+   return x2f(foe->frank);
+#else
+   return foe->rank;
+#endif //FIXEDMATH
 }
 
 void

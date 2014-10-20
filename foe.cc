@@ -348,10 +348,10 @@ clearFoeShape (Foe * fe, int shape)
    y = -f2x ((float) fe->pos.y / FIELD_SCREEN_RATIO);
    d = (fe->d * fe->xReverse) & 1023;
    if (shape) {
-      addShapeFragx (x, y, fe->fbulletSize[fe->shapeType], d, fe->cnt,
+      addShapeFrag(x, y, fe->fbulletSize[fe->shapeType], d, fe->cnt,
                      fe->bulletShape[fe->shapeType], fe->mv.x, fe->mv.y);
    } else {
-      addShapeFragx (x, y, fe->fbulletSize[fe->shapeType], d, fe->cnt,
+      addShapeFrag(x, y, fe->fbulletSize[fe->shapeType], d, fe->cnt,
                      -1, fe->mv.x, fe->mv.y);
    }
 #else
@@ -804,7 +804,7 @@ drawBulletsWake ()
          y = f2x (-(float) fe->pos.y / FIELD_SCREEN_RATIO);
          sx = f2x ((float) fe->spos.x / FIELD_SCREEN_RATIO);
          sy = f2x (-(float) fe->spos.y / FIELD_SCREEN_RATIO);
-         drawLinex (x, y, sx, sy, 150, 180, 90, (63 - fe->cnt) * 3);
+         drawLine(x, y, sx, sy, 150, 180, 90, (63 - fe->cnt) * 3);
 #else
          x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
          y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
@@ -923,7 +923,7 @@ drawBullets ()
             bc = fe->color & 0x3;   // BULLET_COLOR_NUM is 4 (compiler probably already does this though)
 
 #ifdef FIXEDMATH
-            drawShapex (fx, fy, fe->fbulletSize[bt], d, fe->cnt, fe->bulletShape[bt], 
+            drawShape(fx, fy, fe->fbulletSize[bt], d, fe->cnt, fe->bulletShape[bt], 
                   bulletColor[bc][0], bulletColor[bc][1], bulletColor[bc][2]);
 #else
             drawShape(x, y, fe->bulletSize[bt], d, fe->cnt, fe->bulletShape[bt],

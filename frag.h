@@ -24,12 +24,16 @@
 //} Frag;
 typedef struct
 {
-//  float x, y, z;
-//  float mx, my, mz;
-//  float width, height;
+#ifdef FIXEDMATH
    GLfixed fx, fy, fz;
    GLfixed fmx, fmy, fmz;
    GLfixed fwidth, fheight;
+#else
+   float x, y, z;
+   float mx, my, mz;
+   float width, height;
+#endif //FIXEDMATH
+//senquack TODO: poss. optimization, should we change the degrees to floats?:
    int d1, d2, md1, md2;
    int r[FRAG_COLOR_NUM], g[FRAG_COLOR_NUM], b[FRAG_COLOR_NUM];
    int cnt;
@@ -41,13 +45,25 @@ void initFrags ();
 void moveFrags ();
 void drawFrags ();
 void addLaserFrag (int x, int y, int width);
-//void addBossFrag(float x, float y, float z, float width, int d);
+
+#ifdef FIXEDMATH
 //senquack - fixed point version:
-void addBossFragx (GLfixed x, GLfixed y, GLfixed z, GLfixed width, int d);
-//void addShipFrag(float x, float y);
+void addBossFrag(GLfixed x, GLfixed y, GLfixed z, GLfixed width, int d);
+#else
+void addBossFrag(float x, float y, float z, float width, int d);
+#endif //FIXEDMATH
+
+#ifdef FIXEDMATH
 //senquack - fixed point version:
-void addShipFragx (GLfixed x, GLfixed y);
+void addShipFrag(GLfixed x, GLfixed y);
+#else
+void addShipFrag(float x, float y);
+#endif //FIXEDMATH
+
 void addGrazeFrag (int x, int y, int mx, int my);
-//void addShapeFrag(GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int mx, int my);
-void addShapeFragx (GLfixed x, GLfixed y, GLfixed size, int d, int cnt,
-                    int type, int mx, int my);
+
+#ifdef FIXEDMATH
+void addShapeFrag(GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, int mx, int my);
+#else
+void addShapeFrag(GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int mx, int my);
+#endif //FIXEDMATH

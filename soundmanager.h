@@ -10,12 +10,12 @@
  * @version $Revision: 1.1.1.1 $
  */
 
-//senquack
-#define INIT_VOLUME	5
 
-//senquack - gp2x volume control
-//void gp2x_change_volume(int amount);
+//senquack - gp2x/wiz volume control
+#if defined(GP2X) || defined(WIZ)
 void gp2x_change_volume (float amount);
+#define INIT_VOLUME	5
+#endif
 
 
 void closeSound ();

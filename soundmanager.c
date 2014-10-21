@@ -19,24 +19,28 @@
 #include "soundmanager.h"
 
 //senquack - new gp2x volume control
+#if defined(GP2X) || defined(WIZ)
 #include 	<sys/ioctl.h>
 #include	<sys/soundcard.h>
 #include	<unistd.h>
 #include	<fcntl.h>
+#endif
 
 //senquack - for new settings:
 #include "rr.h"
-
 
 static int useAudio = 0;
 
 #define MUSIC_NUM 3
 #define SHARE_LOC "rr_share/"
 
-//senquack - first ogg file has a bug in it, changed to wav
 static char *musicFileName[MUSIC_NUM] = {
-//  "stg_a.ogg", "stg_b.ogg", "stg_c.ogg",
+//senquack - first ogg file freezes open2x (and maybe other) ARM platforms, changed to wav
+#if defined(GP2X) || defined(WIZ)
    "stg_a.wav", "stg_b.ogg", "stg_c.ogg",
+#else
+   "stg_a.ogg", "stg_b.ogg", "stg_c.ogg",
+#endif
 };
 
 static Mix_Music *music[MUSIC_NUM];
@@ -61,12 +65,12 @@ static int chunkChannel[CHUNK_NUM] = {
    7, 7, 7,
 };
 
+#if defined(GP2X) || defined(WIZ)
+//DKS - new
 //senquack - for GP2X volume control:
 static float gp2x_current_volume = INIT_VOLUME;
 
-//DKS - new
-static void
-gp2x_set_volume (int newvol)
+static void gp2x_set_volume (int newvol)
 {
    printf ("NEW VOLUME:%d\n", newvol);
    fflush (stdout);
@@ -84,8 +88,7 @@ gp2x_set_volume (int newvol)
 //senquack - called at startup so we can 
 //    set it back to what it was when we exit.  
 // Returns 0-100, current mixer volume, -1 on error.
-static int
-gp2x_get_volume (void)
+static int gp2x_get_volume (void)
 {
    int vol = -1;
    unsigned long soundDev = open ("/dev/mixer", O_RDONLY);
@@ -102,8 +105,7 @@ gp2x_get_volume (void)
 
 //senquack
 //Will change the volume level up or down, if amount is positive or negative. Will do volume level clamping.
-void
-gp2x_change_volume (float amount)
+void gp2x_change_volume (float amount)
 {
    //senquack - limit amount volume can be changed when we're down low already..
    //    So headphone users can set a good volume
@@ -122,6 +124,7 @@ gp2x_change_volume (float amount)
    }
    gp2x_set_volume ((int) gp2x_current_volume);
 }
+#endif // GP2X volume stuff
 
 void
 closeSound ()
@@ -144,7 +147,6 @@ closeSound ()
    }
    Mix_CloseAudio ();
 }
-
 
 // Initialize the sound.
 
@@ -237,17 +239,25 @@ initSound ()
                SDL_GetError ());
       return;
    }
-   //senquack - altering for GP2X:
+   //senquack - altering for GP2X: (NOTE: channels = 1 is correct, the original OGG music is mono)
 //  audio_rate = 44100;
 //  audio_format = AUDIO_S16;
 //  audio_channels = 1;
 //  audio_buffers = 4096;
 
 //  audio_rate = 22050;
+#if defined(GP2X) || defined(WIZ)
    audio_rate = 44100;
    audio_format = AUDIO_S16;
    audio_channels = 1;
    audio_buffers = 512;
+   //senquack - MANDATORY TODO - add GCW define to Makefile
+#elif defined (GCW)
+   audio_rate = 44100;
+   audio_format = AUDIO_S16;
+   audio_channels = 1;
+   audio_buffers = 1024;
+#endif
 
    if (Mix_OpenAudio (audio_rate, audio_format, audio_channels, audio_buffers)
        < 0) {
@@ -257,8 +267,10 @@ initSound ()
       Mix_QuerySpec (&audio_rate, &audio_format, &audio_channels);
    }
 
+#if defined(GP2X) || defined(WIZ)
    //senquack - making sound nicer in Wiz version than GP2X version
    gp2x_set_volume (INIT_VOLUME);
+#endif
 
    useAudio = 1;
    loadSounds ();
@@ -299,32 +311,34 @@ stopMusic ()
    }
 }
 
+void playChunk(int idx) {
+  if ( !useAudio ) return;
+  Mix_PlayChannel(chunkChannel[idx], chunk[idx], 0);
+}
+//senquack TODO  - investigate why I said this and then decided not to implement it:
 //senquack - new logic to prevent playing of the laser.wav, as it is 
 //    barely audible and has annoying clicks in it
-//void playChunk(int idx) {
-//  if ( !useAudio ) return;
-//  Mix_PlayChannel(chunkChannel[idx], chunk[idx], 0);
+//void
+//playChunk (int idx)
+//{
+//   if (!useAudio)
+//      return;
+////  if ( !useAudio || idx == 1) return;
+//   Mix_PlayChannel (chunkChannel[idx], chunk[idx], 0);
 //}
-void
-playChunk (int idx)
-{
-   if (!useAudio)
-      return;
-//  if ( !useAudio || idx == 1) return;
-   Mix_PlayChannel (chunkChannel[idx], chunk[idx], 0);
-}
 
+void haltChunk(int idx) {
+  if ( !useAudio ) return;
+  Mix_HaltChannel(chunkChannel[idx]);
+}
+//senquack TODO  - investigate why I said this and then decided not to implement it:
 //senquack - new logic to prevent playing of the laser.wav, as it is 
 //    barely audible and has annoying clicks in it
-//void haltChunk(int idx) {
-//  if ( !useAudio ) return;
-//  Mix_HaltChannel(chunkChannel[idx]);
+//void
+//haltChunk (int idx)
+//{
+//   if (!useAudio)
+//      return;
+////  if ( !useAudio || idx == 1) return;
+//   Mix_HaltChannel (chunkChannel[idx]);
 //}
-void
-haltChunk (int idx)
-{
-   if (!useAudio)
-      return;
-//  if ( !useAudio || idx == 1) return;
-   Mix_HaltChannel (chunkChannel[idx]);
-}

@@ -304,8 +304,8 @@ void drawRPanel() {
          case PSY_MODE:
             ml = ship.grzCnt/40;
 #ifdef FIXEDMATH
-            drawBoxx(INT2FNUM(550), INT2FNUM(460), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
-            drawBoxx(INT2FNUM(500+ml), INT2FNUM(460), INT2FNUM(ml), INT2FNUM(8), 210, 210, 240);
+            drawBox(INT2FNUM(550), INT2FNUM(460), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
+            drawBox(INT2FNUM(500+ml), INT2FNUM(460), INT2FNUM(ml), INT2FNUM(8), 210, 210, 240);
 #else
             drawBox(550, 460, 50, 8, 120, 120, 120);
             drawBox(500+ml, 460, ml, 8, 210, 210, 240);
@@ -314,8 +314,8 @@ void drawRPanel() {
          case GW_MODE:
             ml = (ship.rfMtr-ship.rfMtrDec)/40;
 #ifdef FIXEDMATH
-            drawBoxx(INT2FNUM(550), INT2FNUM(460), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
-            drawBoxx(INT2FNUM(500+ml), INT2FNUM(460), INT2FNUM(ml), INT2FNUM(8), 210, 240, 210);
+            drawBox(INT2FNUM(550), INT2FNUM(460), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
+            drawBox(INT2FNUM(500+ml), INT2FNUM(460), INT2FNUM(ml), INT2FNUM(8), 210, 240, 210);
 #else
             drawBox(550, 460, 50, 8, 120, 120, 120);
             drawBox(500+ml, 460, ml, 8, 210, 240, 210);
@@ -364,8 +364,8 @@ void drawRPanel_rotated() {
             //      drawBox(550, 460, 50, 8, 120, 120, 120);
             //      drawBox(500+ml, 460, ml, 8, 210, 210, 240);
 #ifdef FIXEDMATH
-            drawBoxx(430, 15, 50, 8, 120, 120, 120);
-            drawBoxx(380+ml, 15, ml, 8, 210, 210, 240);
+            drawBox(430, 15, 50, 8, 120, 120, 120);
+            drawBox(380+ml, 15, ml, 8, 210, 210, 240);
 #else
             drawBox(430, 15, 50, 8, 120, 120, 120);
             drawBox(380+ml, 15, ml, 8, 210, 210, 240);
@@ -377,8 +377,8 @@ void drawRPanel_rotated() {
             //      drawBox(550, 460, 50, 8, 120, 120, 120);
             //      drawBox(500+ml, 460, ml, 8, 210, 240, 210);
 #ifdef FIXEDMATH
-            drawBoxx(INT2FNUM(430), INT2FNUM(15), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
-            drawBoxx(INT2FNUM(380+ml), INT2FNUM(15), INT2FNUM(ml), INT2FNUM(8), 210, 240, 210);
+            drawBox(INT2FNUM(430), INT2FNUM(15), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
+            drawBox(INT2FNUM(380+ml), INT2FNUM(15), INT2FNUM(ml), INT2FNUM(8), 210, 240, 210);
 #else
             drawBox(430, 15, 50, 8, 120, 120, 120);
             drawBox(380+ml, 15, ml, 8, 210, 240, 210);
@@ -590,7 +590,7 @@ void drawTitle() {
          int sz = STG_BOX_SIZE*3/2;
          if ( titleCnt < 16 ) sz = sz*titleCnt/16;
 #ifdef FIXEDMATH
-         drawBoxx(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(sz), INT2FNUM(sz), r, g, b);
+         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(sz), INT2FNUM(sz), r, g, b);
 #else
          drawBox(sx, sy, sz, sz, r, g, b);
 #endif //FIXEDMATH
@@ -611,7 +611,7 @@ void drawTitle() {
          }
       } else {
 #ifdef FIXEDMATH
-         drawBoxx(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(STG_BOX_SIZE)/2, INT2FNUM(STG_BOX_SIZE)/2, r*2/3, g*2/3, b*2/3);
+         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(STG_BOX_SIZE)/2, INT2FNUM(STG_BOX_SIZE)/2, r*2/3, g*2/3, b*2/3);
 #else
          drawBox(sx, sy, STG_BOX_SIZE/2, STG_BOX_SIZE/2, r*2/3, g*2/3, b*2/3);
 #endif //FIXEDMATH
@@ -653,7 +653,7 @@ void drawTitle_rotated() {
          int sz = STG_BOX_SIZE*3/2;
          if ( titleCnt < 16 ) sz = sz*titleCnt/16;
 #ifdef FIXEDMATH
-         drawBoxx(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(sz), INT2FNUM(sz), r, g, b);
+         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(sz), INT2FNUM(sz), r, g, b);
 #else
          drawBox(sx, sy, sz, sz, r, g, b);
 #endif //FIXEDMATH
@@ -680,7 +680,7 @@ void drawTitle_rotated() {
          }
       } else {
 #ifdef FIXEDMATH
-         drawBoxx(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(STG_BOX_SIZE)/2, INT2FNUM(STG_BOX_SIZE)/2, r*2/3, g*2/3, b*2/3);
+         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(STG_BOX_SIZE)/2, INT2FNUM(STG_BOX_SIZE)/2, r*2/3, g*2/3, b*2/3);
 #else
          drawBox(sx, sy, STG_BOX_SIZE/2, STG_BOX_SIZE/2, r*2/3, g*2/3, b*2/3);
 #endif //FIXEDMATH
@@ -791,7 +791,7 @@ void drawBossScoreAtr() {
    drawNumCenter(bossScore, 450, 240, 16, 200, 200, 220);
    if ( bsCnt < 64 ) return;
 #ifdef FIXEDMATH
-   drawBoxx(INT2FNUM(320), INT2FNUM(272), INT2FNUM(150), INT2FNUM(4), 200, 200, 220);
+   drawBox(INT2FNUM(320), INT2FNUM(272), INT2FNUM(150), INT2FNUM(4), 200, 200, 220);
 #else
    drawBox(320, 272, 150, 4, 200, 200, 220);
 #endif //FIXEDMATH

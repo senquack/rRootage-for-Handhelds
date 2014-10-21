@@ -2375,7 +2375,7 @@ drawBossState ()
       wd = boss.shield * 300 / BOSS_SHIELD_MAX;
    }
 #ifdef FIXEDMATH
-   drawBoxx (INT2FNUM (180 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1),
+   drawBox(INT2FNUM (180 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1),
              INT2FNUM (6), 240, 240, 210);
 #else
 //   drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
@@ -2416,7 +2416,7 @@ drawBossState_rotated ()
       wd = boss.shield * 300 / BOSS_SHIELD_MAX;
    }
 #ifdef FIXEDMATH
-   drawBoxx (INT2FNUM (180 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1),
+   drawBox(INT2FNUM (180 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1),
              INT2FNUM (6), 240, 240, 210);
 #else
 //  drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);

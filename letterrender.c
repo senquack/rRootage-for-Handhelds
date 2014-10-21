@@ -110,7 +110,7 @@ drawLetter (int idx, int lx, int ly, int ltSize, int d, int r, int g, int b)
 #ifdef FIXEDMATH
    int i;
    //  float x, y, length, size, t;
-   float fx, fy, flength, fsize, ft;
+   GLfixed fx, fy, flength, fsize, ft;
    int deg;
    for (i = 0;; i++) {
       //    deg = (int)spData[idx][i][4];
@@ -159,7 +159,8 @@ drawLetter (int idx, int lx, int ly, int ltSize, int d, int r, int g, int b)
          //       (int)(size*ltSize), (int)(length*ltSize), r, g, b);
          //      drawBoxx(f2x((int)(x*ltSize)+lx), f2x((int)(y*ltSize)+ly),
          //       f2x((int)(size*ltSize)), f2x((int)(length*ltSize)), r, g, b);
-         drawBoxx (FMUL (fx, INT2FNUM (ltSize)) + INT2FNUM (lx),
+   //senquack TODO: roll drawBoxx into one float/fixed function
+         drawBox (FMUL (fx, INT2FNUM (ltSize)) + INT2FNUM (lx),
                FMUL (fy, INT2FNUM (ltSize)) + INT2FNUM (ly), FMUL (fsize,
                   INT2FNUM
                   (ltSize)),
@@ -169,7 +170,7 @@ drawLetter (int idx, int lx, int ly, int ltSize, int d, int r, int g, int b)
          //       (int)(length*ltSize), (int)(size*ltSize), r, g, b);
          //      drawBoxx(f2x((int)(x*ltSize)+lx), f2x((int)(y*ltSize)+ly),
          //       f2x((int)(length*ltSize)), f2x((int)(size*ltSize)), r, g, b);
-         drawBoxx (FMUL (fx, INT2FNUM (ltSize)) + INT2FNUM (lx),
+         drawBox (FMUL (fx, INT2FNUM (ltSize)) + INT2FNUM (lx),
                FMUL (fy, INT2FNUM (ltSize)) + INT2FNUM (ly),
                FMUL (flength, INT2FNUM (ltSize)), FMUL (fsize,
                   INT2FNUM

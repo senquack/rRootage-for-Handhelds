@@ -18,6 +18,7 @@ extern int status;
 extern int interval;
 extern int tick;
 
+#if defined(GP2X) || defined(WIZ)
 //senquack  - new settings configurable from an external utility
 #define MAX_CPU_FREQ		(990)
 #define MIN_CPU_FREQ		(540)
@@ -30,6 +31,9 @@ extern int tick;
 #define EXIT_IDX				(5)
 #define VOLDOWN_IDX			(6)
 #define VOLUP_IDX				(7)
+
+//senquack
+#define NUM_BUTTONS  (19)       // total number of buttons we'll need to keep track of
 typedef struct
 {
    int laser_on_by_default;
@@ -40,6 +44,7 @@ typedef struct
    int buttons[NUM_DEFS], rbuttons[NUM_DEFS];   //rbuttons is for rotated button definitions
 } rrsettings;
 extern rrsettings settings;
+#endif //GP2X/wiz
 
 #define TITLE 0
 #define IN_GAME 1
@@ -47,16 +52,6 @@ extern rrsettings settings;
 #define STAGE_CLEAR 3
 #define PAUSE 4
 
-//senquack
-#define NUM_BUTTONS  (19)       // total number of buttons we'll need to keep track of
-#define FIRE_IDX				(0) //Indexes into button redefinitions in settings structure
-#define FIRE2_IDX				(1)
-#define SPECIAL_IDX			(2)
-#define SPECIAL2_IDX			(3)
-#define PAUSE_IDX				(4)
-#define EXIT_IDX				(5)
-#define VOLDOWN_IDX			(6)
-#define VOLUP_IDX				(7)
 
 void quitLast ();
 void initTitleStage (int stg);

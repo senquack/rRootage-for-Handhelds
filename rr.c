@@ -32,9 +32,12 @@
 
 static int noSound = 0;
 
-const char *settings_filename = "./rr.conf";
+//senquack - TODO: fix this for GCW/dingux
+static const char *config_filename = "rr.conf";
+static const char *config_dir = ".rrootage";
 
-//senquack
+//senquack - MANDATORY TODO - make GCW version of these settings:
+#if defined(GP2X) || defined(WIZ)
 const rrsettings default_settings = {
    1, 1, 700, 1, 1,
    // non-rotated button defs:
@@ -45,6 +48,7 @@ const rrsettings default_settings = {
    {GP2X_BUTTON_START, GP2X_BUTTON_X, GP2X_BUTTON_R, GP2X_BUTTON_A,
     GP2X_BUTTON_Y, GP2X_BUTTON_SELECT, GP2X_BUTTON_VOLDOWN, GP2X_BUTTON_VOLUP}
 };
+#endif // GP2X/Wiz
 
 rrsettings settings;
 
@@ -131,6 +135,7 @@ read_saved_settings (const char *filename)
          settings.laser_on_by_default = clamp (atoi (param), 0, 1);
       else if (strcasecmp (str, "rotated") == 0)
          settings.rotated = clamp (atoi (param), 0, 1);
+#if defined(WIZ)
       else if (strcasecmp (str, "fast_ram") == 0)
          settings.fast_ram = clamp (atoi (param), 0, 1);
       else if (strcasecmp (str, "cpu_freq") == 0) {
@@ -156,6 +161,7 @@ read_saved_settings (const char *filename)
                     default_settings.cpu_freq);
             settings.cpu_freq = default_settings.cpu_freq;
          }
+#endif // WIZ
       } else if (strcasecmp (str, "music") == 0)
          settings.music = clamp (atoi (param), 0, 1);
       else if (strcasecmp (str, "buttons_fire") == 0)
@@ -203,8 +209,8 @@ read_saved_settings (const char *filename)
    return 1;
 }
 
-void
-initOverclocking (void)
+#if defined(WIZ)
+void initOverclocking (void)
 {
    char cmd_line[200];
    char tmp_str[20];
@@ -223,6 +229,7 @@ initOverclocking (void)
    printf ("Adjusting Wiz clocks with command line:\n%s\n", cmd_line);
    system (cmd_line);
 }
+#endif //WIZ
 
 // Initialize and load preference.
 static void
@@ -551,12 +558,6 @@ parseArgs (int argc, char *argv[])
          nowait = 1;
       } else if (strcmp (argv[i], "-accframe") == 0) {
          accframe = 1;
-//    } else if ( strcmp(argv[i], "-rotate") == 0 ) {
-//    //senquack - new option:
-//      screenRotated = 1;
-//    } else if ( strcmp(argv[i], "-laser") == 0 ) {
-//     //senquack - new option
-//      laserOnByDefault = 1;
       } else {
          usage (argv[0]);
          exit (1);
@@ -580,26 +581,27 @@ main (int argc, char *argv[])
    long nowTick;
    int frame;
 
-
-////  //senquack - for FPS computation
-//  int fpsctr_oldticks = 0;
-//  int fpsctr_newticks = 0;
-//  int fpsctr_frames = 0;
-
    parseArgs (argc, argv);
 
+
+/*here whatever you do with configdir*/
+
    //senquack - new settings configurable from external utility:
-   if (!read_saved_settings (settings_filename)) {
-      printf
-         ("Error reading saved Wiz port settings from %s.\n  Loading default settings instead.\n",
-          settings_filename);
-      settings = default_settings;
+
+   char *tmp_filename = malloc(strlen(getenv("HOME")) + 1 + strlen(settings_dir) + 1 + strlen(settings_filename) + 1);
+   sprintf(tmp_filename, "%s/%s/%s", getenv("HOME"), settings_dir, settings_filename);
+
+   if (getenv("HOME") && settings_filename && settings_dir &&  read_saved_settings (tmp_filename)) {
+      printf ("Successfully loaded port settings from %s.\n", tmp_filename);
    } else {
-      printf ("Successfully loaded Wiz port settings from %s.\n",
-              settings_filename);
+      printf ("Error reading saved port settings from %s.\n  Loading default settings instead.\n", tmp_filename);
+      settings = default_settings;
    }
 
+   //senquack TODO: remember to add WIZ define to Makefile
+#ifdef WIZ
    initOverclocking ();         //senquack - perform any overclocking of CPU or RAM timings via pollux_set
+#endif
 
    initDegutil ();
    initSDL ();

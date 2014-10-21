@@ -22,19 +22,21 @@
 
 #define LASER_MAX 64
 
-//senquack - fixed point version:
+//senquack - fixed point version appended with _X:
 #define LASER_SPEED 4096
-#define LASER_SPEED_X 26844     //predivided by screen ratio
 #define LASER_WIDTH 4800
+#define LASER_WIDTH_ADD 480
 #define LASER_WIDTH_X 31457     //predivided by screen ratio
-//#define LASER_WIDTH_ADD 480
 #define LASER_WIDTH_ADD_X 3146  //predivided by screen ratio
 
 Laser laser[LASER_MAX];
 //senquack - converting to fixed point:
-//static int laserWidth, laserCnt;
-static int laserCnt;
+#ifdef FIXEDMATH
 static GLfixed laserfWidth;
+static int laserCnt;
+#else
+static int laserWidth, laserCnt;
+#endif //FIXEDMATH
 
 //senquack - converting to fixed point
 //void initLasers() {
@@ -51,7 +53,11 @@ initLasers ()
    for (i = 0; i < LASER_MAX; i++) {
       laser[i].cnt = NOT_EXIST;
    }
+#ifdef FIXEDMATH
    laserfWidth = laserCnt = 0;
+#else
+   laserWidth = laserCnt = 0;
+#endif //FIXEDMATH
 }
 
 #define LASER_COLOR_SPEED 12
@@ -79,6 +85,7 @@ static int laserAdded = 0;
 void
 addLaser ()
 {
+#ifdef FIXEDMATH
    int i;
    for (i = 0; i < LASER_MAX; i++) {
       laserIdx--;
@@ -100,6 +107,21 @@ addLaser ()
    if (laserfWidth > LASER_WIDTH_X)
       laserfWidth = LASER_WIDTH_X;
    laserAdded = 1;
+#else
+  int i;
+  for ( i=0 ; i<LASER_MAX ; i++ ) {
+    laserIdx--; if ( laserIdx < 0 ) laserIdx = LASER_MAX-1;
+    if ( laser[laserIdx].cnt == NOT_EXIST ) break;
+  }
+  if ( i >= LASER_MAX ) return;
+  laser[laserIdx].y = LASER_SPEED;
+  laser[laserIdx].color = laserColor;
+  laserColor -= LASER_COLOR_SPEED; laserColor &= 255;
+  laser[laserIdx].cnt = 0;
+  laserWidth += LASER_WIDTH_ADD;
+  if ( laserWidth > LASER_WIDTH ) laserWidth = LASER_WIDTH;
+  laserAdded = 1;
+#endif //FIXEDMATH
 }
 
 //senquack - converting to fixed point:
@@ -155,12 +177,15 @@ moveLasers ()
    int ry;
    int huy, hdy;
    if (!laserAdded) {
-//    laserWidth -= LASER_WIDTH_ADD;
+#ifdef FIXEDMATH
       laserfWidth -= LASER_WIDTH_ADD_X;
-//    if ( laserWidth < 0 ) {
-//      laserWidth = 0;
       if (laserfWidth < 0) {
          laserfWidth = 0;
+#else
+      laserWidth -= LASER_WIDTH_ADD;
+      if ( laserWidth < 0 ) {
+         laserWidth = 0;
+#endif //FIXEDMATH
          for (i = 0; i < LASER_MAX; i++) {
             laser[i].cnt = NOT_EXIST;
          }
@@ -356,9 +381,9 @@ moveLasers ()
 //
 // finishDrawLaserx();
 //}
-void
-drawLasers ()
+void drawLasers ()
 {
+#ifdef FIXEDMATH
 //  float x, y;
    GLfixed fx, fy;
    int i;
@@ -368,6 +393,9 @@ drawLasers ()
    prepareDrawLaserx ();
 
    //senquack - moved this outside the loop
+   // senquack - rolled divide-by-10000 and convert-to-fixed into one multiply:
+////        x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
+//senquack TODO: poss. optimization w/ inverse or further conversion to fixed:
    fx = (int) ((float) ship.pos.x * 6.5536);    // roll float->fixed conversion and division by screen ratio together
 
    for (i = 0; i < LASER_MAX; i++) {
@@ -376,8 +404,13 @@ drawLasers ()
          continue;
       {
          ls = &(laser[i]);
-         fy = (int) (-(float) (ship.pos.y + ls->y) * 6.5536);
+//        x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
+         //senquack TODO: poss. optimization w/ inverse:
+//        y = -(float)(ship.pos.y+ls->y) / FIELD_SCREEN_RATIO;
+         // senquack - rolled divide-by-10000 and convert-to-fixed into one multiply:
 //        fy = f2x(-(float)(ship.pos.y+ls->y) / FIELD_SCREEN_RATIO);
+//senquack TODO: poss. optimization w/ inverse or further conversion to fixed:
+         fy = (int) (-(float) (ship.pos.y + ls->y) * 6.5536);
 
          if (ls->cnt > 1)
             t = 1;
@@ -397,4 +430,29 @@ drawLasers ()
    }
 
    finishDrawLaserx ();
+#else
+   float x, y;
+   int i;
+   Laser *ls;
+   int t;
+   for ( i=0 ; i<LASER_MAX ; i++ ) {
+      if ( laser[i].cnt == NOT_EXIST ) continue;
+      //Changed by Albert because of strange crashes...
+      //    if ( laser[i].cnt != NOT_EXIST )
+      {
+         ls = &(laser[i]);
+         x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
+         y = -(float)(ship.pos.y+ls->y) / FIELD_SCREEN_RATIO;
+         if ( ls->cnt > 1 )       t = 1;
+         else if ( ls->cnt == 1 ) t = 0;
+         else                     t = 2;
+         drawLaser(x, y, (float)laserWidth/FIELD_SCREEN_RATIO, LASER_SCREEN_HEIGHT,
+               ls->color, 
+               (ls->color+LASER_COLOR_SPEED)&255,
+               (ls->color+LASER_COLOR_SPEED*2)&255,  
+               (ls->color+LASER_COLOR_SPEED*3)&255,
+               laserCnt, t);
+      }
+   }
+#endif //FIXEDMATH
 }

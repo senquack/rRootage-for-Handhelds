@@ -87,7 +87,9 @@ typedef float NumType;
 #include "formula.h"
 #include "formula-variables.h"
 
-int yyerror(char* s);
+//senquack - fix compile error under GCC4:
+//int yyerror(char* s);
+int yyerror(const char* s);
 int yylex();
 
 const char* yyinStr;
@@ -113,7 +115,7 @@ namespace {
 
 
 /* Line 268 of yacc.c  */
-#line 117 "y.tab.c"
+#line 119 "y.tab.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -169,7 +171,7 @@ typedef int YYSTYPE;
 
 
 /* Line 343 of yacc.c  */
-#line 173 "y.tab.c"
+#line 175 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -460,8 +462,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    54,    54,    55,    58,    59,    62,    66,    70,    74,
-      78,    82,    86,    90,    94,    98
+       0,    56,    56,    57,    60,    61,    64,    68,    72,    76,
+      80,    84,    88,    92,    96,   100
 };
 #endif
 
@@ -1401,14 +1403,14 @@ yyreduce:
         case 5:
 
 /* Line 1806 of yacc.c  */
-#line 59 "calc.yy"
+#line 61 "calc.yy"
     { formula = f((yyvsp[(1) - (2)])); return 0; }
     break;
 
   case 6:
 
 /* Line 1806 of yacc.c  */
-#line 62 "calc.yy"
+#line 64 "calc.yy"
     {
 	        (yyval) = formulas.size();
 	        formulas.push_back(new CalcFormula(new CalcNumber((yyvsp[(1) - (1)]))));
@@ -1418,7 +1420,7 @@ yyreduce:
   case 7:
 
 /* Line 1806 of yacc.c  */
-#line 66 "calc.yy"
+#line 68 "calc.yy"
     {
 	        (yyval) = formulas.size();
             formulas.push_back(new CalcFormula(new CalcRandom()));
@@ -1428,7 +1430,7 @@ yyreduce:
   case 8:
 
 /* Line 1806 of yacc.c  */
-#line 70 "calc.yy"
+#line 72 "calc.yy"
     {
 			(yyval) = formulas.size();
 			formulas.push_back(new CalcFormula(new CalcRank()));
@@ -1438,7 +1440,7 @@ yyreduce:
   case 9:
 
 /* Line 1806 of yacc.c  */
-#line 74 "calc.yy"
+#line 76 "calc.yy"
     {
 			(yyval) = formulas.size();
 			formulas.push_back(new CalcFormula(new CalcParam(paramId)));
@@ -1448,7 +1450,7 @@ yyreduce:
   case 10:
 
 /* Line 1806 of yacc.c  */
-#line 78 "calc.yy"
+#line 80 "calc.yy"
     {
 		    (yyval) = formulas.size();
 			formulas.push_back(new CalcFormula(f((yyvsp[(1) - (3)])), op_add, f((yyvsp[(3) - (3)]))));
@@ -1458,7 +1460,7 @@ yyreduce:
   case 11:
 
 /* Line 1806 of yacc.c  */
-#line 82 "calc.yy"
+#line 84 "calc.yy"
     {
 		    (yyval) = formulas.size();
 			formulas.push_back(new CalcFormula(f((yyvsp[(1) - (3)])), op_sub, f((yyvsp[(3) - (3)]))));
@@ -1468,7 +1470,7 @@ yyreduce:
   case 12:
 
 /* Line 1806 of yacc.c  */
-#line 86 "calc.yy"
+#line 88 "calc.yy"
     {
 		    (yyval) = formulas.size();
 			formulas.push_back(new CalcFormula(f((yyvsp[(1) - (3)])), op_mul, f((yyvsp[(3) - (3)]))));
@@ -1478,7 +1480,7 @@ yyreduce:
   case 13:
 
 /* Line 1806 of yacc.c  */
-#line 90 "calc.yy"
+#line 92 "calc.yy"
     {
 		    (yyval) = formulas.size();
 			formulas.push_back(new CalcFormula(f((yyvsp[(1) - (3)])), op_div, f((yyvsp[(3) - (3)]))));
@@ -1488,7 +1490,7 @@ yyreduce:
   case 14:
 
 /* Line 1806 of yacc.c  */
-#line 94 "calc.yy"
+#line 96 "calc.yy"
     {
 		    (yyval) = (yyvsp[(2) - (2)]);
 			f((yyvsp[(2) - (2)]))->setHeadSub();
@@ -1498,7 +1500,7 @@ yyreduce:
   case 15:
 
 /* Line 1806 of yacc.c  */
-#line 98 "calc.yy"
+#line 100 "calc.yy"
     {
 		    (yyval) = (yyvsp[(2) - (3)]);
 		}
@@ -1507,7 +1509,7 @@ yyreduce:
 
 
 /* Line 1806 of yacc.c  */
-#line 1511 "y.tab.c"
+#line 1513 "y.tab.c"
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1738,7 +1740,7 @@ yyreturn:
 
 
 /* Line 2067 of yacc.c  */
-#line 102 "calc.yy"
+#line 104 "calc.yy"
 
 
 
@@ -1783,7 +1785,9 @@ int yylex ()
 	return c;
 }
 
-int yyerror(char* s) {
+//senquack - fix compile error under GCC4:
+//int yyerror(char* s) {
+int yyerror(const char* s) {
 	printf("yyerror: %s\n", s);
 	return 0;
 }

@@ -1,7 +1,8 @@
 #CC = /usr/local/gp2xdev/bin/gp2x-g++
 #CC = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-g++
 CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-g++
-INCLUDES = -I.
+#INCLUDES = -I.
+INCLUDES = -I. -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
 LIBS = tinyxml/tinyxml.o tinyxml/tinyxmlparser.o tinyxml/tinyxmlerror.o
 #CXXFLAGS = -g -W -Wall -ansi -pedantic
 #CXXFLAGS = -pg -g -W -Wall -ansi -pedantic
@@ -11,7 +12,7 @@ LIBS = tinyxml/tinyxml.o tinyxml/tinyxmlparser.o tinyxml/tinyxmlerror.o
 #				  -fsingle-precision-constant 
 #CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGP2X -msoft-float -mcpu=arm920t -mtune=arm920 -fomit-frame-pointer \
 #				  -fsingle-precision-constant 
-CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW -fsingle-precision-constant 
+CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW -fsingle-precision-constant -ffast-math
 
 #CFLAGS = -O2
 #CFLAGS = -O3 -DNDEBUG -DGP2X -mcpu=arm920t -mtune=arm920t -msoft-float -ffast-math -DGP2X -fomit-frame-pointer
@@ -19,7 +20,7 @@ CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW -fsingle-precision-constant
 #				  -fsingle-precision-constant 
 #CFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGP2X -msoft-float -mcpu=arm920t -mtune=arm920 -fomit-frame-pointer \
 #				  -fsingle-precision-constant 
-CFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW
+CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW -fsingle-precision-constant -ffast-math
 
 OBJS = bulletmlparser-tinyxml.o bulletmlparser.o bulletmltree.o calc.o formula-variables.o bulletmlrunner.o bulletmlrunnerimpl.o
 

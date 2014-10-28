@@ -29,6 +29,10 @@ distribution.
 #include <stdio.h>
 #include <assert.h>
 
+//senquack - fixing compilation issues, added these:
+#include <cstdlib>
+#include <cstring>
+
 class TiXmlDocument;
 class TiXmlElement;
 class TiXmlComment;

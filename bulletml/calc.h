@@ -7,6 +7,9 @@
 #include <string>
 #include <memory>
 
+//senquack - fix compile error:
+#include <cstring>
+
 //senquack - complete conversion to floats:
 //DECLSPEC std::auto_ptr<Formula<double> > calc(const std::string& str);
 DECLSPEC std::auto_ptr < Formula < float > > calc (const std::string & str);

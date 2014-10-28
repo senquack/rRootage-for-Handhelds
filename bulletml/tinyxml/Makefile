@@ -20,11 +20,16 @@ PROFILE        := NO
 #LD     := /usr/local/gp2xdev/bin/gp2x-g++
 #AR     := /usr/local/gp2xdev/bin/gp2x-ar rc
 #RANLIB := /usr/local/gp2xdev/bin/gp2x-ranlib
-CC = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-gcc
-CXX = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-g++
-LD = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-g++
-AR = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-ar rc
-RANLIB = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-ranlib
+#CC = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-gcc
+#CXX = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-g++
+#LD = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-g++
+#AR = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-ar rc
+#RANLIB = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-ranlib
+CC       = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
+CXX      = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-g++
+LD       = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-g++
+AR       = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-ar rc
+RANLIB   = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-ranlib
 
 #DEBUG_CFLAGS     := -Wall -Wno-unknown-pragmas -Wno-format -g -DDEBUG
 #RELEASE_CFLAGS   := -Wall -Wno-unknown-pragmas -Wno-format -O2
@@ -36,10 +41,12 @@ RANLIB = /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-ranlib
 #				  -fsingle-precision-constant 
 #RELEASE_CFLAGS = -O2 -DNDEBUG -DGP2X -mcpu=arm920t -mtune=arm920t -msoft-float -ffast-math -DGP2X -fomit-frame-pointer \
 #				  -fsingle-precision-constant 
-DEBUG_CFLAGS = -O2 -DNDEBUG -DGP2X -mcpu=arm920t -mtune=arm920t -msoft-float -DGP2X -fomit-frame-pointer \
-				  -fsingle-precision-constant 
-RELEASE_CFLAGS = -O2 -DNDEBUG -DGP2X -mcpu=arm920t -mtune=arm920t -msoft-float -DGP2X -fomit-frame-pointer \
-				  -fsingle-precision-constant 
+#DEBUG_CFLAGS = -O2 -DNDEBUG -DGP2X -mcpu=arm920t -mtune=arm920t -msoft-float -DGP2X -fomit-frame-pointer \
+#				  -fsingle-precision-constant 
+#RELEASE_CFLAGS = -O2 -DNDEBUG -DGP2X -mcpu=arm920t -mtune=arm920t -msoft-float -DGP2X -fomit-frame-pointer \
+#				  -fsingle-precision-constant 
+DEBUG_CFLAGS = -Wall -Wno-unknown-pragmas -Wno-format -g -DDDEBUG -DGCW -fsingle-precision-constant -ffast-math
+RELEASE_CFLAGS = -Wall -Wno-unknown-pragmas -Wno-format -O2 -DGCW -fsingle-precision-constant -ffast-math 
 
 LIBS		 :=
 

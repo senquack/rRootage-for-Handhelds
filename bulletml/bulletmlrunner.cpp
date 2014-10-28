@@ -43,7 +43,9 @@ BulletMLRunner::run ()
 }
 
 bool
-     BulletMLRunner::isEnd () constconstconstconst constconstconstconst constconst const
+//senquack - no idea where all these consts came from
+//     BulletMLRunner::isEnd () constconstconstconst constconstconstconst constconst const
+     BulletMLRunner::isEnd () const
      {
 /*
 	return

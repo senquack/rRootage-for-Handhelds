@@ -9,7 +9,6 @@
 
 //senquack - complete conversion to floats:
 //DECLSPEC std::auto_ptr<Formula<double> > calc(const std::string& str);
-DECLSPEC std::auto_ptr < Formula < float >>
-calc (const std::string & str);
+DECLSPEC std::auto_ptr < Formula < float > > calc (const std::string & str);
 
 #endif // CALC_H_

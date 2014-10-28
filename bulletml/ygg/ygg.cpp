@@ -713,7 +713,7 @@ char init_stack_dummy[1];
    {
       return create (NULL, path);  //  return
    }
-    
+    
 #ifdef _DEBUG
      bool ygg_ghost::assert_other (const ygg_node & X) const
    {

@@ -644,7 +644,7 @@
       {
          return (ygg_node_body *) this;
       }
-       
+       
 #ifdef _DEBUG
         virtual bool assert_other (const ygg_node & X) const;
       
@@ -1282,7 +1282,7 @@
    {
       return *((ygg_const_reverse_iterator *) (this)) != list.rend ();
    }
-    
+    
 //
 //  ■yggリストクラス
 //

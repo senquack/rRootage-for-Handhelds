@@ -17,7 +17,7 @@ class BulletMLNode:public TreeNode < BulletMLNode >
  public:
 //senquack - complete conversion to floats:
 //  typedef Formula<double> Number;
-   typedef Formula < float >Number;
+   typedef Formula < float > Number;
    typedef enum
    { none, aim, absolute, relative, sequence, typeSize } Type;
    typedef enum

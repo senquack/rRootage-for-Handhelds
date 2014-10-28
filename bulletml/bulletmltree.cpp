@@ -133,7 +133,8 @@ BulletMLNode::getChild (Name name)
 }
 
 bool
-     BulletMLNode::findNode (Name name) const const const const const const
+//     BulletMLNode::findNode (Name name) const const const const const const
+     BulletMLNode::findNode (Name name) const 
      {
         if (getName () == name)
            return true;

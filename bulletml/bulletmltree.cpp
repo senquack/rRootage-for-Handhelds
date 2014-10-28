@@ -164,15 +164,13 @@ BulletMLNode::next ()
       return *ite;
 }
 
-void
+void
 BulletMLNode::getAllChildrenVec (Name name,
                                  std::vector < BulletMLNode * >&outvec)
 {
-   ChildIterator ite;
-   for (ite = childBegin (); ite != childEnd (); ite++) {
-      if ((*ite)->getName () == name)
+   ChildIterator ite;
+   for (ite = childBegin (); ite != childEnd (); ite++) {
+      if ((*ite)->getName () == name)
          outvec.push_back (*ite);
-   }
-}
-
- 
+   }
+}

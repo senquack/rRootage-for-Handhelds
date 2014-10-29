@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.1.1.1 $
  */
+#ifndef GENMCR_H
+#define GENMCR_H
+
 #include "rand.h"
 
 #define randN(N) ((int)(nextRand()>>5)%(N))
@@ -17,3 +20,4 @@
 #define absN(a) ((a) < 0 ? - (a) : (a))
 
 #define NOT_EXIST -999999
+#endif // GENMCR_H

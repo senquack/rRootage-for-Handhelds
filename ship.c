@@ -62,58 +62,28 @@ resetPlayer ()
 
 static int btn2f;
 
-//senquack - converted to fixed point:
-//void initShip() {
-//  ship.pos.x = 0; ship.pos.y = FIELD_HEIGHT_8/5*2;
-//  ship.cnt = 0; ship.laserCnt = 0;
-//  ship.invCnt = SHIP_INVINCIBLE_CNT_BASE;
-//  ship.bombCnt = 0;
-//  ship.d = 0;
-//  ship.grzCnt = 0;
-//  ship.color = ship.colorChgCnt = 0; ship.fldWdt = FLD_WIDTH;
-//  btn2f = 0;
-//  switch ( mode ) {
-//  case NORMAL_MODE:
-//    ship.speed = SHIP_SPEED;
-//    break;
-//  case PSY_MODE:
-//    ship.speed = SHIP_SLOW_SPEED;
-//    break;
-//  case IKA_MODE:
-//  case GW_MODE:
-//    ship.speed = SHIP_IKAGW_SPEED;
-//    break;
-//  }
-//  resetPlayer();
-//}
-void
-initShip ()
-{
-   ship.pos.x = 0;
-   ship.pos.y = FIELD_HEIGHT_8 / 5 * 2;
-   ship.cnt = 0;
-   ship.laserCnt = 0;
-   ship.invCnt = SHIP_INVINCIBLE_CNT_BASE;
-   ship.bombCnt = 0;
-   ship.d = 0;
-//  ship.fd = 0;
-   ship.grzCnt = 0;
-   ship.color = ship.colorChgCnt = 0;
-   ship.fldWdt = FLD_WIDTH;
-   btn2f = 0;
-   switch (mode) {
-   case NORMAL_MODE:
-      ship.speed = SHIP_SPEED;
-      break;
-   case PSY_MODE:
-      ship.speed = SHIP_SLOW_SPEED;
-      break;
-   case IKA_MODE:
-   case GW_MODE:
-      ship.speed = SHIP_IKAGW_SPEED;
-      break;
-   }
-   resetPlayer ();
+void initShip() {
+  ship.pos.x = 0; ship.pos.y = FIELD_HEIGHT_8/5*2;
+  ship.cnt = 0; ship.laserCnt = 0;
+  ship.invCnt = SHIP_INVINCIBLE_CNT_BASE;
+  ship.bombCnt = 0;
+  ship.d = 0;
+  ship.grzCnt = 0;
+  ship.color = ship.colorChgCnt = 0; ship.fldWdt = FLD_WIDTH;
+  btn2f = 0;
+  switch ( mode ) {
+  case NORMAL_MODE:
+    ship.speed = SHIP_SPEED;
+    break;
+  case PSY_MODE:
+    ship.speed = SHIP_SLOW_SPEED;
+    break;
+  case IKA_MODE:
+  case GW_MODE:
+    ship.speed = SHIP_IKAGW_SPEED;
+    break;
+  }
+  resetPlayer();
 }
 
 #define SHOT_INTERVAL 3
@@ -139,7 +109,7 @@ static int shipMv[8][2] = {
    {-181, -181},
 };
 
-//senquack - converted to fixed point:
+//senquack - new option to allow firing by default:
 //void moveShip() {
 //  int pad = getPadState();
 //  int btn = getButtonState();
@@ -524,7 +494,6 @@ moveShip ()
             ship.bombCnt = 0;
       }
       ship.d += 2.8;
-//    ship.fd += 183501;
       break;
    case PSY_MODE:
       if (ship.rollingCnt > 0 && ship.grzWdt == GRZ_WIDTH) {
@@ -547,7 +516,6 @@ moveShip ()
          ship.grzInvCnt--;
       }
       ship.d += ship.rollingCnt * 0.3f;
-//    ship.fd += FMUL(INT2FNUM(ship.rollingCnt), 19661);
       if (ship.grzf) {
          playChunk (9);
          ship.grzf = 0;
@@ -577,7 +545,6 @@ moveShip ()
          playChunk (11);
       }
       ship.d += 1.5f;
-//    ship.fd += 98304;
       break;
    case GW_MODE:
       if (ship.rfCnt > 0) {
@@ -601,7 +568,6 @@ moveShip ()
          playChunk (11);
       }
       ship.d += 3.2f;
-//    ship.fd += 209715;
       break;
    }
    if (sd >= 0) {
@@ -638,158 +604,9 @@ moveShip ()
 #define SHIP_DRUM_WIDTH 15
 #define SHIP_DRUM_SIZE 4
 
-//senquack - NOTE: still freezes quickly with drawCircle calls disabled
-//senquack - trying to isolate freezes in IKA mode:
-//void drawShip() {
-//  float x, y, bx, by;
-//  int inv = 0, ic;
-//  x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
-//  y = -(float)ship.pos.y / FIELD_SCREEN_RATIO;
-//  switch ( mode ) {
-//  case NORMAL_MODE:
-//    if ( ship.bombCnt > 0 ) {
-//      bx =  (float)ship.bombPos.x / FIELD_SCREEN_RATIO;
-//      by = -(float)ship.bombPos.y / FIELD_SCREEN_RATIO;
-//      drawBomb(bx, by, (float)ship.bombWdt / FIELD_SCREEN_RATIO, ship.bombCnt);
-//    }
-//    break;
-//  case PSY_MODE:
-//    if ( ship.grzInvCnt > 0 ) {
-//      drawCircle(x, y, 0.01f * ship.grzInvCnt, ship.grzInvCnt, 150, 180, 240, 220, 220, 230);
-//    }
-//    break;
-//  case IKA_MODE:
-//    if ( ship.color == 0 ) {
-//      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-//     120, 120, 150, 255, 255, 255);
-//    } else {
-//      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-//     200, 0, 0, 100, 0, 0);
-//    }
-//    break;
-//  case GW_MODE:
-//    if ( ship.rfCnt > 0 ) {
-//      drawCircle(x, y, (float)ship.rfWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-//     200, 250, 200, 100, 200, 100);
-//    }
-//    break;
-//  }
-//  ic = ship.invCnt&31;
-//  if ( ic > 0 && ic < 16 ) inv = 1;
-//  drawShipShape(x, y, ship.d, inv);
-//}
-////senquack - converting to fixed point: (broken)
-//void drawShip() {
-////  float x, y, bx, by;
-//  GLfixed fx, fy, fbx, fby;
-//  int inv = 0, ic;
-////  x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
-////  y = -(float)ship.pos.y / FIELD_SCREEN_RATIO;
-//  fx =  FDIV(INT2FNUM(ship.pos.x), FIELD_SCREEN_RATIO_X);
-//  fy = -FDIV(INT2FNUM(ship.pos.y), FIELD_SCREEN_RATIO_X);
-//  switch ( mode ) {
-//  case NORMAL_MODE:
-//    if ( ship.bombCnt > 0 ) {
-////      bx =  (float)ship.bombPos.x / FIELD_SCREEN_RATIO;
-////      by = -(float)ship.bombPos.y / FIELD_SCREEN_RATIO;
-//      fbx =  FDIV(INT2FNUM(ship.bombPos.x) , FIELD_SCREEN_RATIO_X);
-//      fby = -FDIV(INT2FNUM(ship.bombPos.y), FIELD_SCREEN_RATIO_X);
-////      drawBomb(bx, by, (float)ship.bombWdt / FIELD_SCREEN_RATIO, ship.bombCnt);
-//      drawBombx(fbx, fby, FDIV(INT2FNUM(ship.bombWdt), FIELD_SCREEN_RATIO_X) , ship.bombCnt);
-//    }
-//    break;
-//  case PSY_MODE:
-//    if ( ship.grzInvCnt > 0 ) {
-////      drawCircle(x, y, 0.01f * ship.grzInvCnt, ship.grzInvCnt, 150, 180, 240, 220, 220, 230);
-//      drawCirclex(fx, fy, FMUL(655,INT2FNUM(ship.grzInvCnt)), ship.grzInvCnt, 150, 180, 240, 220, 220, 230);
-//    }
-//    break;
-//  case IKA_MODE:
-//    if ( ship.color == 0 ) {
-////      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-////      120, 120, 150, 255, 255, 255);
-//      drawCirclex(fx, fy, FDIV(INT2FNUM(ship.fldWdt),FIELD_SCREEN_RATIO_X), ship.cnt,
-//     120, 120, 150, 255, 255, 255);
-//    } else {
-////      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-////      200, 0, 0, 100, 0, 0);
-//      drawCirclex(fx, fy, FDIV(INT2FNUM(ship.fldWdt), FIELD_SCREEN_RATIO_X), ship.cnt,
-//     200, 0, 0, 100, 0, 0);
-//    }
-//    break;
-//  case GW_MODE:
-//    if ( ship.rfCnt > 0 ) {
-////      drawCircle(x, y, (float)ship.rfWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-////      200, 250, 200, 100, 200, 100);
-//      drawCirclex(fx, fy, FDIV(INT2FNUM(ship.rfWdt), FIELD_SCREEN_RATIO_X), ship.cnt,
-//     200, 250, 200, 100, 200, 100);
-//    }
-//    break;
-//  }
-//  ic = ship.invCnt&31;
-//  if ( ic > 0 && ic < 16 ) inv = 1;
-////  drawShipShape(x, y, ship.d, inv);
-//  drawShipShapex(fx, fy, ship.fd, inv);
-//}
-//void drawShip() {
-////  float x, y, bx, by;
-//  GLfixed fx, fy, fbx, fby;
-//  int inv = 0, ic;
-////  x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
-////  y = -(float)ship.pos.y / FIELD_SCREEN_RATIO;
-////  fx =  FDIV(INT2FNUM(ship.pos.x), FIELD_SCREEN_RATIO_X);
-////  fy = -FDIV(INT2FNUM(ship.pos.y), FIELD_SCREEN_RATIO_X);
-//  fx =  f2x((float)ship.pos.x / FIELD_SCREEN_RATIO);
-//  fy = f2x(-(float)ship.pos.y / FIELD_SCREEN_RATIO);
-//  switch ( mode ) {
-//  case NORMAL_MODE:
-//    if ( ship.bombCnt > 0 ) {
-////      bx =  (float)ship.bombPos.x / FIELD_SCREEN_RATIO;
-////      by = -(float)ship.bombPos.y / FIELD_SCREEN_RATIO;
-////      fbx =  FDIV(INT2FNUM(ship.bombPos.x) , FIELD_SCREEN_RATIO_X);
-////      fby = -FDIV(INT2FNUM(ship.bombPos.y), FIELD_SCREEN_RATIO_X);
-//      fbx =  f2x((float)ship.bombPos.x / FIELD_SCREEN_RATIO);
-//      fby = f2x(-(float)ship.bombPos.y / FIELD_SCREEN_RATIO);
-////      drawBomb(bx, by, (float)ship.bombWdt / FIELD_SCREEN_RATIO, ship.bombCnt);
-//      drawBombx(fbx, fby, FDIV(INT2FNUM(ship.bombWdt), FIELD_SCREEN_RATIO_X) , ship.bombCnt);
-//    }
-//    break;
-//  case PSY_MODE:
-//    if ( ship.grzInvCnt > 0 ) {
-////      drawCircle(x, y, 0.01f * ship.grzInvCnt, ship.grzInvCnt, 150, 180, 240, 220, 220, 230);
-//      drawCirclex(fx, fy, FMUL(655,INT2FNUM(ship.grzInvCnt)), ship.grzInvCnt, 150, 180, 240, 220, 220, 230);
-//    }
-//    break;
-//  case IKA_MODE:
-//    if ( ship.color == 0 ) {
-////      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-////      120, 120, 150, 255, 255, 255);
-//      drawCirclex(fx, fy, FDIV(INT2FNUM(ship.fldWdt),FIELD_SCREEN_RATIO_X), ship.cnt,
-//     120, 120, 150, 255, 255, 255);
-//    } else {
-////      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-////      200, 0, 0, 100, 0, 0);
-//      drawCirclex(fx, fy, FDIV(INT2FNUM(ship.fldWdt), FIELD_SCREEN_RATIO_X), ship.cnt,
-//     200, 0, 0, 100, 0, 0);
-//    }
-//    break;
-//  case GW_MODE:
-//    if ( ship.rfCnt > 0 ) {
-////      drawCircle(x, y, (float)ship.rfWdt/FIELD_SCREEN_RATIO, ship.cnt, 
-////      200, 250, 200, 100, 200, 100);
-//      drawCirclex(fx, fy, FDIV(INT2FNUM(ship.rfWdt), FIELD_SCREEN_RATIO_X), ship.cnt,
-//     200, 250, 200, 100, 200, 100);
-//    }
-//    break;
-//  }
-//  ic = ship.invCnt&31;
-//  if ( ic > 0 && ic < 16 ) inv = 1;
-////  drawShipShape(x, y, ship.d, inv);
-//  drawShipShapex(fx, fy, ship.fd, inv);
-//}
-//senquack - converted ship rotational parameter back to floating point for Wiz
-void
-drawShip ()
+#ifdef FIXEDMATH
+//senquack TODO: speed up w/ mult. by inverse:
+void drawShip ()
 {
 //  float x, y, bx, by;
    GLfixed fx, fy, fbx, fby;
@@ -810,7 +627,7 @@ drawShip ()
          fbx = f2x ((float) ship.bombPos.x / FIELD_SCREEN_RATIO);
          fby = f2x (-(float) ship.bombPos.y / FIELD_SCREEN_RATIO);
 //      drawBomb(bx, by, (float)ship.bombWdt / FIELD_SCREEN_RATIO, ship.bombCnt);
-         drawBombx (fbx, fby,
+         drawBomb (fbx, fby,
                     FDIV (INT2FNUM (ship.bombWdt), FIELD_SCREEN_RATIO_X),
                     ship.bombCnt);
       }
@@ -818,7 +635,7 @@ drawShip ()
    case PSY_MODE:
       if (ship.grzInvCnt > 0) {
 //      drawCircle(x, y, 0.01f * ship.grzInvCnt, ship.grzInvCnt, 150, 180, 240, 220, 220, 230);
-         drawCirclex (fx, fy, FMUL (655, INT2FNUM (ship.grzInvCnt)),
+         drawCircle (fx, fy, FMUL (655, INT2FNUM (ship.grzInvCnt)),
                       ship.grzInvCnt, 150, 180, 240, 220, 220, 230);
       }
       break;
@@ -826,13 +643,13 @@ drawShip ()
       if (ship.color == 0) {
 //      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
 //     120, 120, 150, 255, 255, 255);
-         drawCirclex (fx, fy,
+         drawCircle (fx, fy,
                       FDIV (INT2FNUM (ship.fldWdt), FIELD_SCREEN_RATIO_X),
                       ship.cnt, 120, 120, 150, 255, 255, 255);
       } else {
 //      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
 //     200, 0, 0, 100, 0, 0);
-         drawCirclex (fx, fy,
+         drawCircle (fx, fy,
                       FDIV (INT2FNUM (ship.fldWdt), FIELD_SCREEN_RATIO_X),
                       ship.cnt, 200, 0, 0, 100, 0, 0);
       }
@@ -841,7 +658,7 @@ drawShip ()
       if (ship.rfCnt > 0) {
 //      drawCircle(x, y, (float)ship.rfWdt/FIELD_SCREEN_RATIO, ship.cnt, 
 //     200, 250, 200, 100, 200, 100);
-         drawCirclex (fx, fy,
+         drawCircle (fx, fy,
                       FDIV (INT2FNUM (ship.rfWdt), FIELD_SCREEN_RATIO_X),
                       ship.cnt, 200, 250, 200, 100, 200, 100);
       }
@@ -851,38 +668,58 @@ drawShip ()
    if (ic > 0 && ic < 16)
       inv = 1;
 //  drawShipShape(x, y, ship.d, inv);
-//  drawShipShapex(fx, fy, ship.fd, inv);
-   drawShipShapex (fx, fy, ship.d, inv);
+   drawShipShape (fx, fy, ship.d, inv);
 }
+#else
+void drawShip() {
+  float x, y, bx, by;
+  int inv = 0, ic;
+  x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
+  y = -(float)ship.pos.y / FIELD_SCREEN_RATIO;
+  switch ( mode ) {
+  case NORMAL_MODE:
+    if ( ship.bombCnt > 0 ) {
+      bx =  (float)ship.bombPos.x / FIELD_SCREEN_RATIO;
+      by = -(float)ship.bombPos.y / FIELD_SCREEN_RATIO;
+      drawBomb(bx, by, (float)ship.bombWdt / FIELD_SCREEN_RATIO, ship.bombCnt);
+    }
+    break;
+  case PSY_MODE:
+    if ( ship.grzInvCnt > 0 ) {
+      drawCircle(x, y, 0.01f * ship.grzInvCnt, ship.grzInvCnt, 150, 180, 240, 220, 220, 230);
+    }
+    break;
+  case IKA_MODE:
+    if ( ship.color == 0 ) {
+      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
+     120, 120, 150, 255, 255, 255);
+    } else {
+      drawCircle(x, y, (float)ship.fldWdt/FIELD_SCREEN_RATIO, ship.cnt, 
+     200, 0, 0, 100, 0, 0);
+    }
+    break;
+  case GW_MODE:
+    if ( ship.rfCnt > 0 ) {
+      drawCircle(x, y, (float)ship.rfWdt/FIELD_SCREEN_RATIO, ship.cnt, 
+     200, 250, 200, 100, 200, 100);
+    }
+    break;
+  }
+  ic = ship.invCnt&31;
+  if ( ic > 0 && ic < 16 ) inv = 1;
+  drawShipShape(x, y, ship.d, inv);
+}
+#endif //FIXEDMATH
 
-//senquack - converted to fixed point;
-//void destroyShip() {
-//  float x, y;
-//  if ( status != IN_GAME || ship.invCnt > 0 || ship.grzInvCnt > 0 ) return;
-//  x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
-//  y = -(float)ship.pos.y / FIELD_SCREEN_RATIO;
-//  addShipFrag(x, y);
-//  playChunk(7);
-//  shipUsed++;
-//  resetPlayer();
-//  if ( decrementShip() ) {
-//    initGameover();
-//  } else {
-//    ship.invCnt = SHIP_INVINCIBLE_CNT_BASE;
-//    clearFoesZako();
-//  }
-//}
-void
-destroyShip ()
+#ifdef FIXEDMATH
+void destroyShip ()
 {
-//  float x, y;
    GLfixed x, y;
    if (status != IN_GAME || ship.invCnt > 0 || ship.grzInvCnt > 0)
       return;
    x = f2x ((float) ship.pos.x / FIELD_SCREEN_RATIO);
    y = f2x ((float) -ship.pos.y / FIELD_SCREEN_RATIO);
-//  addShipFrag(x, y);
-   addShipFragx (x, y);
+   addShipFrag(x, y);
    playChunk (7);
    shipUsed++;
    resetPlayer ();
@@ -893,6 +730,25 @@ destroyShip ()
       clearFoesZako ();
    }
 }
+#else
+void destroyShip() {
+  float x, y;
+  if ( status != IN_GAME || ship.invCnt > 0 || ship.grzInvCnt > 0 ) return;
+  x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
+  y = -(float)ship.pos.y / FIELD_SCREEN_RATIO;
+  addShipFrag(x, y);
+  playChunk(7);
+  shipUsed++;
+  resetPlayer();
+  if ( decrementShip() ) {
+    initGameover();
+  } else {
+    ship.invCnt = SHIP_INVINCIBLE_CNT_BASE;
+    clearFoesZako();
+  }
+}
+#endif
+
 
 int
 getPlayerDeg (int x, int y)

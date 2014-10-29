@@ -83,10 +83,12 @@ addLineFrag (int x, int y, int z, int mx, int my, int mz,
    fr = &(frag[fragIdx]);
 //senquack TODO: poss. optimization w/ inverse:
 #ifdef FIXEDMATH
+   //senquack BIG TODO: NOTE: the trick below for fy actually would be faster here!
    fr->fx = FDIV (INT2FNUM (x), FIELD_SCREEN_RATIO_X);
 //  fr->fy = FDIV(INT2FNUM(y), FIELD_SCREEN_RATIO_X);
    //senquack - note: fixed point overflows on the y axis here, roll some float math and fixed point conversion together:
    fr->fy = (int) ((float) y * 6.5536f);
+   //senquack BIG TODO: NOTE: the trick below for fy actually would be faster for all of these too!
    fr->fz = FDIV (INT2FNUM (z), FIELD_SCREEN_RATIO_X);
    fr->fmx = FDIV (INT2FNUM (mx), FIELD_SCREEN_RATIO_X);
    fr->fmy = FDIV (INT2FNUM (my), FIELD_SCREEN_RATIO_X);
@@ -418,8 +420,7 @@ void addLineFragOfs(float x, float y, float ox1, float oy1, float ox2, float oy2
 //}
 #ifdef FIXEDMATH
 void
-addShapeFrag(GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type,
-               int mx, int my)
+addShapeFrag(GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, int mx, int my)
 {
    int sd;
    GLfixed sz, sz2;
@@ -654,6 +655,5 @@ drawFrags ()
       drawRollLine(fr->x, fr->y, fr->z, fr->width, 
             fr->r[c], fr->g[c], fr->b[c], fr->d1, fr->d2);
 #endif //FIXEDMATH
-
    }
 }

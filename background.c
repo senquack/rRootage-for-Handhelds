@@ -13,6 +13,10 @@
 #include "background.h"
 #include "screen.h"
 
+//senquack - for fixed-point stuff:
+#include "GLES/gl.h"
+#include "degutil.h"
+
 #define PLANE_MAX 4
 
 static Plane plane[PLANE_MAX];
@@ -515,7 +519,6 @@ void moveBackground() {
 //senquack TODO: interleave
 #ifdef FIXEDMATH
 void drawBackground() {
-#ifdef FIXEDMATH
    GLfixed bgvertices[64*3];	// array of line vertices (only ever 32 maximum drawn lines)
    GLubyte bgcolors[64*4];		// array of line vertices' colors
    GLfixed	*bgverticeptr;				// ptr to next vertice to enter data to
@@ -595,7 +598,9 @@ void drawBackground() {
       glDrawArrays(GL_LINES, 0, numbgvertices);
       glPopMatrix();
    }
+}
 #else
+void drawBackground() {
    GLfloat  bgvertices[64*3];	// array of line vertices (only ever 32 maximum drawn lines)
    GLubyte  bgcolors[64*4];		// array of line vertices' colors
    GLfloat	*bgverticeptr;				// ptr to next vertice to enter data to
@@ -616,8 +621,8 @@ void drawBackground() {
       x = pl->x + pl->ox;
       tmpr = pl->r; tmpg = pl->g; tmpb = pl->b; tmpa = pl->a;
       //Pull out and pre-convert xn and yn to float before loops:
-      GLfloat tmpxn = (float)pl->xn;
-      GLfloat tmpyn = (float)pl->yn;
+      int tmpxn = pl->xn;
+      int tmpyn = pl->yn;
       //Pull out these values before loops:
       GLfloat tmpx = pl->x;
       GLfloat tmpy = pl->y;
@@ -626,8 +631,6 @@ void drawBackground() {
       GLfloat tmpoy = pl->oy;
       GLfloat tmpheight = pl->height;
       GLfloat tmpwidth = pl->width;
-      int tmpxn = pl->xn;
-      int tmpyn = pl->yn;
       GLfloat tmpxn_times_width = (float)tmpxn * tmpwidth;
       GLfloat tmpyn_times_height = (float)tmpyn * tmpheight;
       for ( lx=0 ; lx < tmpxn ; lx++, x += tmpwidth ) {
@@ -639,7 +642,7 @@ void drawBackground() {
          *bgverticeptr++ = tmpz;
          *bgverticeptr++ = x;		
          *bgverticeptr++ = tmpy + tmpoy + tmpyn_times_height;
-         *bgverticeptr++ = tmpfz;
+         *bgverticeptr++ = tmpz;
          //senquack TODO: interleave
          //senquack TODO: optimize this to store RGBA all at once (do we worry about endian-ness?)
          *bgcolorptr++ = tmpr;	*bgcolorptr++ = tmpg;	*bgcolorptr++ = tmpb;	*bgcolorptr++ = tmpa;
@@ -668,5 +671,5 @@ void drawBackground() {
       glDrawArrays(GL_LINES, 0, numbgvertices);
       glPopMatrix();
    }
-#endif //FIXEDMATH
 }
+#endif //FIXEDMATH

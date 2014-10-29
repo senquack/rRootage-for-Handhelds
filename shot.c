@@ -101,7 +101,7 @@ void moveShots() {
     st = &(shot[i]);
     st->x += st->mx/2;
     st->y += st->my/2;
-    st->height += SHOT_HEIHGT_SPEED/2;
+    st->height += SHOT_HEIGHT_SPEED/2;
     st->cnt--;
     if ( st->cnt < 0 ) {
       switch ( mode ) {

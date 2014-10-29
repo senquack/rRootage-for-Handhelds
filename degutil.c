@@ -19,7 +19,7 @@ int tantbl[TAN_TABLE_SIZE + 2];
 
 int sctbl[SC_TABLE_SIZE + SC_TABLE_SIZE / 4];
 
-#if defined (FIXEDMATH) && (defined(ARM) || defined (GP2X))
+#if defined (FIXEDMATH) && (defined(ARM) || defined (GP2X)) || defined (WIZ)
 //senquack - fast ARM ASM 16:16 fixed point divide routine:
 //             Credit goes to Henry Thomas and the website is
 //             http://me.henri.net/fp-div.html

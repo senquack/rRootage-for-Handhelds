@@ -61,25 +61,20 @@ static void setMode(int m) {
    glClearColor(bgColor[m][0], bgColor[m][1], bgColor[m][2], 0.0f);
 }
 
+//senquack - modified to be more flexible with filename (now defined in rr.c)
 // Load preference.
 void loadPreference() {
    FILE *fp;
    int i, j;
    int version;
-   char *tmpname;
-   char name[128];
-
-   //senquack - better abstract this code (don't do ifdef on GP2X)
-#ifdef GP2X
-   //senquack - don't store the save file on the NAND, store it in the current dir:
-   strcpy(name, "." PREF_FILE);
-#else
-   tmpname = getenv("HOME");
-   strcpy(name, tmpname);
-   strcat(name, PREF_FILE);
-#endif
-
-   if ( NULL == (fp = fopen(name,"rb")) ) {
+//   char *tmpname;
+//   char name[128];
+//   tmpname = getenv("HOME");
+//   strcpy(name, tmpname);
+//   strcat(name, PREF_FILE);
+//   if ( NULL == (fp = fopen(name,"rb")) ) {
+   if ( NULL == (fp = fopen(full_prefs_filename,"rb")) ) {
+      printf("Error opening prefs for reading or file not found: %s\n", full_prefs_filename);
       initHiScore();
       return;
    }
@@ -99,23 +94,21 @@ void loadPreference() {
    fclose(fp);
 }
 
+//senquack - modified to be more flexible with filename (now defined in rr.c)
 // Save preference.
 void savePreference() {
    FILE *fp;
    int i, j;
-   char *tmpname;
-   char name[128];
-
-#ifdef GP2X
-   //senquack - don't store the save file on the NAND, store it in the current dir:
-   strcpy(name, "." PREF_FILE);
-#else
-   tmpname = getenv("HOME");
-   strcpy(name, tmpname);
-   strcat(name, PREF_FILE);
-#endif
-
-   if ( NULL == (fp = fopen(name,"wb")) ) return;
+//   char *tmpname;
+//   char name[128];
+//   tmpname = getenv("HOME");
+//   strcpy(name, tmpname);
+//   strcat(name, PREF_FILE);
+//   if ( NULL == (fp = fopen(name,"wb")) ) return;
+   if ( NULL == (fp = fopen(full_prefs_filename,"wb")) ) {
+      printf("Error opening prefs filename for writing: %s\n", full_prefs_filename);
+      return;
+   }
    putw(VERSION_NUM, fp);
    for ( j=0 ; j<MODE_NUM ; j++ ) {
       for ( i=0 ; i<STAGE_NUM ; i++ ) {
@@ -287,19 +280,10 @@ void drawRPanel() {
    if ( left >= 0 ) {
       drawString(lStr, 40+480, 280, 18, 1, 200, 200, 222);
       drawLetter(left, 40+480, 420, 18, 1, 230, 180, 150);
-#else
-      drawString(lStr, 40+480, 280, 18, 1, 200.0/255.0, 200.0/255.0, 222.0/255.0);
-      drawLetter(left, 40+480, 420, 18, 1, 230.0/255.0, 180.0/255.0, 150.0/255.0);
-#endif //FIXEDMATH
       switch ( mode ) {
          case NORMAL_MODE:
-#ifdef FIXEDMATH
             drawString(bStr, 90+480, 280, 18, 1, 200, 200, 222);
             drawLetter(bomb, 90+480, 420, 18, 1, 230, 180, 150);
-#else
-            drawString(bStr, 90+480, 280, 18, 1, 200.0/255.0, 200.0/255.0, 222.0/255.0);
-            drawLetter(bomb, 90+480, 420, 18, 1, 230.0/255.0, 180.0/255.0, 150.0/255.0);
-#endif //FIXEDMATH
             break;
          case PSY_MODE:
             ml = ship.grzCnt/40;
@@ -364,8 +348,8 @@ void drawRPanel_rotated() {
             //      drawBox(550, 460, 50, 8, 120, 120, 120);
             //      drawBox(500+ml, 460, ml, 8, 210, 210, 240);
 #ifdef FIXEDMATH
-            drawBox(430, 15, 50, 8, 120, 120, 120);
-            drawBox(380+ml, 15, ml, 8, 210, 210, 240);
+            drawBox(INT2FNUM(430), INT2FNUM(15), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
+            drawBox(INT2FNUM(380+ml), INT2FNUM(15), INT2FNUM(ml), INT2FNUM(8), 210, 210, 240);
 #else
             drawBox(430, 15, 50, 8, 120, 120, 120);
             drawBox(380+ml, 15, ml, 8, 210, 210, 240);

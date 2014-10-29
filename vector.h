@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.1.1.1 $
  */
+#ifndef VECTOR_H
+#define VECTOR_H
+
 #ifndef DEF_VECTOR
 #define absN(a) ((a) < 0 ? - (a) : (a))
 
@@ -28,3 +31,4 @@ void vctDiv (Vector * v1, int a);
 int vctCheckSide (Vector * checkPos, Vector * pos1, Vector * pos2);
 int vctSize (Vector * v);
 int vctDist (Vector * v1, Vector * v2);
+#endif // VECTOR_H

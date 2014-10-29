@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.3 $
  */
+#ifndef FOE_MTD_H
+#define FOE_MTD_H
+
 #define FOE_ENEMY_POS_RATIO 1024
 
 #define BULLET_COLOR_NUM 4
@@ -26,3 +29,4 @@ void wipeBullets (Vector * pos, int width);
 void drawBulletsWake ();
 void drawFoes ();
 void drawBullets ();
+#endif // FOE_MTD_H

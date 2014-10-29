@@ -9,6 +9,8 @@
  *
  * @version $Revision: 1.2 $
  */
+#ifndef BOSS_MTD_H
+#define BOSS_MTD_H
 #include "vector.h"
 
 //senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
@@ -27,3 +29,4 @@ void drawBossState ();
 //senquack - for when the screen is rotated:
 void drawBossState_rotated ();
 Vector *getBossPos ();
+#endif //BOSS_MTD_H

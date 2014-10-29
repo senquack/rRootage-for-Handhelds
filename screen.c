@@ -16,9 +16,6 @@
 #include "SDL_mixer.h"
 #include "SDL_image.h"
 
-#include "GLES/gl.h"
-#include "GLES/egl.h"
-
 #include <math.h>
 #include <string.h>
 
@@ -35,15 +32,184 @@
 
 #define FAR_PLANE 720
 
-#ifdef FIXEDMATH
-
 #define SCREEN_WIDTH    320
 #define SCREEN_HEIGHT   240
 #define SCREEN_BPP      16
-#define SCREEN_FLAGS    (SDL_FULLSCREEN | SDL_HWSURFACE)
+//#define SCREEN_FLAGS    (SDL_FULLSCREEN | SDL_HWSURFACE)
+#define SCREEN_FLAGS    (SDL_FULLSCREEN)
 //#define LOWRES_SCREEN_WIDTH 320
 //#define LOWRES_SCREEN_HEIGHT 240
 #define SHARE_LOC "rr_share/"
+
+typedef struct eglConnection {
+   EGLDisplay display;
+   EGLContext context;
+   EGLSurface surface;
+   NativeWindowType window;
+} eglConnection;
+
+static eglConnection egl_screen = {
+   EGL_NO_DISPLAY,
+   EGL_NO_CONTEXT,
+   EGL_NO_SURFACE,
+   (NativeWindowType)0
+};
+
+SDL_Surface * conv_surf_gl (SDL_Surface * s, int want_alpha);
+
+// fps() returns the current FPS as an integer. Meant to be called once every frame.
+static int fps()
+{
+   static int frames_drawn = 0; // Frame counter (resets after recording new FPS value)
+   static int current_fps = 0;  // Current FPS
+
+   // Remembers last time we reported a FPS value:
+   static struct timespec lasttime = {.tv_sec=0, .tv_nsec=0};
+   static uint64_t lasttime_in_ns = 0;
+
+   // Get current time:
+   struct timespec curtime = {.tv_sec=0, .tv_nsec=0};
+   clock_gettime(CLOCK_MONOTONIC_RAW, &curtime);
+   uint64_t curtime_in_ns = (uint64_t)curtime.tv_nsec + (uint64_t)curtime.tv_sec * 1000000000;
+
+   // If one second has passed, record the time and reset the frame counter:
+   if ((curtime_in_ns - lasttime_in_ns) >= 1000000000) {
+      clock_gettime(CLOCK_MONOTONIC_RAW, &lasttime);
+      lasttime_in_ns = (uint64_t)lasttime.tv_nsec + (uint64_t)lasttime.tv_sec * 1000000000;
+      current_fps = frames_drawn;
+      frames_drawn = 0;
+   } else {
+      frames_drawn++;
+   }
+
+   return current_fps;
+}
+
+void swapGLScene ()
+{
+//  SDL_GL_SwapBuffers();
+   printf("Swapping scene..\n");
+   fflush(NULL);
+   if (eglSwapBuffers(egl_screen.display, egl_screen.surface) != GL_TRUE) {
+      printf("OpenGLES: eglSwapBuffers failed!\n");
+   } else {
+      printf("FPS: %d\n", fps());
+   }
+   printf("Finished swapping scene..\n");
+   fflush(NULL);
+}
+
+void renderCube()
+{
+
+    static GLubyte color[8][4] = { {255, 0, 0, },
+    {255, 0, 0, 255},
+    {0, 255, 0, 255},
+    {0, 255, 0, 255},
+    {0, 255, 0, 255},
+    {255, 255, 255, 255},
+    {255, 0, 255, 255},
+    {0, 0, 255, 255}
+    };
+    static GLfloat cube[8][3] = { {0.5, 0.5, -0.5},
+    {0.5f, -0.5f, -0.5f},
+    {-0.5f, -0.5f, -0.5f},
+    {-0.5f, 0.5f, -0.5f},
+    {-0.5f, 0.5f, 0.5f},
+    {0.5f, 0.5f, 0.5f},
+    {0.5f, -0.5f, 0.5f},
+    {-0.5f, -0.5f, 0.5f}
+    };
+    static GLubyte indices[36] = { 0, 3, 4,
+        4, 5, 0,
+        0, 5, 6,
+        6, 1, 0,
+        6, 7, 2,
+        2, 1, 6,
+        7, 4, 3,
+        3, 2, 7,
+        5, 4, 7,
+        7, 6, 5,
+        2, 3, 1,
+        3, 0, 1
+    };
+
+
+    /* Do our drawing, too. */
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+//    glClearColor(1.0,1.0,1.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glClear(GL_COLOR_BUFFER_BIT);
+
+//    /* Draw the cube */
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, cube);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, indices);
+
+    glMatrixMode(GL_MODELVIEW);
+    glRotatef(5.0, 1.0, 1.0, 1.0);
+}
+
+static void renderCubeLoop()
+{
+   eglSwapInterval(egl_screen.display, 1);      // We want VSYNC
+
+   glEnableClientState (GL_VERTEX_ARRAY);
+   glEnableClientState (GL_COLOR_ARRAY);
+//   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+   glViewport (0, 0, 320, 240);
+   glClear(GL_COLOR_BUFFER_BIT);
+
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+//        glOrthof(-2.0, 2.0, -2.0 * aspectAdjust, 2.0 * aspectAdjust, -20.0, 20.0);
+
+        //FINALLY GOT A CUBE!
+//        glOrthof(-2.6666, 2.6666, -2.0 , 2.0 , -20.0, 20.0);
+
+   glOrthof(-1.3333, 1.3333, -1.0 , 1.0 , -20.0, 20.0);
+
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+   glEnable(GL_DEPTH_TEST);
+   glDepthFunc(GL_LESS);
+   glShadeModel(GL_SMOOTH);
+
+
+   int quit = 0;
+   SDL_Event event;
+
+   // Main loop:
+   while (!quit ) {
+
+//      // Print current fps:
+//      printf("%d FPS\n", fps());
+
+      // Quit if button/key pressed:
+      while(SDL_PollEvent(&event)){
+         switch (event.type) {
+            case SDL_KEYDOWN:
+            case SDL_KEYUP:
+               quit = 1;
+               break;
+            default:
+               break;
+
+         }
+      }
+      renderCube();
+      swapGLScene ();
+
+   }
+//   while(SDL_PollEvent(&event)){
+//      usleep(0);
+//   }
+//   usleep(1000000);
+}
 
 //OpenGLES-related:
 /** @brief Error checking function
@@ -128,39 +294,55 @@ int8_t CheckGLESErrors( const char* file, uint16_t line )
    return 0;
 }
 
-eglConnection egl_screen = {
-   EGL_NO_DISPLAY,
-   EGL_NO_CONTEXT,
-   EGL_NO_SURFACE,
-   (NativeWindowType)0
-};
-
 //Initialize OpenGLES 1.1 (return 0 for success, 1 for error)
 int initGLES()
 {
    // These settings are correct for the GCW0
-   const EGLint egl_config_attr[] = {
-#if SCREEN_BPP > 16
-      // RGBA8888
-      EGL_RED_SIZE,      8,
-      EGL_BLUE_SIZE,     8,
-      EGL_GREEN_SIZE,    8,
-      EGL_ALPHA_SIZE,    8,
-      EGL_BUFFER_SIZE,   32,
-#else
-      // RGBA5650
-      EGL_RED_SIZE,      5,
-      EGL_BLUE_SIZE,     6,
-      EGL_GREEN_SIZE,    5,
-      EGL_ALPHA_SIZE,    0,
+   EGLint egl_config_attr[] = {
+////#if SCREEN_BPP > 16
+////      // RGBA8888
+//      EGL_RED_SIZE,      8,
+//      EGL_BLUE_SIZE,     8,
+//      EGL_GREEN_SIZE,    8,
+//      EGL_ALPHA_SIZE,    8,
+////      EGL_BUFFER_SIZE,   32,
+////#else
+////      // RGBA5650
+////      EGL_RED_SIZE,      5,
+////      EGL_BLUE_SIZE,     6,
+////      EGL_GREEN_SIZE,    5,
+////      EGL_ALPHA_SIZE,    0,
+////      EGL_BUFFER_SIZE,   16,
+////#endif
+//      // senquack TODO - Do we really even need a depth buffer?
+//      EGL_DEPTH_SIZE,    16,     
+//////      EGL_DEPTH_SIZE,    0,
+////      EGL_STENCIL_SIZE,  0,
+//      EGL_SURFACE_TYPE,     EGL_WINDOW_BIT,
+//      EGL_RENDERABLE_TYPE,  EGL_OPENGL_ES_BIT,   // We want OpenGLES 1, not 2
+//      EGL_NONE           // This is important as it tells EGL when to stop looking in the array
+
+//#if SCREEN_BPP > 16
+//      // RGBA8888
+//      EGL_RED_SIZE,      8,
+//      EGL_BLUE_SIZE,     8,
+//      EGL_GREEN_SIZE,    8,
+//      EGL_ALPHA_SIZE,    8,
+//      EGL_BUFFER_SIZE,   32,
+//#else
+//      // RGBA5650
+//      EGL_RED_SIZE,      5,
+//      EGL_BLUE_SIZE,     6,
+//      EGL_GREEN_SIZE,    5,
+//      EGL_ALPHA_SIZE,    0,
       EGL_BUFFER_SIZE,   16,
-#endif
+//#endif
       // senquack TODO - Do we really even need a depth buffer?
       EGL_DEPTH_SIZE,    16,     
-//      EGL_DEPTH_SIZE,    0,
+////      EGL_DEPTH_SIZE,    0,
       EGL_STENCIL_SIZE,  0,
       EGL_SURFACE_TYPE,     EGL_WINDOW_BIT,
-      EGL_RENDERABLE_TYPE,  EGL_OPENGL_ES_BIT;   // We want OpenGLES 1, not 2
+//      EGL_RENDERABLE_TYPE,  EGL_OPENGL_ES_BIT,   // We want OpenGLES 1, not 2
       EGL_NONE           // This is important as it tells EGL when to stop looking in the array
    };
 
@@ -204,7 +386,7 @@ int initGLES()
 
    if (result != EGL_TRUE || num_configs_found == 0)
    {
-      CheckEGLErrors( __FILE__, __LINE__ );
+      CheckGLESErrors( __FILE__, __LINE__ );
       printf( "EGLport ERROR: Unable to query for available configs, found %d.\n", num_configs_found );
       return 1;
    }
@@ -223,7 +405,7 @@ int initGLES()
    egl_screen.window = 0;
 
    printf( "OpenGLES: Creating window surface\n" );
-   egl_screen.surface = eglCreateWindowSurface(egl_screen.display, egl_config_attr, egl_screen.window, NULL);
+   egl_screen.surface = eglCreateWindowSurface(egl_screen.display, egl_config, egl_screen.window, NULL);
    if (egl_screen.surface == EGL_NO_SURFACE)
    {
       CheckGLESErrors( __FILE__, __LINE__ );
@@ -242,10 +424,13 @@ int initGLES()
 
    printf( "OpenGLES: Setting swap interval\n" );
    eglSwapInterval(egl_screen.display, 1);      // We want VSYNC
+//   eglSwapInterval(egl_screen.display, 0);      // We want VSYNC
 
    printf( "OpenGLES: Initialization complete\n" );
    CheckGLESErrors( __FILE__, __LINE__ );
 
+
+   renderCubeLoop();
 
    glViewport (0, 0, 320, 240);
 
@@ -264,6 +449,7 @@ int initGLES()
    glDisable (GL_TEXTURE_2D);
    glDisable (GL_COLOR_MATERIAL);
 
+
    //senquack - for OpenGLES, we enable these once and leave them enabled:
    glEnableClientState (GL_VERTEX_ARRAY);
    glEnableClientState (GL_COLOR_ARRAY);
@@ -271,9 +457,11 @@ int initGLES()
    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
    //senquack - TODO : gotta stop calling resize() all the time
-   resized (screenWidth, screenHeight);
+   resized (SCREEN_WIDTH, SCREEN_HEIGHT);
    return 0;
 }
+
+
 
 // Close down OpenGLES (return 0 for success, 1 for error)
 int closeGLES()
@@ -311,6 +499,7 @@ int closeGLES()
       return 1;
    }
    egl_screen.display = 0;
+   return 0;
 }
 
 // Reset viewport when the screen is resized.
@@ -376,8 +565,8 @@ screenResized ()
 void
 resized (int width, int height)
 {
-   screenWidth = width;
-   screenHeight = height;
+//   screenWidth = width;
+//   screenHeight = height;
    screenResized ();
 }
 
@@ -449,7 +638,7 @@ void gluPerspective(GLfloat fovy, GLfloat ratio, GLfloat near, GLfloat far)
    GLfloat right = top * ratio;
    GLfloat left = -right;
 
-   glFrustum(left, right, bottom, top, near, far);
+   glFrustumf(left, right, bottom, top, near, far);
 } 
 #endif //FIXEDMATH
 
@@ -755,8 +944,8 @@ int lowres = 0;
 int windowMode = 0;
 int brightness = DEFAULT_BRIGHTNESS;
 //Uint8 *keys;
-SDL_Joystick *stick = NULL;
-int joystickMode = 1;
+//int joystickMode = 1;
+//SDL_Joystick *stick = NULL;
 
 
 //senquack - support screen rotation:
@@ -897,11 +1086,11 @@ void initSDL ()
 //      exit(1);
 //   }
 
-   printf("Initializing SDL joystick subsystem..\n");
+//   printf("Initializing SDL joystick subsystem..\n");
    if ( SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0 ) {
       printf ("Unable to initialize SDL_JOYSTICK: %s\n",
             SDL_GetError ());
-      joystickMode = 0;
+//      joystickMode = 0;
       exit (1);
    }
 
@@ -918,10 +1107,10 @@ void initSDL ()
 
    SDL_ShowCursor (SDL_DISABLE);
 
-   if (joystickMode == 1) {
-      SDL_JoystickEventState (SDL_ENABLE);
-      stick = SDL_JoystickOpen (0);
-   }
+//   if (joystickMode == 1) {
+//      SDL_JoystickEventState (SDL_ENABLE);
+//      stick = SDL_JoystickOpen (0);
+//   }
 
 //   /* Set the title bar in environments that support it */
 //   SDL_WM_SetCaption (CAPTION, NULL);
@@ -932,7 +1121,6 @@ void initSDL ()
    loadGLTexture (SMOKE_BMP, &smokeTexture);
    loadGLTexture (TITLE_BMP, &titleTexture);
 
-   return 1;
 }
 
 void
@@ -1099,13 +1287,6 @@ drawGLSceneEnd ()
    glPopMatrix ();
 }
 
-void
-swapGLScene ()
-{
-//  SDL_GL_SwapBuffers();
-   if (eglSwapBuffers(egl_screen.display, egl_screen.surface) != GL_TRUE)
-      printf("OpenGLES: eglSwapBuffers failed!\n");
-}
 
 // NOTE
 //senquack - disabling these next 3-4 functions allowed program to run longer before hang:
@@ -2417,7 +2598,7 @@ void drawStar (int f, GLfloat x, GLfloat y, int r, int g, int b, float size)
       glBindTexture (GL_TEXTURE_2D, smokeTexture);
    }
    glPushMatrix ();
-   glTranslatef (fx, fy, 0);
+   glTranslatef (x, y, 0);
    glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
    glVertexPointer (2, GL_FLOAT, 0, vertices);
    glTexCoordPointer (2, GL_FLOAT, 0, texvertices);
@@ -4217,7 +4398,7 @@ void drawBomb (GLfloat x, GLfloat y, GLfloat width, int cnt)
 //  glEnd();
 //}
 #ifdef FIXEDMATH
-void drawCirclex (GLfixed x, GLfixed y, GLfixed width, int cnt,
+void drawCircle (GLfixed x, GLfixed y, GLfixed width, int cnt,
                    int r1, int g1, int b1, int r2, int b2, int g2)
 {
    int i, d;
@@ -4279,7 +4460,7 @@ void drawCirclex (GLfixed x, GLfixed y, GLfixed width, int cnt,
    glDrawArrays (GL_TRIANGLE_FAN, 0, 33);
 }
 #else
-void drawCirclex (GLfixed x, GLfixed y, GLfixed width, int cnt,
+void drawCircle (GLfloat x, GLfloat y, GLfloat width, int cnt,
                    int r1, int g1, int b1, int r2, int b2, int g2)
 {
    int i, d;
@@ -7222,7 +7403,7 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
       break;
    case 4:
       // circular shape
-      sz = size * 0.5f
+      sz = size * 0.5f;
       sz2 = size * 0.25f;         // added this because of simplicity later on
 
       //senquack
@@ -7303,7 +7484,7 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
       // triangle shape
 //    sz = size*2/3; sz2 = size/5;
       sz = size * (2.0f/3.0f);
-      sz2 = size * 0.2f
+      sz2 = size * 0.2f;
 
 
       // TEMP DEBUGGING:
@@ -7370,7 +7551,7 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
       break;
    case 6:
       //senquack - hexagonal shape
-      sz = size * 0.5f
+      sz = size * 0.5f;
 
       //senquack
 //    glRotatef((float)((cnt*13)&1023)*360/1024, 0, 0, 1);
@@ -8219,7 +8400,7 @@ void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type,
       break;
    case 1:
 //    sz = size/2;
-      sz = size * 0.5f
+      sz = size * 0.5f;
       sz2 = size * 0.25f;         // added this because of simplicity later on
 //    glRotatef((float)((cnt*53)&1023)*360/1024, 0, 0, 1);
       glRotatef ((float) ((((cnt * 53) & 1023) * 360) >> 10), 0, 0, 1);
@@ -8536,7 +8717,7 @@ void startDrawBoards() {
   //senquack - dunno why we do this -- TODO: double check this
 //  glPushMatrix();
   glLoadIdentity();
-  glOrtho(0, 640, 480, 0, -1, 1);
+  glOrthof(0, 640, 480, 0, -1, 1);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
@@ -9363,7 +9544,7 @@ void drawTitleBoard ()
 //    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
 //    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 
-   memset (colors, 255, 4 * 4);
+   memset (colors, 255, 5 * 4);
 // vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(78);
 // vertices[2] = INT2FNUM(470);  vertices[3] = INT2FNUM(78);
 // vertices[4] = INT2FNUM(470);  vertices[5] = INT2FNUM(114);
@@ -9417,8 +9598,8 @@ void drawTitleBoard ()
       colors[4] = colors[5] = colors[6] =
       colors[8] = colors[9] = colors[10] =
       colors[12] = colors[13] = colors[14] =
-      colors[16] = colors[17] = colors[18] =
-      colors[20] = colors[21] = colors[22] = 200;
+      colors[16] = colors[17] = colors[18] = 200;
+//      colors[20] = colors[21] = colors[22] = 200;
    colors[3] = colors[7] = colors[11] = colors[15] = colors[19] = 255;
 
    vertices[0] = INT2FNUM (350);
@@ -9454,7 +9635,7 @@ void drawTitleBoard ()
    glDrawArrays (GL_TRIANGLE_FAN, 0, 5);
 
 //  glColor4i(255, 255, 255, 255);
-   memset (colors, 255, 20);
+   memset (colors, 255, 5*4);
 
 //  glBegin(GL_LINE_LOOP);
 //  glVertex3f(350, 30, 0);
@@ -9522,7 +9703,7 @@ void drawTitleBoard ()
 //    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
 //    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 
-   memset (colors, 255, 4 * 4);
+   memset (colors, 255, 5 * 4);
 // vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(78);
 // vertices[2] = INT2FNUM(470);  vertices[3] = INT2FNUM(78);
 // vertices[4] = INT2FNUM(470);  vertices[5] = INT2FNUM(114);
@@ -9576,8 +9757,8 @@ void drawTitleBoard ()
       colors[4] = colors[5] = colors[6] =
       colors[8] = colors[9] = colors[10] =
       colors[12] = colors[13] = colors[14] =
-      colors[16] = colors[17] = colors[18] =
-      colors[20] = colors[21] = colors[22] = 200;
+      colors[16] = colors[17] = colors[18] = 200;
+//      colors[20] = colors[21] = colors[22] = 200;
    colors[3] = colors[7] = colors[11] = colors[15] = colors[19] = 255;
 
    vertices[0] = 350;
@@ -9613,7 +9794,7 @@ void drawTitleBoard ()
    glDrawArrays (GL_TRIANGLE_FAN, 0, 5);
 
 //  glColor4i(255, 255, 255, 255);
-   memset (colors, 255, 20);
+   memset (colors, 255, 5*4);
 
 //  glBegin(GL_LINE_LOOP);
 //  glVertex3f(350, 30, 0);
@@ -9782,11 +9963,12 @@ int drawTimeCenter (int n, int x, int y, int s, int r, int g, int b)
 //  
 //  return pad;
 //}
-int
-getPadState ()
+int getPadState ()
 {
+   //senquack BIG TODO: fix this for gcw:
    int x = 0, y = 0;
    int pad = 0;
+#if defined(GP2X) || defined(WIZ)
    int gp2x_up = 0, gp2x_upleft = 0, gp2x_left = 0, gp2x_downleft =
       0, gp2x_down = 0, gp2x_downright = 0, gp2x_right = 0, gp2x_upright = 0;
 
@@ -9840,6 +10022,8 @@ getPadState ()
    if (gp2x_up || gp2x_upright || gp2x_upleft) {
       pad |= PAD_UP;
    }
+
+#endif
 
    return pad;
 }
@@ -9925,13 +10109,15 @@ int laserOnByDefault = 0;
 //  
 //  return btn;
 //}
-int
-getButtonState ()
+int getButtonState ()
 {
+   //senquack BIG TODO: fix this for gcw:
    int btn = 0;
    int btn1 = 0, btn2 = 0;
    int btn_volup = 0, btn_voldown = 0;
 //  int volchanged = 0;
+
+#if defined(WIZ) || defined(GP2X)
 
    // Albert's original code:
 //  if ( stick != NULL ) {
@@ -10034,6 +10220,7 @@ getButtonState ()
 //  if (btn_quit) 
 //   btn |= PAD_BUTTON_QUIT;
 
+#endif
    return btn;
 }
 

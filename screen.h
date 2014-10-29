@@ -9,8 +9,14 @@
  *
  * @version $Revision: 1.4 $
  */
+#ifndef SCREEN_H
+#define SCREEN_H
 
-//Original non-gp2x code:
+// For GL type defines:
+#include "GLES/gl.h"
+#include "GLES/egl.h"
+
+//Original rrootage code:
 #define PAD_UP 1
 #define PAD_DOWN 2
 #define PAD_LEFT 4
@@ -18,6 +24,7 @@
 #define PAD_BUTTON1 16
 #define PAD_BUTTON2 32
 
+#if defined(WIZ) || defined(GP2X)
 //GP2X mappings
 #define GP2X_BUTTON_UP              (0)
 #define GP2X_BUTTON_DOWN            (4)
@@ -38,6 +45,7 @@
 #define GP2X_BUTTON_SELECT          (9)
 #define GP2X_BUTTON_VOLUP           (16)
 #define GP2X_BUTTON_VOLDOWN         (17)
+#endif
 
 #define DEFAULT_BRIGHTNESS 224
 
@@ -77,16 +85,6 @@ void drawGLSceneStart ();
 void drawGLSceneEnd ();
 void swapGLScene ();
 
-//OpenGLES stuff:
-int8_t CheckGLESErrors( const char* file, uint16_t line );
-
-typedef struct eglConnection {
-   EGLDisplay display;
-   EGLContext context;
-   EGLSurface surface;
-   NativeWindowType window;
-} eglConnection;
-eglConnection egl_screen;
 int initGLES();
 int closeGLES();
 
@@ -269,5 +267,4 @@ void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
 //senquack - Albert had added this I think
 //void drawTestPoly();
 
-//senquack - 2/11 - disabled for now:
-SDL_Surface *conv_surf_gl (SDL_Surface * s, int want_alpha);
+#endif //SCREEN_H

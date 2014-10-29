@@ -9,5 +9,8 @@
  *
  * @version $Revision: 1.1.1.1 $
  */
+#ifndef BRGMNG_MTD_H
+#define BRGMNG_MTD_H
 void initBarragemanager ();
 void closeBarragemanager ();
+#endif // BRGMNG_MTD_H

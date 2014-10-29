@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.1.1.1 $
  */
+#ifndef LASER_H
+#define LASER_H
+
 #include "vector.h"
 
 typedef struct
@@ -22,3 +25,4 @@ void initLasers ();
 void moveLasers ();
 void drawLasers ();
 void addLaser ();
+#endif // LASER_H

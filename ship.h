@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.2 $
  */
+#ifndef SHIP_H
+#define SHIP_H
+
 #include "vector.h"
 
 //senquack - for GLfixed type
@@ -21,8 +24,6 @@
 
 #define FIELD_SCREEN_RATIO 10000.0f
 #define FIELD_SCREEN_RATIO_X 655360000  // fixed point version of above
-#define FIELD_SCREEN_RATIO_INVERSE_X 6  // inaccurate inverse of above ratio in fixed point (for speed)
-
 
 typedef struct
 {
@@ -45,3 +46,4 @@ void moveShip ();
 void drawShip ();
 void destroyShip ();
 int getPlayerDeg (int x, int y);
+#endif // SHIP_H

@@ -9,6 +9,8 @@
  *
  * @version $Revision: 1.2 $
  */
+#ifndef ATTRACTMANAGER_H
+#define ATTRACTMANAGER_H
 
 #define STAGE_NUM 40
 #define SAME_RANK_STAGE_NUM 4
@@ -63,3 +65,4 @@ void drawTitle();
 void initBossScoreAtr(int bs);
 void moveBossScoreAtr();
 void drawBossScoreAtr();
+#endif //ATTRACTMANAGER_H

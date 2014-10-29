@@ -20,6 +20,7 @@
 #define COMMAND_SCREEN_SPD_RATE 512
 #define COMMAND_SCREEN_VEL_RATE 512
 
+//senquack changed all doubles to floats:
 class FoeCommand:public BulletMLRunner
 {
  public:
@@ -28,23 +29,23 @@ class FoeCommand:public BulletMLRunner
 
      virtual ~ FoeCommand ();
 
-   virtual double getBulletDirection ();
-   virtual double getAimDirection ();
-   virtual double getBulletSpeed ();
-   virtual double getDefaultSpeed ();
-   virtual double getRank ();
-   virtual void createSimpleBullet (double direction, double speed);
-   virtual void createBullet (BulletMLState * state, double direction,
-                              double speed);
+   virtual float getBulletDirection ();
+   virtual float getAimDirection ();
+   virtual float getBulletSpeed ();
+   virtual float getDefaultSpeed ();
+   virtual float getRank ();
+   virtual void createSimpleBullet (float direction, float speed);
+   virtual void createBullet (BulletMLState * state, float direction,
+                              float speed);
    virtual int getTurn ();
    virtual void doVanish ();
 
-   virtual void doChangeDirection (double d);
-   virtual void doChangeSpeed (double s);
-   virtual void doAccelX (double ax);
-   virtual void doAccelY (double ay);
-   virtual double getBulletSpeedX ();
-   virtual double getBulletSpeedY ();
+   virtual void doChangeDirection (float d);
+   virtual void doChangeSpeed (float s);
+   virtual void doAccelX (float ax);
+   virtual void doAccelY (float ay);
+   virtual float getBulletSpeedX ();
+   virtual float getBulletSpeedY ();
 
  private:
    struct foe *foe;

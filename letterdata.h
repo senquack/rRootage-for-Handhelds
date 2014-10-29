@@ -10,6 +10,9 @@
  * @version $Revision: 1.2 $
  */
 
+#ifndef LETTERDATA_H
+#define LETTERDATA_H
+
 #ifdef FIXEDMATH
 //senquack - converted to fixed point:
 static GLfixed spData_fixed[][16][5] = { {
@@ -743,3 +746,4 @@ static float spData[][16][5] = {{
     }
 };
 #endif //FIXEDMATH
+#endif // LETTERDATA_H

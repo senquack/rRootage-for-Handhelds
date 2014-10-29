@@ -10,10 +10,18 @@
  * @version $Revision: 1.4 $
  */
 #include "SDL.h"
+
+#include "GLES/gl.h"
+#include "GLES/egl.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+
+//senquack
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "rr.h"
 #include "screen.h"
@@ -32,29 +40,91 @@
 
 static int noSound = 0;
 
-//senquack - TODO: fix this for GCW/dingux
-static const char *config_filename = "rr.conf";
-static const char *config_dir = ".rrootage";
+//senquack - modified code to store files in subdir, modified filenames:
+//const char *settings_dir   = ".rrootage";    // Both the two files below will be written into this dir.
+//                                             //   This dir will normally exist in the $HOME dir,
+//                                             //    but on GP2X/Wiz it will exist in the current dir. 
+//
+//const char *portcfg_filename = "rr.conf";    // This is where we store settings for the custom configurator
+//                                                   //    not included with the original rrootage. -senquack
+//                                                   //  (Things like custom controls, other new features I added)
+//                                                   //    It is a text-mode file handhled here in this source file.
+//
+//const char *prefs_filename = "rr.bin";    // This is where we store the standard settings like Hi-score,
+//                                                //    game mode, etc, from the original rRootage.
+//                                                //    It is a binary-mode file handled in attractmanager.c
 
-//senquack - MANDATORY TODO - make GCW version of these settings:
 #if defined(GP2X) || defined(WIZ)
-const rrsettings default_settings = {
-   1, 1, 700, 1, 1,
-   // non-rotated button defs:
-   {GP2X_BUTTON_B, GP2X_BUTTON_Y, GP2X_BUTTON_X, GP2X_BUTTON_A,
-    GP2X_BUTTON_START, GP2X_BUTTON_SELECT, GP2X_BUTTON_VOLDOWN,
-    GP2X_BUTTON_VOLUP},
-   // rotated button defs: //19 means disabled
-   {GP2X_BUTTON_START, GP2X_BUTTON_X, GP2X_BUTTON_R, GP2X_BUTTON_A,
-    GP2X_BUTTON_Y, GP2X_BUTTON_SELECT, GP2X_BUTTON_VOLDOWN, GP2X_BUTTON_VOLUP}
-};
-#endif // GP2X/Wiz
+static const char *base_settings_path = "./";
+#else
+static const char *base_settings_path = ".rrootage/";
+#endif
 
-rrsettings settings;
+
+static const char *base_portcfg_filename = "rr.conf";    // This is where we store settings for the custom configurator
+                                                   //    not included with the original rrootage. -senquack
+                                                   //  (Things like custom controls, other new features I added)
+                                                   //    It is a text-mode file handhled here in this source file.
+
+static const char *base_prefs_filename = "rr.bin";    // This is where we store the standard settings like Hi-score,
+                                                //    game mode, etc, from the original rRootage.
+                                                //    It is a binary-mode file handled in attractmanager.c
+
+char *full_prefs_filename = NULL;               // Fully-qualified prefs filename (used in attractmanager.c)
+
+// portcfg holds our default settings until the config file is read:
+portcfg_settings settings = {    
+   .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
+   .rotated                = SCREEN_HORIZ,                // Is screen rotated? Assigned to one of: 
+                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
+   .music                  = 1,                           // Is music enabled?
+   .buttons_swapped        = 0,                           // Are laser / bomb buttons swapped?
+   .joy_deadzone           = 5000                         // Analog joystick deadzone
+};     
+
+//senquack - TODO: clean up crufty old Wiz port settings code, adapt it to new portcfg code:
+//#if defined(GP2X) || defined(WIZ)
+//const portcfg_settings default_settings = {
+//   1, 1, 700, 1, 1,
+//   // non-rotated button defs:
+//   {GP2X_BUTTON_B, GP2X_BUTTON_Y, GP2X_BUTTON_X, GP2X_BUTTON_A,
+//    GP2X_BUTTON_START, GP2X_BUTTON_SELECT, GP2X_BUTTON_VOLDOWN,
+//    GP2X_BUTTON_VOLUP},
+//   // rotated button defs: //19 means disabled
+//   {GP2X_BUTTON_START, GP2X_BUTTON_X, GP2X_BUTTON_R, GP2X_BUTTON_A,
+//    GP2X_BUTTON_Y, GP2X_BUTTON_SELECT, GP2X_BUTTON_VOLDOWN, GP2X_BUTTON_VOLUP}
+//};
+//#endif // GP2X/Wiz
 
 //senquack
-int
-clamp (int x, int min, int max)
+// Create the specified directory if it doesn't yet exist. Returns 1 on success, 0 on error.
+int create_dir(const char *dir)
+{
+	struct stat	st;
+   if ( stat(dir, &st) != 0 ) {
+      printf("Dir not found, creating: %s\n", dir);
+      if ( mkdir(dir, 0755) == 0 ) {
+         printf("Successfully created dir.\n");
+         return 1;
+      } else {
+         printf("Failed to create dir.\n");
+         return 0;
+      }
+   } else {
+      if( S_ISDIR(st.st_mode) ) {
+         printf("Successfully found existing dir: %s\n", dir);
+         return 1;
+      } else {
+         printf("Found, but unable to access existing dir: %s\n", dir);
+         printf("(Is it a file or invalid symlink instead of a dir?)\n");
+         return 0;
+      }
+   }
+   return 0;   //shouldn't get here
+}
+
+//senquack
+int clamp (int x, int min, int max)
 {
    if (x < min) {
       return min;
@@ -66,8 +136,7 @@ clamp (int x, int min, int max)
 }
 
 //senquack
-char *
-trim_string (char *buf)
+char* trim_string (char *buf)
 {
    int len;
 
@@ -84,10 +153,9 @@ trim_string (char *buf)
    return buf;
 }
 
-//senquack - added a settings file for my Wiz port
+//senquack - added a settings file for my handheld ports
 //  Return 1 on success, 0 on error.  Read settings into settings structure
-int
-read_saved_settings (const char *filename)
+int read_portcfg_settings (const char *filename)
 {
    FILE *f;
    char buf[8192];
@@ -97,9 +165,7 @@ read_saved_settings (const char *filename)
    if (f == NULL) {
       printf ("Error opening file: %s\n", filename);
       return 0;
-   } else {
-      printf ("Loading settings from file: %s\n", filename);
-   }
+   } 
 
    while (!feof (f)) {
       // skip empty lines
@@ -131,14 +197,20 @@ read_saved_settings (const char *filename)
       str = trim_string (str);
       param = trim_string (param);
 
-      if (strcasecmp (str, "laser_on_by_default") == 0)
+      if (strcasecmp (str, "laser_on_by_default") == 0) {
          settings.laser_on_by_default = clamp (atoi (param), 0, 1);
-      else if (strcasecmp (str, "rotated") == 0)
-         settings.rotated = clamp (atoi (param), 0, 1);
+      } else if (strcasecmp (str, "rotated") == 0) {
+         settings.rotated = clamp (atoi (param), SCREEN_HORIZ, SCREEN_ROTATED_RIGHT);
+      } else if (strcasecmp (str, "music") == 0) {
+         settings.music = clamp (atoi (param), 0, 1);
+      } else if (strcasecmp (str, "buttons_swapped") == 0) {
+         settings.buttons_swapped = clamp (atoi (param), 0, 1);
+      } else if (strcasecmp (str, "joy_deadzone") == 0) {
+         settings.joy_deadzone = clamp (atoi (param), 1000, 30000);
 #if defined(WIZ)
-      else if (strcasecmp (str, "fast_ram") == 0)
+      } else if (strcasecmp (str, "fast_ram") == 0) {
          settings.fast_ram = clamp (atoi (param), 0, 1);
-      else if (strcasecmp (str, "cpu_freq") == 0) {
+      } else if (strcasecmp (str, "cpu_freq") == 0) {
          if ((strlen (param) > 0) && (strlen (param) < 4)) {
             settings.cpu_freq = atoi (param);
             if (settings.cpu_freq) {
@@ -161,50 +233,43 @@ read_saved_settings (const char *filename)
                     default_settings.cpu_freq);
             settings.cpu_freq = default_settings.cpu_freq;
          }
-#endif // WIZ
-      } else if (strcasecmp (str, "music") == 0)
-         settings.music = clamp (atoi (param), 0, 1);
-      else if (strcasecmp (str, "buttons_fire") == 0)
+      } else if (strcasecmp (str, "buttons_fire") == 0) {
          settings.buttons[FIRE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "buttons_fire2") == 0)
+      } else if (strcasecmp (str, "buttons_fire2") == 0) {
          settings.buttons[FIRE2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "buttons_special") == 0)
+      } else if (strcasecmp (str, "buttons_special") == 0) {
          settings.buttons[SPECIAL_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "buttons_special2") == 0)
-         settings.buttons[SPECIAL2_IDX] =
-            clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "buttons_pause") == 0)
+      } else if (strcasecmp (str, "buttons_special2") == 0) {
+         settings.buttons[SPECIAL2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+      } else if (strcasecmp (str, "buttons_pause") == 0) {
          settings.buttons[PAUSE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "buttons_exit") == 0)
+      } else if (strcasecmp (str, "buttons_exit") == 0) {
          settings.buttons[EXIT_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "buttons_voldown") == 0)
+      } else if (strcasecmp (str, "buttons_voldown") == 0) {
          settings.buttons[VOLDOWN_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "buttons_volup") == 0)
+      } else if (strcasecmp (str, "buttons_volup") == 0) {
          settings.buttons[VOLUP_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "rbuttons_fire") == 0)
+      } else if (strcasecmp (str, "rbuttons_fire") == 0) {
          settings.rbuttons[FIRE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "rbuttons_fire2") == 0)
+      } else if (strcasecmp (str, "rbuttons_fire2") == 0) {
          settings.rbuttons[FIRE2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "rbuttons_special") == 0)
-         settings.rbuttons[SPECIAL_IDX] =
-            clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "rbuttons_special2") == 0)
-         settings.rbuttons[SPECIAL2_IDX] =
-            clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "rbuttons_pause") == 0)
+      } else if (strcasecmp (str, "rbuttons_special") == 0) {
+         settings.rbuttons[SPECIAL_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+      } else if (strcasecmp (str, "rbuttons_special2") == 0) {
+         settings.rbuttons[SPECIAL2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+      } else if (strcasecmp (str, "rbuttons_pause") == 0) {
          settings.rbuttons[PAUSE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "rbuttons_exit") == 0)
+      } else if (strcasecmp (str, "rbuttons_exit") == 0) {
          settings.rbuttons[EXIT_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "rbuttons_voldown") == 0)
-         settings.rbuttons[VOLDOWN_IDX] =
-            clamp (atoi (param), 0, NUM_BUTTONS);
-      else if (strcasecmp (str, "rbuttons_volup") == 0)
+      } else if (strcasecmp (str, "rbuttons_voldown") == 0) {
+         settings.rbuttons[VOLDOWN_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+      } else if (strcasecmp (str, "rbuttons_volup") == 0) {
          settings.rbuttons[VOLUP_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
-      else {
+#endif // GP2X/WIZ
+      } else {
          printf ("Ignoring unknown setting: %s\n", str);
       }
    }
-
    fclose (f);
    return 1;
 }
@@ -569,8 +634,7 @@ int interval = INTERVAL_BASE;
 int tick = 0;
 static int pPrsd = 1;
 
-int
-main (int argc, char *argv[])
+int main (int argc, char *argv[])
 {
 
    int done = 0;
@@ -583,20 +647,56 @@ main (int argc, char *argv[])
 
    parseArgs (argc, argv);
 
+   //senquack - added support for custom configuration, as well as storing both it and the main "preferences"
+   //    (hi-score, mode) file to be stored in a subdir $HOME/.rrootage/
 
-/*here whatever you do with configdir*/
+   char *full_portcfg_filename = NULL;
+#if defined(GP2X) || defined(WIZ)
 
-   //senquack - new settings configurable from external utility:
+   // On GCW/Wiz, settings go into the current working dir
+   full_prefs_filename = (char *) malloc( sizeof(base_settings_path) + sizeof(base_prefs_filename) + 1);
+   strcpy(full_prefs_filename, base_settings_path);
+   strcat(full_prefs_filename, base_prefs_filename);
 
-   char *tmp_filename = malloc(strlen(getenv("HOME")) + 1 + strlen(settings_dir) + 1 + strlen(settings_filename) + 1);
-   sprintf(tmp_filename, "%s/%s/%s", getenv("HOME"), settings_dir, settings_filename);
+   full_portcfg_filename = (char *) malloc( sizeof(base_settings_path) + sizeof(base_portcfg_filename) + 1);
+   strcpy(full_portcfg_filename, base_settings_path);
+   strcat(full_portcfg_filename, base_portcfg_filename);
 
-   if (getenv("HOME") && settings_filename && settings_dir &&  read_saved_settings (tmp_filename)) {
-      printf ("Successfully loaded port settings from %s.\n", tmp_filename);
-   } else {
-      printf ("Error reading saved port settings from %s.\n  Loading default settings instead.\n", tmp_filename);
-      settings = default_settings;
-   }
+#else
+
+//   // On all other platforms, settings dir goes into the $HOME dir
+//   if (getenv("HOME")) {
+//      printf("Got $HOME directory environment variable: %s\n", getenv("HOME"));
+//      full_prefs_filename = (char *) malloc( sizeof(getenv("HOME")) + 1 + 
+//                                             sizeof(base_settings_path) + sizeof(base_prefs_filename) + 1);
+//      sprintf(full_prefs_filename, "%s/%s%s", getenv("HOME"), base_settings_path, base_prefs_filename);
+//
+//      full_portcfg_filename = (char *) malloc( sizeof(getenv("HOME")) + 1 + 
+//                                             sizeof(base_settings_path) + sizeof(base_portcfg_filename) + 1);
+//      sprintf(full_portcfg_filename, "%s/%s%s", getenv("HOME"), base_settings_path, base_portcfg_filename);
+//   } else {
+//      printf("Failed to get $HOME directory environment variable, aborting program.\n");
+//      return 1;
+//   }
+//
+//   char *tmp_pathname = (char *) malloc( sizeof(getenv("HOME")) + 1 + sizeof(base_settings_path) + 1);
+//   sprintf(tmp_pathname, "%s/%s", getenv("HOME"), base_settings_path);
+//   printf("Ensuring settings directory exists, creating if not: %s\n", tmp_pathname);
+//   if ( !create_dir(tmp_pathname) ) {
+//      printf("Unable to create missing settings directory, aborting program.\n");
+//      return 1;
+//   }
+//   free(tmp_pathname);
+#endif
+
+//   printf("Loading portcfg settings from: %s\n", full_portcfg_filename);
+//   if ( read_portcfg_settings(full_portcfg_filename) ) {
+//      printf("Successfully read settings.\n");
+//   } else {
+//      printf("Failed to read settings, using defaults.\n");
+//   }
+//   free( full_portcfg_filename );   // Don't need anymore 
+   
 
    //senquack TODO: remember to add WIZ define to Makefile
 #ifdef WIZ
@@ -613,128 +713,144 @@ main (int argc, char *argv[])
 //fflush(stdout);
 
    while (!done) {
+      //TEMP DEBUGGING:
+      // Quit if button/key pressed:
+//      while(SDL_PollEvent(&event)){
+//         switch (event.type) {
+//            case SDL_KEYDOWN:
+//            case SDL_KEYUP:
+//               done = 1;
+//               break;
+//            default:
+//               break;
+//
+//         }
+//      }
+
       SDL_PollEvent (&event);
 //    keys = SDL_GetKeyState(NULL);
 
-
-      //senquack - all this button handling sure is a ugly mess, let's just hack it and try to forget
-//    if ( keys[SDLK_ESCAPE] == SDL_PRESSED || event.type == SDL_QUIT ) done = 1;
-//    if ( keys[SDLK_p] == SDL_PRESSED ) {
-//      if ( !pPrsd ) {
-//       if ( status == IN_GAME ) {
-//         status = PAUSE;
-//       } else if ( status == PAUSE ) {
-//         status = IN_GAME;
-//       }
+    Uint8 *keys = SDL_GetKeyState(NULL);
+//
+//
+//      //senquack - all this button handling sure is a ugly mess, let's just hack it and try to forget
+    if ( keys[SDLK_ESCAPE] == SDL_PRESSED || event.type == SDL_QUIT ) done = 1;
+////    if ( keys[SDLK_p] == SDL_PRESSED ) {
+////      if ( !pPrsd ) {
+////       if ( status == IN_GAME ) {
+////         status = PAUSE;
+////       } else if ( status == PAUSE ) {
+////         status = IN_GAME;
+////       }
+////      }
+////      pPrsd = 1;
+////    } else {
+////      pPrsd = 0;
+////    }
+//
+//      //senquack - Quitting is handled from the main menu.  The quit button merely exits to the
+//      //            main menu and that logic is handled elsewhere now.
+//      //senquack - adding support for rotated screen for Wiz:
+////    if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_START)) {
+////      if ( !pPrsd ) {
+////       if ( status == IN_GAME ) {
+////         status = PAUSE;
+////       } else if ( status == PAUSE ) {
+////         status = IN_GAME;
+////       }
+////      }
+////      pPrsd = 1;
+////    } else {
+////      pPrsd = 0;
+////    }
+////
+////  //senquack
+////  if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
+////     initGameover();
+////  }
+//
+////  if (screenRotated) {
+////     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_A) ||
+////          SDL_JoystickGetButton(stick, GP2X_BUTTON_B) ||  
+////          SDL_JoystickGetButton(stick, GP2X_BUTTON_X) ||
+////          SDL_JoystickGetButton(stick, GP2X_BUTTON_Y) )
+////     {
+////          if ( !pPrsd ) {
+////          if ( status == IN_GAME ) {
+////            status = PAUSE;
+////          } else if ( status == PAUSE ) {
+////            status = IN_GAME;
+////          }
+////          }
+////          pPrsd = 1;
+////     } else {
+////          pPrsd = 0;
+////     }
+////
+////     //senquack
+////     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
+////        initGameover();
+////     }
+////  } else {
+////     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_START)) {
+////       if ( !pPrsd ) {
+////          if ( status == IN_GAME ) {
+////            status = PAUSE;
+////          } else if ( status == PAUSE ) {
+////            status = IN_GAME;
+////          }
+////       }
+////       pPrsd = 1;
+////     } else {
+////       pPrsd = 0;
+////     }
+////
+////     //senquack
+////     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
+////        initGameover();
+////     }
+////  }
+//
+////  if (screenRotated) {
+//      if (settings.rotated) {
+//         if (SDL_JoystickGetButton (stick, settings.rbuttons[PAUSE_IDX])) {
+//            if (!pPrsd) {
+//               if (status == IN_GAME) {
+//                  status = PAUSE;
+//               } else if (status == PAUSE) {
+//                  status = IN_GAME;
+//               }
+//            }
+//            pPrsd = 1;
+//         } else {
+//            pPrsd = 0;
+//         }
+//
+//         //senquack
+//         if (SDL_JoystickGetButton (stick, settings.rbuttons[EXIT_IDX])
+//             && status == IN_GAME) {
+//            initGameover ();
+//         }
+//      } else {
+//         if (SDL_JoystickGetButton (stick, settings.buttons[PAUSE_IDX])) {
+//            if (!pPrsd) {
+//               if (status == IN_GAME) {
+//                  status = PAUSE;
+//               } else if (status == PAUSE) {
+//                  status = IN_GAME;
+//               }
+//            }
+//            pPrsd = 1;
+//         } else {
+//            pPrsd = 0;
+//         }
+//
+//         //senquack
+//         if (SDL_JoystickGetButton (stick, settings.buttons[EXIT_IDX])
+//             && status == IN_GAME) {
+//            initGameover ();
+//         }
 //      }
-//      pPrsd = 1;
-//    } else {
-//      pPrsd = 0;
-//    }
-
-      //senquack - Quitting is handled from the main menu.  The quit button merely exits to the
-      //            main menu and that logic is handled elsewhere now.
-      //senquack - adding support for rotated screen for Wiz:
-//    if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_START)) {
-//      if ( !pPrsd ) {
-//       if ( status == IN_GAME ) {
-//         status = PAUSE;
-//       } else if ( status == PAUSE ) {
-//         status = IN_GAME;
-//       }
-//      }
-//      pPrsd = 1;
-//    } else {
-//      pPrsd = 0;
-//    }
-//
-//  //senquack
-//  if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
-//     initGameover();
-//  }
-
-//  if (screenRotated) {
-//     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_A) ||
-//          SDL_JoystickGetButton(stick, GP2X_BUTTON_B) ||  
-//          SDL_JoystickGetButton(stick, GP2X_BUTTON_X) ||
-//          SDL_JoystickGetButton(stick, GP2X_BUTTON_Y) )
-//     {
-//          if ( !pPrsd ) {
-//          if ( status == IN_GAME ) {
-//            status = PAUSE;
-//          } else if ( status == PAUSE ) {
-//            status = IN_GAME;
-//          }
-//          }
-//          pPrsd = 1;
-//     } else {
-//          pPrsd = 0;
-//     }
-//
-//     //senquack
-//     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
-//        initGameover();
-//     }
-//  } else {
-//     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_START)) {
-//       if ( !pPrsd ) {
-//          if ( status == IN_GAME ) {
-//            status = PAUSE;
-//          } else if ( status == PAUSE ) {
-//            status = IN_GAME;
-//          }
-//       }
-//       pPrsd = 1;
-//     } else {
-//       pPrsd = 0;
-//     }
-//
-//     //senquack
-//     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
-//        initGameover();
-//     }
-//  }
-
-//  if (screenRotated) {
-      if (settings.rotated) {
-         if (SDL_JoystickGetButton (stick, settings.rbuttons[PAUSE_IDX])) {
-            if (!pPrsd) {
-               if (status == IN_GAME) {
-                  status = PAUSE;
-               } else if (status == PAUSE) {
-                  status = IN_GAME;
-               }
-            }
-            pPrsd = 1;
-         } else {
-            pPrsd = 0;
-         }
-
-         //senquack
-         if (SDL_JoystickGetButton (stick, settings.rbuttons[EXIT_IDX])
-             && status == IN_GAME) {
-            initGameover ();
-         }
-      } else {
-         if (SDL_JoystickGetButton (stick, settings.buttons[PAUSE_IDX])) {
-            if (!pPrsd) {
-               if (status == IN_GAME) {
-                  status = PAUSE;
-               } else if (status == PAUSE) {
-                  status = IN_GAME;
-               }
-            }
-            pPrsd = 1;
-         } else {
-            pPrsd = 0;
-         }
-
-         //senquack
-         if (SDL_JoystickGetButton (stick, settings.buttons[EXIT_IDX])
-             && status == IN_GAME) {
-            initGameover ();
-         }
-      }
 
       nowTick = SDL_GetTicks ();
       frame = (int) (nowTick - prvTickCount) / interval;
@@ -773,5 +889,7 @@ main (int argc, char *argv[])
       swapGLScene ();
    }
    quitLast ();
+
+   if (full_prefs_filename) free(full_prefs_filename);
    return 0;
 }

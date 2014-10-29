@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.2 $
  */
+#ifndef FRAG_H
+#define FRAG_H
+
 #include "vector.h"
 
 #define FRAG_COLOR_NUM 2
@@ -67,3 +70,4 @@ void addShapeFrag(GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, 
 #else
 void addShapeFrag(GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int mx, int my);
 #endif //FIXEDMATH
+#endif // FRAG_H

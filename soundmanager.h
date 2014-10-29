@@ -10,6 +10,8 @@
  * @version $Revision: 1.1.1.1 $
  */
 
+#ifndef SOUNDMANAGER_H
+#define SOUNDMANAGER_H
 
 //senquack - gp2x/wiz volume control
 #if defined(GP2X) || defined(WIZ)
@@ -25,3 +27,4 @@ void fadeMusic ();
 void stopMusic ();
 void playChunk (int idx);
 void haltChunk (int idx);
+#endif // SOUNDMANAGER_H

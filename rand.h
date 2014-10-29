@@ -9,5 +9,8 @@
  *
  * @version $Revision: 1.1.1.1 $
  */
+#ifndef RAND_H
+#define RAND_H
 void setSeed (unsigned long s);
 unsigned long nextRand ();
+#endif // RAND_H

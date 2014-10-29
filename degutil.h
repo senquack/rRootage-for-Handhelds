@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.1.1.1 $
  */
+#ifndef DEGUTIL_H
+#define DEGUTIL_H
+
 #define DIV 1024
 #define TAN_TABLE_SIZE 1024
 #define SC_TABLE_SIZE 1024
@@ -30,12 +33,12 @@ extern int tantbl[];
 #define INT2FNUM(x) ((x)<<16)
 // Convert from fixed math to int
 #define FNUM2INT(x) ((x)>>16)
-#endif //FIXEDMATH
 
 
 //#define FMUL(x,y) (int)(((x)*(y))>>16)
 //#define FMUL(x,y) (int)(((long long)(x)*(long long)(y))>>16)
 #define FMUL(x,y) (int)(((long long)(x)*(y))>>16)
+#endif //FIXEDMATH
 
 //senquack - this appears to cause bugs unfortunately:
 //senquack - fast ARM ASM 16:16 fixed point multiply routine:
@@ -52,7 +55,7 @@ extern int tantbl[];
 //#define FDIV(x,y) ((x/y)>>16)
 //#define FDIV(x,y) (((long long)(x)<<16) / (y))
 #if defined(FIXEDMATH) 
-#if (defined(ARM) || defined(GP2X))
+#if (defined(ARM) || defined(GP2X)) || defined(WIZ)
 #define FDIV(x,y) fpdiv(x,y)
 //senquack - fast ARM ASM 16:16 fixed point divide routine:
 //             Credit goes to Henry Thomas and the website is
@@ -79,3 +82,4 @@ void initDegutil ();
 int getDeg (int x, int y);
 int getDistance (int x, int y);
 float getDistanceFloat (float x, float y);
+#endif // DEGUTIL_H

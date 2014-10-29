@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.1 $
  */
+#ifndef SHOT_H
+#define SHOT_H
+
 #include "vector.h"
 
 //senquack - changed shots back to float for all cases:
@@ -36,3 +39,4 @@ void initShots ();
 void moveShots ();
 void drawShots ();
 void addShot (int x, int y, int ox, int oy, int color);
+#endif // SHOT_H

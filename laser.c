@@ -446,12 +446,14 @@ void drawLasers ()
          if ( ls->cnt > 1 )       t = 1;
          else if ( ls->cnt == 1 ) t = 0;
          else                     t = 2;
+//         drawLaser(x, y, (float)laserWidth/FIELD_SCREEN_RATIO, LASER_SCREEN_HEIGHT,
+//               ls->color, 
+//               (ls->color+LASER_COLOR_SPEED)&255,
+//               (ls->color+LASER_COLOR_SPEED*2)&255,  
+//               (ls->color+LASER_COLOR_SPEED*3)&255,
+//               laserCnt, t);
          drawLaser(x, y, (float)laserWidth/FIELD_SCREEN_RATIO, LASER_SCREEN_HEIGHT,
-               ls->color, 
-               (ls->color+LASER_COLOR_SPEED)&255,
-               (ls->color+LASER_COLOR_SPEED*2)&255,  
-               (ls->color+LASER_COLOR_SPEED*3)&255,
-               laserCnt, t);
+               ls->color, laserCnt, t);
       }
    }
 #endif //FIXEDMATH

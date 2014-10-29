@@ -9,10 +9,8 @@
  *
  * @version $Revision: 1.1.1.1 $
  */
-
-//senquack - for fixed-point stuff:
-#include "GLES/gl.h"
-#include "degutil.h"
+#ifndef BACKGROUND_H
+#define BACKGROUND_H
 
 //senquack - converting to fixed point:
 //typedef struct {
@@ -44,3 +42,4 @@ typedef struct {
 void initBackground();
 void moveBackground();
 void drawBackground();
+#endif //BACKGROUND_H

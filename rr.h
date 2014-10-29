@@ -9,6 +9,9 @@
  *
  * @version $Revision: 1.4 $
  */
+#ifndef RR_H
+#define RR_H
+
 #define CAPTION "rRootage"
 #define VERSION_NUM 22
 
@@ -18,8 +21,39 @@ extern int status;
 extern int interval;
 extern int tick;
 
-#if defined(GP2X) || defined(WIZ)
-//senquack  - new settings configurable from an external utility
+#define TITLE 0
+#define IN_GAME 1
+#define GAMEOVER 2
+#define STAGE_CLEAR 3
+#define PAUSE 4
+
+void quitLast ();
+void initTitleStage (int stg);
+void initTitle ();
+void initGame ();
+void initGameover ();
+
+//senquack - added this for custom port configuration:
+extern const char *settings_dir;    // Both the two files below will be written into this dir.
+                                             //   This dir will normally exist in the $HOME dir,
+                                             //    but on GP2X/Wiz it will exist in the current dir. 
+
+extern const char *portcfg_filename;    // This is where we store settings for the custom configurator
+                                                   //    not included with the original rrootage. -senquack
+                                                   //  (Things like custom controls, other new features I added)
+                                                   //    It is a text-mode file handhled here in this source file.
+
+extern const char *prefs_filename;    // This is where we store the standard settings like Hi-score,
+
+enum {   SCREEN_HORIZ,
+         SCREEN_ROTATED_LEFT,
+         SCREEN_ROTATED_RIGHT
+};
+
+/***************** WIZ / GP2X SETTINGS ***************/
+//TODO: clean these up and get them working with new portcfg code
+#if defined(WIZ) || defined(GP2X)
+
 #define MAX_CPU_FREQ		(990)
 #define MIN_CPU_FREQ		(540)
 #define NUM_DEFS 				(8) //number of button redefinition settings
@@ -32,29 +66,27 @@ extern int tick;
 #define VOLDOWN_IDX			(6)
 #define VOLUP_IDX				(7)
 
-//senquack
 #define NUM_BUTTONS  (19)       // total number of buttons we'll need to keep track of
-typedef struct
+#endif //WIZ/GP2X
+
+/**************** CUSTOM PORT SETTINGS *****************/
+typedef struct portcfg_settings
 {
-   int laser_on_by_default;
-   int rotated;
+   int laser_on_by_default;   
+   int rotated;               // Is screen rotated? Assigned to one of: 
+                              //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
+   int music;                 // Is music enabled?
+   int buttons_swapped;       // Are laser / bomb buttons swapped?
+   int joy_deadzone;          // Analog joystick deadzone
+#if defined(WIZ) || defined(GP2X)
    int cpu_freq;                // if this is 0, overclocking is disabled
    int fast_ram;
-   int music;
    int buttons[NUM_DEFS], rbuttons[NUM_DEFS];   //rbuttons is for rotated button definitions
-} rrsettings;
-extern rrsettings settings;
-#endif //GP2X/wiz
+#endif //WIZ/GP2X
+} portcfg_settings;
 
-#define TITLE 0
-#define IN_GAME 1
-#define GAMEOVER 2
-#define STAGE_CLEAR 3
-#define PAUSE 4
+extern portcfg_settings settings;    //portcfg is our global "current-settings"
+extern char *full_prefs_filename;      // Fully-qualified prefs filename
 
-
-void quitLast ();
-void initTitleStage (int stg);
-void initTitle ();
-void initGame ();
-void initGameover ();
+int create_dir(const char *dir);
+#endif //RR_H

@@ -429,7 +429,7 @@ void drawLasers ()
       }
    }
 
-   finishDrawLaserx ();
+   finishDrawLaser ();
 #else
    float x, y;
    int i;
@@ -456,5 +456,6 @@ void drawLasers ()
                ls->color, laserCnt, t);
       }
    }
+   finishDrawLaser ();
 #endif //FIXEDMATH
 }

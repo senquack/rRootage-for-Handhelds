@@ -9949,17 +9949,12 @@ int getPadState ()
       pad |= PAD_UP;
    }
 #elif GCW
-//   pad |= control_state[CUP]        ? PAD_UP       : 0;
-//   pad |= control_state[CDOWN]      ? PAD_DOWN     : 0;
-//   pad |= control_state[CLEFT]      ? PAD_LEFT     : 0;
-//   pad |= control_state[CRIGHT]     ? PAD_RIGHT    : 0;
-   if       (control_state[CUP]        || control_state[CANALOGUP])       pad |= PAD_UP;
-   else if  (control_state[CDOWN]      || control_state[CANALOGDOWN])     pad |= PAD_DOWN;
-   else if  (control_state[CLEFT]      || control_state[CANALOGLEFT])     pad |= PAD_LEFT;
-   else if  (control_state[CRIGHT]     || control_state[CANALOGRIGHT])    pad |= PAD_RIGHT;
-
-   if       (control_state[CBUTTON1])     pad |= PAD_BUTTON1;
-   if       (control_state[CBUTTON2])     pad |= PAD_BUTTON2;
+   if (control_state[CUP]        || control_state[CANALOGUP])       pad |= PAD_UP;
+   if (control_state[CDOWN]      || control_state[CANALOGDOWN])     pad |= PAD_DOWN;
+   if (control_state[CLEFT]      || control_state[CANALOGLEFT])     pad |= PAD_LEFT;
+   if (control_state[CRIGHT]     || control_state[CANALOGRIGHT])    pad |= PAD_RIGHT;
+   if (control_state[CBUTTON1])     pad |= PAD_BUTTON1;
+   if (control_state[CBUTTON2])     pad |= PAD_BUTTON2;
 
 #endif //GCW
 

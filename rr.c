@@ -998,10 +998,14 @@ int main (int argc, char *argv[])
                      control_state[CESCAPE] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
                   case SDLK_SPACE:	// GCW Y button
+                     break;
                   case SDLK_LALT:	// GCW B button
+                     control_state[CBUTTON2] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     break;
                   case SDLK_LSHIFT:	// GCW X button
-                  case SDLK_LCTRL:	// GCW A button
                      control_state[CBUTTON1] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     break;
+                  case SDLK_LCTRL:	// GCW A button
                      break;
                   case SDLK_BACKSPACE:	// GCW L trigger
                      break;

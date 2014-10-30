@@ -99,118 +99,6 @@ void swapGLScene ()
    fflush(NULL);
 }
 
-void renderCube()
-{
-
-    static GLubyte color[8][4] = { {255, 0, 0, },
-    {255, 0, 0, 255},
-    {0, 255, 0, 255},
-    {0, 255, 0, 255},
-    {0, 255, 0, 255},
-    {255, 255, 255, 255},
-    {255, 0, 255, 255},
-    {0, 0, 255, 255}
-    };
-    static GLfloat cube[8][3] = { {0.5, 0.5, -0.5},
-    {0.5f, -0.5f, -0.5f},
-    {-0.5f, -0.5f, -0.5f},
-    {-0.5f, 0.5f, -0.5f},
-    {-0.5f, 0.5f, 0.5f},
-    {0.5f, 0.5f, 0.5f},
-    {0.5f, -0.5f, 0.5f},
-    {-0.5f, -0.5f, 0.5f}
-    };
-    static GLubyte indices[36] = { 0, 3, 4,
-        4, 5, 0,
-        0, 5, 6,
-        6, 1, 0,
-        6, 7, 2,
-        2, 1, 6,
-        7, 4, 3,
-        3, 2, 7,
-        5, 4, 7,
-        7, 6, 5,
-        2, 3, 1,
-        3, 0, 1
-    };
-
-
-    /* Do our drawing, too. */
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-//    glClearColor(1.0,1.0,1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    glClear(GL_COLOR_BUFFER_BIT);
-
-//    /* Draw the cube */
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, cube);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, indices);
-
-    glMatrixMode(GL_MODELVIEW);
-    glRotatef(5.0, 1.0, 1.0, 1.0);
-}
-
-static void renderCubeLoop()
-{
-   eglSwapInterval(egl_screen.display, 1);      // We want VSYNC
-
-   glEnableClientState (GL_VERTEX_ARRAY);
-   glEnableClientState (GL_COLOR_ARRAY);
-//   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-   glViewport (0, 0, 320, 240);
-   glClear(GL_COLOR_BUFFER_BIT);
-
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-//        glOrthof(-2.0, 2.0, -2.0 * aspectAdjust, 2.0 * aspectAdjust, -20.0, 20.0);
-
-        //FINALLY GOT A CUBE!
-//        glOrthof(-2.6666, 2.6666, -2.0 , 2.0 , -20.0, 20.0);
-
-   glOrthof(-1.3333, 1.3333, -1.0 , 1.0 , -20.0, 20.0);
-
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-   glEnable(GL_DEPTH_TEST);
-   glDepthFunc(GL_LESS);
-   glShadeModel(GL_SMOOTH);
-
-
-   int quit = 0;
-   SDL_Event event;
-
-   // Main loop:
-   while (!quit ) {
-
-//      // Print current fps:
-//      printf("%d FPS\n", fps());
-
-      // Quit if button/key pressed:
-      while(SDL_PollEvent(&event)){
-         switch (event.type) {
-            case SDL_KEYDOWN:
-            case SDL_KEYUP:
-               quit = 1;
-               break;
-            default:
-               break;
-
-         }
-      }
-      renderCube();
-      swapGLScene ();
-
-   }
-//   while(SDL_PollEvent(&event)){
-//      usleep(0);
-//   }
-//   usleep(1000000);
-}
-
 //OpenGLES-related:
 /** @brief Error checking function
  * @param file : string reference that contains the source file that the check is occuring in
@@ -335,7 +223,9 @@ int initGLES()
 //      EGL_BLUE_SIZE,     6,
 //      EGL_GREEN_SIZE,    5,
 //      EGL_ALPHA_SIZE,    0,
+
       EGL_BUFFER_SIZE,   16,
+//      EGL_BUFFER_SIZE,   32,
 //#endif
       // senquack TODO - Do we really even need a depth buffer?
       EGL_DEPTH_SIZE,    16,     
@@ -424,13 +314,9 @@ int initGLES()
 
    printf( "OpenGLES: Setting swap interval\n" );
    eglSwapInterval(egl_screen.display, 1);      // We want VSYNC
-//   eglSwapInterval(egl_screen.display, 0);      // We want VSYNC
 
    printf( "OpenGLES: Initialization complete\n" );
    CheckGLESErrors( __FILE__, __LINE__ );
-
-
-   renderCubeLoop();
 
    glViewport (0, 0, 320, 240);
 
@@ -460,8 +346,6 @@ int initGLES()
    resized (SCREEN_WIDTH, SCREEN_HEIGHT);
    return 0;
 }
-
-
 
 // Close down OpenGLES (return 0 for success, 1 for error)
 int closeGLES()
@@ -800,7 +684,9 @@ loadGLTexture (char *fileName, GLuint * texture)
 {
    SDL_Surface *surface;
    int mode;                    //The bit-depth of the texture.
-   char name[32];
+   //senquack: far too short for safety:
+//   char name[32];
+   char name[1024];
    strcpy (name, SHARE_LOC);
    strcat (name, "images/");
    strcat (name, fileName);
@@ -898,8 +784,11 @@ loadGLTexture (char *fileName, GLuint * texture)
    //Disabled for gpu940
    glGenTextures (1, texture);
    glBindTexture (GL_TEXTURE_2D, *texture);
-   //glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-   //glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+   //senquack - shouldn't be using mipmap if we don't use it below anymore
+//   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+
    //Disabled for gpu940
    //gluBuild2DMipmaps(GL_TEXTURE_2D, 3, surface->w, surface->h, GL_RGB, GL_UNSIGNED_BYTE, surface->pixels);
 
@@ -2535,8 +2424,8 @@ void drawStar (int f, GLfixed x, GLfixed y, int r, int g, int b, GLfixed size)
    glBlendFunc (GL_ONE, GL_SRC_ALPHA);
 //  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 // glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
-//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
    glEnable (GL_BLEND);
@@ -2586,8 +2475,8 @@ void drawStar (int f, GLfloat x, GLfloat y, int r, int g, int b, float size)
    glBlendFunc (GL_ONE, GL_SRC_ALPHA);
 //  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 // glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
-//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
    glEnable (GL_BLEND);
@@ -5375,7 +5264,7 @@ void finishDrawShapes (void)
 {
 // glPopMatrix();
 
-   // now, draw all the cores (points)
+   // now, draw all the cores of the foes (points)
    //senquack BIG TODO: interleave & change drawing of point squares as 4 vertices using triangle strip
 #ifdef FIXEDMATH
    glVertexPointer (2, GL_FIXED, 0, shapeptvertices);
@@ -7105,18 +6994,18 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
    *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
    *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
    *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE_X;
+   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
 
    switch (type) {
    case 0:
@@ -8339,18 +8228,18 @@ void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type,
    *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
    *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
    *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE_X;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE_X;
+   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
 
 //  glColor4i(ikaClr[c][0][0], ikaClr[c][0][1], ikaClr[c][0][2], 255);
 //    glEnable(GL_BLEND);
@@ -9541,8 +9430,8 @@ void drawTitleBoard ()
    glEnable (GL_BLEND);
 // glBlendFunc(GL_ONE, GL_SRC_COLOR);
    glBlendFunc (GL_ONE, GL_SRC_ALPHA);
-//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
-//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
+   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 
    memset (colors, 255, 5 * 4);
 // vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(78);
@@ -9690,18 +9579,24 @@ void drawTitleBoard ()
 //  glVertex3f(350, 114,  0);
 //  glEnd();
 
-   GLubyte colors[5 * 4];
-   GLfloat vertices[5 * 2];
-// GLfixed texvertices[4*2];
+//   GLubyte colors[5 * 4];
+//   GLfloat vertices[5 * 2];
+
+   //senquack - line loops appear to be broken under GCW's etnaviv driver, turned into line strips:
+   GLubyte colors[6 * 4];
+   GLfloat vertices[6 * 2];
    GLfloat texvertices[4 * 2];
+
+   glVertexPointer (2, GL_FLOAT, 0, vertices);
+   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
 
    glEnable (GL_TEXTURE_2D);
    glBindTexture (GL_TEXTURE_2D, titleTexture);
    glEnable (GL_BLEND);
 // glBlendFunc(GL_ONE, GL_SRC_COLOR);
    glBlendFunc (GL_ONE, GL_SRC_ALPHA);
-//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
-//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
+   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 
    memset (colors, 255, 5 * 4);
 // vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(78);
@@ -9729,11 +9624,9 @@ void drawTitleBoard ()
    texvertices[5] = 0;
    texvertices[6] = 1;
    texvertices[7] = 0;
-//
+
 ////  glEnableClientState(GL_VERTEX_ARRAY);
-   glVertexPointer (2, GL_FLOAT, 0, vertices);
 ////  glEnableClientState(GL_COLOR_ARRAY);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
    glTexCoordPointer (2, GL_FLOAT, 0, texvertices);
 // glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -9744,14 +9637,6 @@ void drawTitleBoard ()
    glDisable (GL_BLEND);
    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-//  glColor4i(200, 200, 200, 255);
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(350, 30, 0);
-//  glVertex3f(400, 30, 0);
-//  glVertex3f(380, 56, 0);
-//  glVertex3f(380, 80, 0);
-//  glVertex3f(350, 80, 0);
-//  glEnd();
 
    colors[0] = colors[1] = colors[2] =
       colors[4] = colors[5] = colors[6] =
@@ -9794,7 +9679,8 @@ void drawTitleBoard ()
    glDrawArrays (GL_TRIANGLE_FAN, 0, 5);
 
 //  glColor4i(255, 255, 255, 255);
-   memset (colors, 255, 5*4);
+//   memset (colors, 255, 5*4);
+   memset (colors, 255, 6*4);
 
 //  glBegin(GL_LINE_LOOP);
 //  glVertex3f(350, 30, 0);
@@ -9803,17 +9689,23 @@ void drawTitleBoard ()
 //  glVertex3f(380, 80, 0);
 //  glVertex3f(350, 80, 0);
 //  glEnd();
+
    vertices[0] = 350;
    vertices[1] = 30;
    vertices[2] = 400;
    vertices[3] = 30;
    vertices[4] = 380;
-   vertices[5] = 56;
+//   vertices[5] = 56;
+   vertices[5] = 54;
    vertices[6] = 380;
    vertices[7] = 80;
    vertices[8] = 350;
    vertices[9] = 80;
-   glDrawArrays (GL_LINE_LOOP, 0, 5);
+   vertices[10] = 350;
+   vertices[11] = 30;
+   //senquack - line loops appear to be broken under GCW's etnaviv driver, turned into line strips:
+//   glDrawArrays (GL_LINE_LOOP, 0, 5);
+   glDrawArrays (GL_LINE_STRIP, 0, 6);
 
 //  glBegin(GL_LINE_LOOP);
 //  glVertex3f(404, 80, 0);
@@ -9832,7 +9724,11 @@ void drawTitleBoard ()
    vertices[7] = 44;
    vertices[8] = 465;
    vertices[9] = 80;
-   glDrawArrays (GL_LINE_LOOP, 0, 5);
+   vertices[10] = 404;
+   vertices[11] = 80;
+   //senquack - line loops appear to be broken under GCW's etnaviv driver, turned into line strips:
+//   glDrawArrays (GL_LINE_LOOP, 0, 5);
+   glDrawArrays (GL_LINE_STRIP, 0, 6);
 }
 #endif //FIXEDMATH
 
@@ -10442,7 +10338,7 @@ void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
       x[2] /= mag;
    }
 
-   mag = sqrt(y[0] * y[0] + y[1] * y[1] + y[2] * y[2]);
+   mag = sqrtf(y[0] * y[0] + y[1] * y[1] + y[2] * y[2]);
    if (mag) {
       y[0] /= mag;
       y[1] /= mag;

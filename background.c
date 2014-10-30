@@ -606,7 +606,7 @@ void drawBackground() {
    GLfloat	*bgverticeptr;				// ptr to next vertice to enter data to
    GLubyte	*bgcolorptr;					// ptr to next vertice color to enter data to
 
-   glVertexPointer(3, GL_FIXED, 0, bgvertices);
+   glVertexPointer(3, GL_FLOAT, 0, bgvertices);
    glColorPointer(4, GL_UNSIGNED_BYTE, 0, bgcolors);
    //	glEnable(GL_BLEND);
 

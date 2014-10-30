@@ -495,35 +495,124 @@ move ()
 //    break;
 //  }
 //}
-static void
-draw ()
+//senquack - DEBUGGING GCW:
+//static void draw ()
+//{
+//   switch (status) {
+//   case TITLE:
+//      //printf("draw(): Drawing TITLE\n");
+//      //printf("draw(): Drawing TITLE - drawBackground\n");
+//      drawBackground ();
+//      //printf("draw(): Drawing TITLE - drawBoss\n");
+//      drawBoss ();
+//      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
+//      drawBulletsWake ();
+//      //printf("draw(): Drawing TITLE - drawBullets\n");
+//      drawBullets ();
+//      //printf("draw(): Drawing TITLE - startDrawBoards\n");
+//      startDrawBoards ();
+//      //printf("draw(): Drawing TITLE - drawSideBoards\n");
+//      drawSideBoards ();
+//      //printf("draw(): Drawing TITLE - drawTitle\n");
+//// if (screenRotated) 
+//      if (settings.rotated)
+//         drawTitle_rotated ();
+//      else
+//         drawTitle ();
+//
+//      //printf("draw(): Drawing TITLE - endDrawBoards\n");
+//      endDrawBoards ();
+//      //printf("draw(): Drawing TITLE - drawTestPoly\n");
+////    drawTestPoly();
+//      break;
+//   case IN_GAME:
+//   case STAGE_CLEAR:
+//      //senquack
+////    printf("draw(): Drawing STAGE_CLEAR\n");
+//      drawBackground ();
+//      drawBoss ();
+//      drawLasers ();
+//      drawShots ();
+//      drawBulletsWake ();
+//      drawFrags ();
+//      drawShip ();
+//      drawBullets ();
+//      startDrawBoards ();
+//      drawSideBoards ();
+////senquack - support rotated screen:
+////  drawBossState();
+////    if (screenRotated) 
+//      if (settings.rotated)
+//         drawBossState_rotated ();
+//      else
+//         drawBossState ();
+//      endDrawBoards ();
+//      break;
+//   case GAMEOVER:
+//      //senquack
+////    printf("draw(): Drawing GAMEOVER\n");
+//      drawBackground ();
+//      drawBoss ();
+//      drawBulletsWake ();
+//      drawFrags ();
+//      drawBullets ();
+//      startDrawBoards ();
+//      drawSideBoards ();
+//      drawGameover ();
+//      endDrawBoards ();
+//      break;
+//   case PAUSE:
+//      //senquack
+////    printf("draw(): Drawing PAUSE\n");
+//      drawBackground ();
+//      drawBoss ();
+//      drawLasers ();
+//      drawShots ();
+//      drawBulletsWake ();
+//      drawFrags ();
+//      drawShip ();
+//      drawBullets ();
+//      startDrawBoards ();
+//      drawSideBoards ();
+////senquack - support rotated screen:
+////  drawBossState();
+////    if (screenRotated) 
+//      if (settings.rotated)
+//         drawBossState_rotated ();
+//      else
+//         drawBossState ();
+//      drawPause ();
+//      endDrawBoards ();
+//      break;
+//   }
+//}
+static void draw ()
 {
    switch (status) {
    case TITLE:
-      //printf("draw(): Drawing TITLE\n");
-      //printf("draw(): Drawing TITLE - drawBackground\n");
+//      //printf("draw(): Drawing TITLE\n");
+//      //printf("draw(): Drawing TITLE - drawBackground\n");
       drawBackground ();
-      //printf("draw(): Drawing TITLE - drawBoss\n");
+//      //printf("draw(): Drawing TITLE - drawBoss\n");
       drawBoss ();
-      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
+//      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
       drawBulletsWake ();
-      //printf("draw(): Drawing TITLE - drawBullets\n");
+//      //printf("draw(): Drawing TITLE - drawBullets\n");
       drawBullets ();
-      //printf("draw(): Drawing TITLE - startDrawBoards\n");
+//      //printf("draw(): Drawing TITLE - startDrawBoards\n");
       startDrawBoards ();
-      //printf("draw(): Drawing TITLE - drawSideBoards\n");
+//      //printf("draw(): Drawing TITLE - drawSideBoards\n");
       drawSideBoards ();
-      //printf("draw(): Drawing TITLE - drawTitle\n");
-// if (screenRotated) 
+//      //printf("draw(): Drawing TITLE - drawTitle\n");
       if (settings.rotated)
          drawTitle_rotated ();
       else
          drawTitle ();
-
-      //printf("draw(): Drawing TITLE - endDrawBoards\n");
+//
+//      //printf("draw(): Drawing TITLE - endDrawBoards\n");
       endDrawBoards ();
-      //printf("draw(): Drawing TITLE - drawTestPoly\n");
-//    drawTestPoly();
+//      //printf("draw(): Drawing TITLE - drawTestPoly\n");
+////    drawTestPoly();
       break;
    case IN_GAME:
    case STAGE_CLEAR:
@@ -873,18 +962,11 @@ int main (int argc, char *argv[])
          tick++;
       }
 
-//  //senquack - display FPS so we can optimize
-//  fpsctr_frames++;
-//  fpsctr_newticks = SDL_GetTicks();
-//  if ((fpsctr_newticks - fpsctr_oldticks) >= 1000)
-//  {
-//     printf("\nFPS: %d\n", fpsctr_frames); fflush(stdout);
-//     fpsctr_frames = 0;
-//     fpsctr_oldticks = fpsctr_newticks;
-//  }
-
       drawGLSceneStart ();
+      //DEBUG:
       draw ();
+//      extern void renderCube();
+//      renderCube();
       drawGLSceneEnd ();
       swapGLScene ();
    }

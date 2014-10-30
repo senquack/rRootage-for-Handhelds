@@ -25,6 +25,8 @@ extern "C"
 //senquack BIG TODO: For Wiz, I had left all these member funcs as returning double.. I could probably convert them
 //       to floats for speedup:
 //senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
+
+//senquack - converted all doubles to floats:
 FoeCommand::FoeCommand (BulletMLParser * parser, Foe * f)
    :
 BulletMLRunner (parser)
@@ -42,28 +44,28 @@ FoeCommand::~FoeCommand ()
 {
 }
 
-double
+float
 FoeCommand::getBulletDirection ()
 {
-   return (double) foe->d * 360 / DIV;
+   return (float) foe->d * 360 / DIV;
 }
 
-double
+float
 FoeCommand::getAimDirection ()
 {
    int d = getPlayerDeg (foe->pos.x, foe->pos.y);
    if (foe->xReverse == -1)
       d = (-d) & 1023;
-   return ((double) d * 360 / DIV);
+   return ((float) d * 360 / DIV);
 }
 
-double
+float
 FoeCommand::getBulletSpeed ()
 {
-   return ((double) foe->spd) / COMMAND_SCREEN_SPD_RATE;
+   return ((float) foe->spd) / COMMAND_SCREEN_SPD_RATE;
 }
 
-double
+float
 FoeCommand::getDefaultSpeed ()
 {
    return 1;
@@ -74,7 +76,7 @@ FoeCommand::getDefaultSpeed ()
 //double FoeCommand::getRank() {
 //  return foe->rank;
 //}
-double
+float
 FoeCommand::getRank ()
 {
 #ifdef FIXEDMATH
@@ -86,7 +88,7 @@ FoeCommand::getRank ()
 }
 
 void
-FoeCommand::createSimpleBullet (double direction, double speed)
+FoeCommand::createSimpleBullet (float direction, float speed)
 {
    int d = (int) (direction * DIV / 360);
    d &= (DIV - 1);
@@ -96,8 +98,8 @@ FoeCommand::createSimpleBullet (double direction, double speed)
 }
 
 void
-FoeCommand::createBullet (BulletMLState * state, double direction,
-                          double speed)
+FoeCommand::createBullet (BulletMLState * state, float direction,
+                          float speed)
 {
    int d = (int) (direction * DIV / 360);
    d &= (DIV - 1);
@@ -119,37 +121,37 @@ FoeCommand::doVanish ()
 }
 
 void
-FoeCommand::doChangeDirection (double d)
+FoeCommand::doChangeDirection (float d)
 {
    foe->d = (int) (d * DIV / 360);
 }
 
 void
-FoeCommand::doChangeSpeed (double s)
+FoeCommand::doChangeSpeed (float s)
 {
    foe->spd = (int) (s * COMMAND_SCREEN_SPD_RATE);
 }
 
 void
-FoeCommand::doAccelX (double ax)
+FoeCommand::doAccelX (float ax)
 {
    foe->vel.x = (int) (ax * COMMAND_SCREEN_VEL_RATE);
 }
 
 void
-FoeCommand::doAccelY (double ay)
+FoeCommand::doAccelY (float ay)
 {
    foe->vel.y = (int) (ay * COMMAND_SCREEN_VEL_RATE);
 }
 
-double
+float
 FoeCommand::getBulletSpeedX ()
 {
-   return ((double) foe->vel.x / COMMAND_SCREEN_VEL_RATE);
+   return ((float) foe->vel.x / COMMAND_SCREEN_VEL_RATE);
 }
 
-double
+float
 FoeCommand::getBulletSpeedY ()
 {
-   return ((double) foe->vel.y / COMMAND_SCREEN_VEL_RATE);
+   return ((float) foe->vel.y / COMMAND_SCREEN_VEL_RATE);
 }

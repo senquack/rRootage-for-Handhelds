@@ -539,8 +539,7 @@ setFoeBattery (Boss * bs, Battery * bt, Attack * at,
    if (at->xrAlter && (idx & 1) == 1)
       xr = -xr;
 #ifdef FIXEDMATH
-   bt->foe =
-      addFoeBattery (bs->x + bt->x, bs->y + bt->y, at->frank, 512, 0, xr, mrp,
+   bt->foe = addFoeBattery (bs->x + bt->x, bs->y + bt->y, at->frank, 512, 0, xr, mrp,
                      at->morphCnt, at->morphHalf, at->fmorphRank,
                      at->fspeedRank, sp->color, sp->bulletShape,
                      sp->fbulletSize, lt, at->ikaType,
@@ -1002,7 +1001,7 @@ addBossTreeFrag (BossTree * bt)
 //    (bt->fz[i+1]+bt->fz[i])>>1, 
 //    INT2FNUM(dst>>9), deg);
 //senquack TODO: figure out why I used FDIV here instead of shifting: .. also clean the crap above it
-      addBossFragx (((bt->fx[i + 1] + bt->fx[i]) >> 1) + fx,
+      addBossFrag (((bt->fx[i + 1] + bt->fx[i]) >> 1) + fx,
                     -((bt->fy[i + 1] + bt->fy[i]) >> 1) + fy,
                     (bt->fz[i + 1] + bt->fz[i]) >> 1,
                     FDIV (INT2FNUM (dst), 33554432), deg);
@@ -1031,7 +1030,7 @@ addBossTreeFrag (BossTree * bt)
 //    (bt->fez[i]+bt->fz[bpn])>>1, 
 //    INT2FNUM(dst>>9), deg);
 //senquack TODO: figure out why I used FDIV here instead of shifting: .. also clean the crap above it
-      addBossFragx (((bt->fex[i] + bt->fx[bpn]) >> 1) + fx,
+      addBossFrag (((bt->fex[i] + bt->fx[bpn]) >> 1) + fx,
                     -((bt->fey[i] + bt->fy[bpn]) >> 1) + fy,
                     (bt->fez[i] + bt->fz[bpn]) >> 1,
                     FDIV (INT2FNUM (dst), 33554432), deg);
@@ -1891,7 +1890,7 @@ finishDrawBossWings(void)
 
 //senquack - added this for GLES1.1 fixed-point
 static void
-drawBossWing(GLfoat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWing * wg)
+drawBossWing(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWing * wg)
 {
    int i;
    GLfloat sz = wg->size;
@@ -2003,9 +2002,9 @@ void drawBoss ()
       df = bossShape.diffuse;
 //    drawStar(1, x, y, 0, df, df, df, (float)(df+256)/500.0f);
 //    drawStar(1, x, y, 0, df, df, df, (float)(df+randN(256))/500.0f);
-      drawStarx (1, fx, fy, df, df, df,
+      drawStar (1, fx, fy, df, df, df,
                  FDIV (INT2FNUM (df + 256), INT2FNUM (500)));
-      drawStarx (1, fx, fy, df, df, df,
+      drawStar (1, fx, fy, df, df, df,
                  FDIV (INT2FNUM (df + randN (256)), INT2FNUM (500)));
    }
 
@@ -2044,7 +2043,7 @@ void drawBoss ()
          case DESTROIED:
 // drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
 // drawLinex(fx1, fy1, fz1, fx2, fy2, fz2, bossShape.r, bossShape.g, bossShape.b, 240);
-            drawLinex (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+            drawLine (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
                        bossShape.b, 240);
 
 // drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
@@ -2058,11 +2057,11 @@ void drawBoss ()
    //central #ifdef'd drawLine and drawLinePart like it should be:
 
                //senquack - don't need 3D vertices for this
-               drawLinePartx (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+               drawLinePart (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
                               bossShape.b, 240, crBpl);
             } else if (j < crBpn) {
 //   drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
-               drawLinex (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+               drawLine (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
                           bossShape.b, 240);
             }
             if (crBpn == bpn) {
@@ -2087,8 +2086,8 @@ void drawBoss ()
             //    ALSO: make drawStar just one function again, instead of having a separate fixed and float version
 // drawStar(0, x2, y2, z2, df, df, df, (float)(df+256)/900.0f);
 // drawStar(0, x2, y2, z2, df, df, df, (float)(df+randN(256))/900.0f);
-            drawStarx(0, x2, y2, df, df, df, FDIV(INT2FNUM(df+256), f2x(900.0)));
-            drawStarx(0, x2, y2, df, df, df, FDIV(INT2FNUM(df+randN(256)), f2x(900.0)));
+            drawStar(0, x2, y2, df, df, df, FDIV(INT2FNUM(df+256), f2x(900.0)));
+            drawStar(0, x2, y2, df, df, df, FDIV(INT2FNUM(df+randN(256)), f2x(900.0)));
          }
 //      x1 = x2; y1 = y2; z1 = z2;
 //      fx1 = fx2; fy1 = fy2; fz1 = fz2;
@@ -2115,7 +2114,7 @@ void drawBoss ()
          case LAST_ATTACK:
          case DESTROIED:
 // drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
-            drawLinex (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
+            drawLine (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
                        bossShape.b, 220);
 //   glColor4hack(bossShape.r, bossShape.g, bossShape.b, 220);
 //   glBegin(GL_LINE_LOOP);
@@ -2130,8 +2129,7 @@ void drawBoss ()
          case CREATING:
             if (crBpn == bpn) {
 //   drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
-               drawLinePartx (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
-                              bossShape.b, 220, crBpl);
+               drawLinePart (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
 //   bt->eWing[j].size = (float)crBpl/255;
 //   bt->eWing[j].fsize = INT2FNUM(crBpl>>8);
 //   bt->eWing[j].fsize =  f2x((float)crBpl/255.0f); 
@@ -2144,8 +2142,7 @@ void drawBoss ()
             break;
          case CHANGE:
 // drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
-            drawLinex (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g,
-                       bossShape.b, 220);
+            drawLine (fx1, fy1, fx2, fy2, bossShape.r, bossShape.g, bossShape.b, 220);
 //   glColor4hack(bossShape.r, bossShape.g, bossShape.b, 220);
 //   glBegin(GL_LINE_LOOP);
 //   glVertex3f(x1, y1, z1);
@@ -2168,19 +2165,17 @@ void drawBoss ()
             df = bt->diffuse;
 // drawStar(1, x2, y2, z2, df, df, df, (float)(df+256)/640.0f);
 // drawStar(1, x2, y2, z2, df, df, df, (float)(df+randN(256))/640.0f);
-            drawStarx (1, fx2, fy2, df, df, df,
-                       FDIV (INT2FNUM (df + 256), INT2FNUM (640)));
-            drawStarx (1, fx2, fy2, df, df, df,
-                       FDIV (INT2FNUM (df + randN (256)), INT2FNUM (640)));
+            drawStar (1, fx2, fy2, df, df, df, FDIV (INT2FNUM (df + 256), INT2FNUM (640)));
+            drawStar (1, fx2, fy2, df, df, df, FDIV (INT2FNUM (df + randN (256)), INT2FNUM (640)));
          }
       }
    }
-   finishDrawBossWingsx ();
+   finishDrawBossWings ();
 
    //senquack TODO: make drawCore just one fixed/float version:
 //  drawCore(x, y, boss.cnt, boss.r, boss.g, boss.b);
 //  drawCorex(f2x(x), f2x(y), boss.cnt, boss.r, boss.g, boss.b);
-   drawCorex (fx, fy, boss.cnt, boss.r, boss.g, boss.b);
+   drawCore (fx, fy, boss.cnt, boss.r, boss.g, boss.b);
 #else
    prepareDrawBossWings();
   float x, y;
@@ -2388,8 +2383,7 @@ drawBossState ()
    cwd = boss.patternChangeShield * 300 / BOSS_SHIELD_MAX;
    if (wd > cwd) {
 //    drawNumCenter(boss.patternChangeShield, 176+cwd, 10, 6, 240, 210, 210);
-      drawNumCenter (boss.patternChangeShield, 165 + cwd, 10, 6, 240, 210,
-                     210);
+      drawNumCenter (boss.patternChangeShield, 165 + cwd, 10, 6, 240, 210, 210);
    }
 }
 
@@ -2429,7 +2423,6 @@ drawBossState_rotated ()
    cwd = boss.patternChangeShield * 300 / BOSS_SHIELD_MAX;
    if (wd > cwd) {
 //    drawNumCenter(boss.patternChangeShield, 176+cwd, 10, 6, 240, 210, 210);
-      drawNumCenter (boss.patternChangeShield, 165 + cwd, 10, 6, 240, 210,
-                     210);
+      drawNumCenter (boss.patternChangeShield, 165 + cwd, 10, 6, 240, 210, 210);
    }
 }

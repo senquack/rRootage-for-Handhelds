@@ -87,16 +87,11 @@ static int fps()
 
 void swapGLScene ()
 {
-//  SDL_GL_SwapBuffers();
-   printf("Swapping scene..\n");
-   fflush(NULL);
    if (eglSwapBuffers(egl_screen.display, egl_screen.surface) != GL_TRUE) {
       printf("OpenGLES: eglSwapBuffers failed!\n");
    } else {
       printf("FPS: %d\n", fps());
    }
-   printf("Finished swapping scene..\n");
-   fflush(NULL);
 }
 
 //OpenGLES-related:

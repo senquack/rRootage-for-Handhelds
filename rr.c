@@ -41,19 +41,6 @@
 static int noSound = 0;
 
 //senquack - modified code to store files in subdir, modified filenames:
-//const char *settings_dir   = ".rrootage";    // Both the two files below will be written into this dir.
-//                                             //   This dir will normally exist in the $HOME dir,
-//                                             //    but on GP2X/Wiz it will exist in the current dir. 
-//
-//const char *portcfg_filename = "rr.conf";    // This is where we store settings for the custom configurator
-//                                                   //    not included with the original rrootage. -senquack
-//                                                   //  (Things like custom controls, other new features I added)
-//                                                   //    It is a text-mode file handhled here in this source file.
-//
-//const char *prefs_filename = "rr.bin";    // This is where we store the standard settings like Hi-score,
-//                                                //    game mode, etc, from the original rRootage.
-//                                                //    It is a binary-mode file handled in attractmanager.c
-
 #if defined(GP2X) || defined(WIZ)
 static const char *base_settings_path = "./";
 #else
@@ -753,39 +740,38 @@ int main (int argc, char *argv[])
 
 #else
 
-//   // On all other platforms, settings dir goes into the $HOME dir
-//   if (getenv("HOME")) {
-//      printf("Got $HOME directory environment variable: %s\n", getenv("HOME"));
-//      full_prefs_filename = (char *) malloc( sizeof(getenv("HOME")) + 1 + 
-//                                             sizeof(base_settings_path) + sizeof(base_prefs_filename) + 1);
-//      sprintf(full_prefs_filename, "%s/%s%s", getenv("HOME"), base_settings_path, base_prefs_filename);
-//
-//      full_portcfg_filename = (char *) malloc( sizeof(getenv("HOME")) + 1 + 
-//                                             sizeof(base_settings_path) + sizeof(base_portcfg_filename) + 1);
-//      sprintf(full_portcfg_filename, "%s/%s%s", getenv("HOME"), base_settings_path, base_portcfg_filename);
-//   } else {
-//      printf("Failed to get $HOME directory environment variable, aborting program.\n");
-//      return 1;
-//   }
-//
-//   char *tmp_pathname = (char *) malloc( sizeof(getenv("HOME")) + 1 + sizeof(base_settings_path) + 1);
-//   sprintf(tmp_pathname, "%s/%s", getenv("HOME"), base_settings_path);
-//   printf("Ensuring settings directory exists, creating if not: %s\n", tmp_pathname);
-//   if ( !create_dir(tmp_pathname) ) {
-//      printf("Unable to create missing settings directory, aborting program.\n");
-//      return 1;
-//   }
-//   free(tmp_pathname);
+   // On all other platforms, settings dir goes into the $HOME dir
+   if (getenv("HOME")) {
+      printf("Got $HOME directory environment variable: %s\n", getenv("HOME"));
+      full_prefs_filename = (char *) malloc( strlen(getenv("HOME")) + 1 + 
+                                             strlen(base_settings_path) + strlen(base_prefs_filename) + 1);
+      sprintf(full_prefs_filename, "%s/%s%s", getenv("HOME"), base_settings_path, base_prefs_filename);
+
+      full_portcfg_filename = (char *) malloc( strlen(getenv("HOME")) + 1 + 
+                                             strlen(base_settings_path) + strlen(base_portcfg_filename) + 1);
+      sprintf(full_portcfg_filename, "%s/%s%s", getenv("HOME"), base_settings_path, base_portcfg_filename);
+   } else {
+      printf("Failed to get $HOME directory environment variable, aborting program.\n");
+      return 1;
+   }
+
+   char *tmp_pathname = (char *) malloc( strlen(getenv("HOME")) + 1 + strlen(base_settings_path) + 1);
+   sprintf(tmp_pathname, "%s/%s", getenv("HOME"), base_settings_path);
+   printf("Ensuring settings directory exists, creating if not: %s\n", tmp_pathname);
+   if ( !create_dir(tmp_pathname) ) {
+      printf("Unable to create missing settings directory, aborting program.\n");
+      return 1;
+   }
+   free(tmp_pathname);
 #endif
 
-//   printf("Loading portcfg settings from: %s\n", full_portcfg_filename);
-//   if ( read_portcfg_settings(full_portcfg_filename) ) {
-//      printf("Successfully read settings.\n");
-//   } else {
-//      printf("Failed to read settings, using defaults.\n");
-//   }
-//   free( full_portcfg_filename );   // Don't need anymore 
-   
+   printf("Loading portcfg settings from: %s\n", full_portcfg_filename);
+   if ( read_portcfg_settings(full_portcfg_filename) ) {
+      printf("Successfully read settings.\n");
+   } else {
+      printf("Failed to read settings, using defaults.\n");
+   }
+   free( full_portcfg_filename );   // Don't need anymore 
 
    //senquack TODO: remember to add WIZ define to Makefile
 #ifdef WIZ

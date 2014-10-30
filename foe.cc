@@ -810,7 +810,7 @@ drawBulletsWake ()
          y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
          sx =  (float)fe->spos.x / FIELD_SCREEN_RATIO;
          sy = -(float)fe->spos.y / FIELD_SCREEN_RATIO;
-         drawLine(x, y, 0, sx, sy, 0, 150, 180, 90, (63-fe->cnt)*3);        
+         drawLine(x, y, sx, sy, 150, 180, 90, (63-fe->cnt)*3);        
 #endif //FIXEDMATH
       }
    }

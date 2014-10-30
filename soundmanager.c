@@ -239,13 +239,8 @@ initSound ()
                SDL_GetError ());
       return;
    }
-   //senquack - altering for GP2X: (NOTE: channels = 1 is correct, the original OGG music is mono)
-//  audio_rate = 44100;
-//  audio_format = AUDIO_S16;
-//  audio_channels = 1;
-//  audio_buffers = 4096;
 
-//  audio_rate = 22050;
+   //senquack - altering for GP2X: (NOTE: channels = 1 is correct, the original OGG music is mono)
 #if defined(GP2X) || defined(WIZ)
    audio_rate = 44100;
    audio_format = AUDIO_S16;
@@ -257,7 +252,13 @@ initSound ()
    audio_format = AUDIO_S16;
    audio_channels = 1;
    audio_buffers = 1024;
+#else
+  audio_rate = 44100;
+  audio_format = AUDIO_S16;
+  audio_channels = 1;
+  audio_buffers = 4096;
 #endif
+
 
    if (Mix_OpenAudio (audio_rate, audio_format, audio_channels, audio_buffers)
        < 0) {

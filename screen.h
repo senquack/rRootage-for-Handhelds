@@ -16,6 +16,9 @@
 #include "GLES/gl.h"
 #include "GLES/egl.h"
 
+// For joystick
+#include "SDL.h"
+
 //Original rrootage code:
 #define PAD_UP 1
 #define PAD_DOWN 2
@@ -23,6 +26,7 @@
 #define PAD_RIGHT 8
 #define PAD_BUTTON1 16
 #define PAD_BUTTON2 32
+
 
 #if defined(WIZ) || defined(GP2X)
 //GP2X mappings
@@ -59,6 +63,9 @@ extern float zoom;
 //senquack
 //extern Uint8 *keys;
 //extern SDL_Joystick *stick;
+#ifdef GCW
+extern SDL_Joystick *joy_analog;
+#endif
 
 extern int buttonReversed;
 extern int lowres;

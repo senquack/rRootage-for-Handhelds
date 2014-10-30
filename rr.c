@@ -66,8 +66,10 @@ portcfg_settings settings = {
                                                           //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
    .music                  = 1,                           // Is music enabled?
    .buttons_swapped        = 0,                           // Are laser / bomb buttons swapped?
-   .joy_deadzone           = 5000                         // Analog joystick deadzone
+   .analog_deadzone        = 5000,                        // Analog joystick deadzone
+   .analog_enabled         = 1
 };     
+
 
 //senquack - TODO: clean up crufty old Wiz port settings code, adapt it to new portcfg code:
 //#if defined(GP2X) || defined(WIZ)
@@ -192,8 +194,10 @@ int read_portcfg_settings (const char *filename)
          settings.music = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "buttons_swapped") == 0) {
          settings.buttons_swapped = clamp (atoi (param), 0, 1);
-      } else if (strcasecmp (str, "joy_deadzone") == 0) {
-         settings.joy_deadzone = clamp (atoi (param), 1000, 30000);
+      } else if (strcasecmp (str, "analog_deadzone") == 0) {
+         settings.analog_deadzone = clamp (atoi (param), 1000, 30000);
+      } else if (strcasecmp (str, "analog_enabled") == 0) {
+         settings.analog_enabled = clamp (atoi (param), 0, 1);
 #if defined(WIZ)
       } else if (strcasecmp (str, "fast_ram") == 0) {
          settings.fast_ram = clamp (atoi (param), 0, 1);
@@ -259,6 +263,34 @@ int read_portcfg_settings (const char *filename)
    }
    fclose (f);
    return 1;
+}
+
+//senquack - added control state abstraction
+int control_state[CNUMCONTROLS];
+
+int control_pressed(int control)
+{
+	if (control < CNUMCONTROLS)
+		return control_state[control];
+	else
+		printf("Error: invalid parameter to control_pressed(int): %d\n", control);
+		return 0;
+}
+	
+//DKS - this function is used to determine if any button at all is pressed (barring the DPAD directionals)
+int any_control_pressed(void)
+{
+//	return control_state[CHELP] || control_state[CPAUSE] || control_state[CENTER] || control_state[CESCAPE];
+}
+
+//DKS - added this hack function to fix power slider issues on GCW and when enabling/disabling gsensor/analog stick
+// Details: slider issues SDLK_PAUSE keypress before slider daemon
+// handles volume/lcd brightness adjustment, this somehow can interfere
+// with game's directional keystates after it is released.
+// Intended to be called from control_update() below
+static void control_reset()
+{
+	memset(control_state, 0, sizeof control_state);
 }
 
 #if defined(WIZ)
@@ -668,42 +700,43 @@ static int accframe = 0;
 static void
 usage (char *argv0)
 {
-//  fprintf(stderr, "Usage: %s [-rotate] [-laser] [-nosound] [-reverse] [-nowait] [-accframe]\n", argv0);
-   fprintf (stderr, "Usage: %s [-nosound] [-nowait] [-accframe]\n", argv0);
+////  fprintf(stderr, "Usage: %s [-rotate] [-laser] [-nosound] [-reverse] [-nowait] [-accframe]\n", argv0);
+//   fprintf (stderr, "Usage: %s [-nosound] [-nowait] [-accframe]\n", argv0);
 }
 
+//senquack - don't need to parse args
 static void
 parseArgs (int argc, char *argv[])
 {
-   int i;
-   for (i = 1; i < argc; i++) {
-//    if ( strcmp(argv[i], "-lowres") == 0 ) {
-//      lowres = 1;
-//    } else if ( strcmp(argv[i], "-nosound") == 0 ) {
-      if (strcmp (argv[i], "-nosound") == 0) {
-         noSound = 1;
-      }
-//    } else if ( strcmp(argv[i], "-window") == 0 ) {
-//      windowMode = 1;
-//    } else if ( strcmp(argv[i], "-reverse") == 0 ) {
-//      buttonReversed = 1;
-//    }
-      /* else if ( (strcmp(argv[i], "-brightness") == 0) && argv[i+1] ) {
-         i++;
-         brightness = (int)atoi(argv[i]);
-         if ( brightness < 0 || brightness > 256 ) {
-         brightness = DEFAULT_BRIGHTNESS;
-         }
-         } */
-      else if (strcmp (argv[i], "-nowait") == 0) {
-         nowait = 1;
-      } else if (strcmp (argv[i], "-accframe") == 0) {
-         accframe = 1;
-      } else {
-         usage (argv[0]);
-         exit (1);
-      }
-   }
+//   int i;
+//   for (i = 1; i < argc; i++) {
+////    if ( strcmp(argv[i], "-lowres") == 0 ) {
+////      lowres = 1;
+////    } else if ( strcmp(argv[i], "-nosound") == 0 ) {
+////      if (strcmp (argv[i], "-nosound") == 0) {
+////         noSound = 1;
+////      }
+////    } else if ( strcmp(argv[i], "-window") == 0 ) {
+////      windowMode = 1;
+////    } else if ( strcmp(argv[i], "-reverse") == 0 ) {
+////      buttonReversed = 1;
+////    }
+//      /* else if ( (strcmp(argv[i], "-brightness") == 0) && argv[i+1] ) {
+//         i++;
+//         brightness = (int)atoi(argv[i]);
+//         if ( brightness < 0 || brightness > 256 ) {
+//         brightness = DEFAULT_BRIGHTNESS;
+//         }
+//         } */
+//      else if (strcmp (argv[i], "-nowait") == 0) {
+//         nowait = 1;
+//      } else if (strcmp (argv[i], "-accframe") == 0) {
+//         accframe = 1;
+//      } else {
+//         usage (argv[0]);
+//         exit (1);
+//      }
+//   }
 }
 
 int interval = INTERVAL_BASE;
@@ -802,14 +835,15 @@ int main (int argc, char *argv[])
 //         }
 //      }
 
-      SDL_PollEvent (&event);
+//      SDL_PollEvent (&event);
 //    keys = SDL_GetKeyState(NULL);
 
-    Uint8 *keys = SDL_GetKeyState(NULL);
+//    Uint8 *keys = SDL_GetKeyState(NULL);
 //
 //
 //      //senquack - all this button handling sure is a ugly mess, let's just hack it and try to forget
-    if ( keys[SDLK_ESCAPE] == SDL_PRESSED || event.type == SDL_QUIT ) done = 1;
+//    if ( keys[SDLK_ESCAPE] == SDL_PRESSED || event.type == SDL_QUIT ) done = 1;
+
 ////    if ( keys[SDLK_p] == SDL_PRESSED ) {
 ////      if ( !pPrsd ) {
 ////       if ( status == IN_GAME ) {
@@ -926,6 +960,88 @@ int main (int argc, char *argv[])
 //            initGameover ();
 //         }
 //      }
+
+//senquack TODO: adapt this newer control handling to the older Wiz port stuff:
+#ifdef GCW
+      while(SDL_PollEvent(&event)) {
+         switch(event.type) {
+            case SDL_QUIT:
+               done = 1;
+               break;
+            case SDL_KEYDOWN:
+            case SDL_KEYUP:
+               switch(event.key.keysym.sym) {
+                  case SDLK_HOME:	// GCW Power slider - apply hack 
+                     control_reset();
+                     return;
+                     break;
+                  case SDLK_UP:
+                     control_state[CUP] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     control_state[CDOWN] = 0;	// power slider bug hack
+                     break;
+                  case SDLK_DOWN:
+                     control_state[CDOWN] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     control_state[CUP] = 0;	// power slider bug hack
+                     break;
+                  case SDLK_LEFT:
+                     control_state[CLEFT] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     control_state[CRIGHT] = 0;	// power slider bug hack
+                     break;
+                  case SDLK_RIGHT:
+                     control_state[CRIGHT] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     control_state[CLEFT] = 0;	// power slider bug hack
+                     break;
+                  case SDLK_RETURN:	// GCW Start button
+                     control_state[CPAUSE] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     break;
+                  case SDLK_ESCAPE:	// GCW Select button
+                     control_state[CESCAPE] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     break;
+                  case SDLK_SPACE:	// GCW Y button
+                  case SDLK_LALT:	// GCW B button
+                  case SDLK_LSHIFT:	// GCW X button
+                  case SDLK_LCTRL:	// GCW A button
+                     control_state[CBUTTON1] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     break;
+                  case SDLK_BACKSPACE:	// GCW L trigger
+                     break;
+                  case SDLK_TAB:	      // GCW R trigger
+                     control_state[CBUTTON2] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     break;
+                  default:
+                     break;
+               }
+         }
+      }
+
+      // ANALOG JOY:
+      if (settings.analog_enabled && joy_analog) {
+         Sint16 xmove, ymove;
+         xmove=SDL_JoystickGetAxis(joy_analog,0);
+         ymove=SDL_JoystickGetAxis(joy_analog,1);
+         control_state[CANALOGLEFT] 	= (xmove < -settings.analog_deadzone);
+         control_state[CANALOGRIGHT] 	= (xmove > settings.analog_deadzone);
+         control_state[CANALOGUP] 		= (ymove < -settings.analog_deadzone);
+         control_state[CANALOGDOWN] 	= (ymove > settings.analog_deadzone);
+      } else {
+         control_state[CANALOGUP] = control_state[CANALOGDOWN] =
+            control_state[CANALOGLEFT] = control_state[CANALOGRIGHT] = 0;
+      }
+
+      // Escape doesn't quit whole game, only exits to main menu.
+//      if (control_state[CESCAPE])    done = 1;
+      if (control_state[CESCAPE] && status == IN_GAME) {
+        initGameover();
+      }
+
+      if (control_state[CPAUSE]) {
+         if ( status == IN_GAME ) {
+            status = PAUSE;
+         } else if ( status == PAUSE ) {
+            status = IN_GAME;
+         }
+      }
+#endif //GCW
 
       nowTick = SDL_GetTicks ();
       frame = (int) (nowTick - prvTickCount) / interval;

@@ -827,9 +827,15 @@ static GLuint titleTexture;
 int lowres = 0;
 int windowMode = 0;
 int brightness = DEFAULT_BRIGHTNESS;
+
 //Uint8 *keys;
 //int joystickMode = 1;
 //SDL_Joystick *stick = NULL;
+
+//senquack - GCW's analog stick
+#ifdef GCW
+SDL_Joystick *joy_analog = NULL;
+#endif
 
 
 //senquack - support screen rotation:
@@ -970,13 +976,32 @@ void initSDL ()
 //      exit(1);
 //   }
 
-//   printf("Initializing SDL joystick subsystem..\n");
+   printf("Initializing SDL joystick subsystem..\n");
    if ( SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0 ) {
-      printf ("Unable to initialize SDL_JOYSTICK: %s\n",
+      printf ("Unable to initialize SDL joystick subsystem: %s\n",
             SDL_GetError ());
 //      joystickMode = 0;
-      exit (1);
+   } else {
+#ifdef GCW
+	printf ("Initializing GCW analog joystick driver..\n");
+	for (int i = 0; i < SDL_NumJoysticks(); i++)
+	{
+		printf("Joystick %u: \"%s\"\n", i, SDL_JoystickName(i));
+		if (strcmp(SDL_JoystickName(i), "linkdev device (Analog 2-axis 8-button 2-hat)") == 0)
+		{
+			joy_analog = SDL_JoystickOpen(i);
+			if (joy_analog)
+				printf("Recognized GCW Zero's built-in analog stick.\n");
+			else
+				printf("ERROR: Failed to recognize GCW Zero's built-in analog stick..\n");
+      }
+	}
+	SDL_JoystickEventState(SDL_IGNORE); // We'll do our own polling
+#endif
    }
+
+	//DKS - also disable keyboard events:
+	SDL_EnableKeyRepeat(0, 0); // No key repeat
 
 //   screenWidth = SCREEN_WIDTH;
 //   screenHeight = SCREEN_HEIGHT;
@@ -1037,6 +1062,9 @@ closeSDL ()
 //    SDL_GL_DeleteContext(glcontext);
 //    SDL_DestroyWindow(window);
 
+#ifdef GCW
+  if (joy_analog) SDL_JoystickClose(joy_analog);
+#endif
 
    closeGLES();
 
@@ -4002,8 +4030,11 @@ void drawShipShape (GLfloat x, GLfloat y, float d, int inv)
    glPushMatrix ();
    glTranslatef (x, y, 0);
 
-   GLubyte colors[4 * 4];
-   GLfloat vertices[4 * 3];
+   //senquack - working around bug on etnaviv, have to use LINE_STRIP instead of LINE_LOOP:
+//   GLubyte colors[4 * 4];
+//   GLfloat vertices[4 * 3];
+   GLubyte colors[5 * 4];
+   GLfloat vertices[5 * 3];
    colors[0] = colors[4] = colors[8] = colors[12] = 255;
    colors[1] = colors[5] = colors[9] = colors[13] = colors[2] = colors[6] = colors[10] = colors[14] = 100;
    colors[3] = colors[7] = colors[11] = colors[15] = 255;
@@ -4036,12 +4067,14 @@ void drawShipShape (GLfloat x, GLfloat y, float d, int inv)
 
 //    glColor4i(120, 220, 100, 150);
 
+   //senquack - working around bug on etnaviv, have to use LINE_STRIP instead of LINE_LOOP:
+   //       (had to add one more vertex to complete the rectangle)
+
    //senquack - moved these outside the loop
-   colors[0] = colors[4] = colors[8] = colors[12] = 120;
-   colors[1] = colors[5] = colors[9] = colors[13] = 220;
-   // shouldn't be necessary (already set):
-// colors[2] = colors[6] = colors[10] = colors[14] = 100;
-   colors[3] = colors[7] = colors[11] = colors[15] = 150;
+   colors[0] = colors[4] = colors[8] = colors[12] = colors[16] = 120;
+   colors[1] = colors[5] = colors[9] = colors[13] = colors[17] = 220;
+   colors[2] = colors[6] = colors[10] = colors[14] = colors[18] = 100;
+   colors[3] = colors[7] = colors[11] = colors[15] = colors[19] = 150;
 
    vertices[0] = -SHIP_DRUM_WIDTH;
    vertices[1] = -SHIP_DRUM_HEIGHT;
@@ -4055,13 +4088,18 @@ void drawShipShape (GLfloat x, GLfloat y, float d, int inv)
    vertices[9] = -SHIP_DRUM_WIDTH;
    vertices[10] = SHIP_DRUM_HEIGHT;
    vertices[11] = SHIP_DRUM_R;
+   vertices[12] = -SHIP_DRUM_WIDTH;
+   vertices[13] = -SHIP_DRUM_HEIGHT;
+   vertices[14] = SHIP_DRUM_R;
 
 //  for ( i=0 ; i<8 ; i++ ) {
    for (i = 8; i > 0; i--) {
 // glRotatex(INT2FNUM(45), 0, INT2FNUM(1), 0);
       glRotatef (45, 0, 1, 0);
-      glDrawArrays (GL_LINE_LOOP, 0, 4);
+//      glDrawArrays (GL_LINE_LOOP, 0, 4);
+      glDrawArrays (GL_LINE_STRIP, 0, 5);
    }
+
    glPopMatrix ();
 }
 #endif //FIXEDMATH
@@ -8492,8 +8530,11 @@ static int shtClr[3][3][3] = {
 //}
 void drawShot (GLfloat x, GLfloat y, GLfloat d, int c, float width, float height)
 {
-   GLubyte colors[4 * 4];
-   GLfixed vertices[4 * 2];
+   //senquack - changing to LINE_STRIP to work around etnaviv bug:
+//   GLubyte colors[4 * 4];
+//   GLfloat vertices[4 * 2];
+   GLubyte colors[5 * 4];
+   GLfloat vertices[5 * 2];
 
    glPushMatrix ();
    glTranslatef (x, y, 0);
@@ -8516,10 +8557,10 @@ void drawShot (GLfloat x, GLfloat y, GLfloat d, int c, float width, float height
    glVertexPointer (2, GL_FLOAT, 0, vertices);
    glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
 
-   colors[0] = colors[4] = colors[8] = colors[12] = shtClr[c][0][0];
-   colors[1] = colors[5] = colors[9] = colors[13] = shtClr[c][0][1];
-   colors[2] = colors[6] = colors[10] = colors[14] = shtClr[c][0][2];
-   colors[3] = colors[7] = colors[11] = colors[15] = 240;
+   colors[0] = colors[4] = colors[8] = colors[12] = colors[16] = shtClr[c][0][0];
+   colors[1] = colors[5] = colors[9] = colors[13] = colors[17] = shtClr[c][0][1];
+   colors[2] = colors[6] = colors[10] = colors[14] = colors[18] = shtClr[c][0][2];
+   colors[3] = colors[7] = colors[11] = colors[15] = colors[19] = 240;
    vertices[0] = -width;
    vertices[1] = -height;
    vertices[2] = -width;
@@ -8528,7 +8569,10 @@ void drawShot (GLfloat x, GLfloat y, GLfloat d, int c, float width, float height
    vertices[5] = -height;
    vertices[6] = width;
    vertices[7] = height;
-   glDrawArrays (GL_LINE_LOOP, 0, 4);
+   vertices[8] = -width;
+   vertices[9] = -height;
+//   glDrawArrays (GL_LINE_LOOP, 0, 4);
+   glDrawArrays (GL_LINE_STRIP, 0, 5);
 
 //  glColor4i(shtClr[c][1][0], shtClr[c][1][1], shtClr[c][1][2], 240);
 //  glBegin(GL_TRIANGLE_FAN);
@@ -9888,19 +9932,6 @@ int getPadState ()
          gp2x_upright = SDL_JoystickGetButton (stick, GP2X_BUTTON_UPRIGHT);
       }
    }
-   //senquack
-//  if ( keys[SDLK_RIGHT] == SDL_PRESSED || keys[SDLK_KP6] == SDL_PRESSED || x > JOYSTICK_AXIS || gp2x_right || gp2x_downright || gp2x_upright) {
-//    pad |= PAD_RIGHT;
-//  }
-//  if ( keys[SDLK_LEFT] == SDL_PRESSED || keys[SDLK_KP4] == SDL_PRESSED || x < -JOYSTICK_AXIS || gp2x_left || gp2x_downleft || gp2x_upleft) {
-//    pad |= PAD_LEFT;
-//  }
-//  if ( keys[SDLK_DOWN] == SDL_PRESSED || keys[SDLK_KP2] == SDL_PRESSED || y > JOYSTICK_AXIS || gp2x_down || gp2x_downright || gp2x_downleft) {
-//    pad |= PAD_DOWN;
-//  }
-//  if ( keys[SDLK_UP] == SDL_PRESSED ||  keys[SDLK_KP8] == SDL_PRESSED || y < -JOYSTICK_AXIS || gp2x_up || gp2x_upright || gp2x_upleft) {
-//    pad |= PAD_UP;
-//  }
    if (gp2x_right || gp2x_downright || gp2x_upright) {
       pad |= PAD_RIGHT;
    }
@@ -9913,16 +9944,25 @@ int getPadState ()
    if (gp2x_up || gp2x_upright || gp2x_upleft) {
       pad |= PAD_UP;
    }
+#elif GCW
+//   pad |= control_state[CUP]        ? PAD_UP       : 0;
+//   pad |= control_state[CDOWN]      ? PAD_DOWN     : 0;
+//   pad |= control_state[CLEFT]      ? PAD_LEFT     : 0;
+//   pad |= control_state[CRIGHT]     ? PAD_RIGHT    : 0;
+   if       (control_state[CUP]        || control_state[CANALOGUP])       pad |= PAD_UP;
+   else if  (control_state[CDOWN]      || control_state[CANALOGDOWN])     pad |= PAD_DOWN;
+   else if  (control_state[CLEFT]      || control_state[CANALOGLEFT])     pad |= PAD_LEFT;
+   else if  (control_state[CRIGHT]     || control_state[CANALOGRIGHT])    pad |= PAD_RIGHT;
 
-#endif
+   if       (control_state[CBUTTON1])     pad |= PAD_BUTTON1;
+   if       (control_state[CBUTTON2])     pad |= PAD_BUTTON2;
+
+#endif //GCW
 
    return pad;
 }
 
-int buttonReversed = 0;
-
-//senquack - added to allow the laser to always be firing *except* when the fire button is pressed:
-int laserOnByDefault = 0;
+//int buttonReversed = 0;
 
 //senquack - adding support for rotated screen:
 //int getButtonState() {
@@ -9970,6 +10010,7 @@ int laserOnByDefault = 0;
 //    if ( !buttonReversed ) {
 //      //printf("pressed!!!\n\n\n\n\n");
 //      btn |= PAD_BUTTON1;
+
 //    } else {
 //      btn |= PAD_BUTTON2;
 //    }
@@ -10002,7 +10043,9 @@ int laserOnByDefault = 0;
 //}
 int getButtonState ()
 {
-   //senquack BIG TODO: fix this for gcw:
+#if 0
+   //senquack BIG TODO: clean up or remove this unused code on GCW:
+
    int btn = 0;
    int btn1 = 0, btn2 = 0;
    int btn_volup = 0, btn_voldown = 0;
@@ -10113,6 +10156,7 @@ int getButtonState ()
 
 #endif
    return btn;
+#endif //0
 }
 
 // to perform cross product between 2 vectors in FadiGluLookAt

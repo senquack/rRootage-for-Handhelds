@@ -77,7 +77,8 @@ typedef struct portcfg_settings
                               //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
    int music;                 // Is music enabled?
    int buttons_swapped;       // Are laser / bomb buttons swapped?
-   int joy_deadzone;          // Analog joystick deadzone
+   int analog_deadzone;       // Analog joystick deadzone
+   int analog_enabled;        // Analog joystick enalbed?
 #if defined(WIZ) || defined(GP2X)
    int cpu_freq;                // if this is 0, overclocking is disabled
    int fast_ram;
@@ -87,6 +88,26 @@ typedef struct portcfg_settings
 
 extern portcfg_settings settings;    //portcfg is our global "current-settings"
 extern char *full_prefs_filename;      // Fully-qualified prefs filename
+
+//senquack - new controls handling code:
+enum {
+   CUP,
+   CDOWN,
+   CLEFT,
+   CRIGHT,
+   CPAUSE,
+   CESCAPE,
+   CVOLUP,
+   CVOLDOWN,
+   CBUTTON1,
+   CBUTTON2,
+   CANALOGUP,
+   CANALOGDOWN,
+   CANALOGLEFT,
+   CANALOGRIGHT,
+   CNUMCONTROLS,
+};
+extern int control_state[CNUMCONTROLS];      // Control state abstraction
 
 int create_dir(const char *dir);
 #endif //RR_H

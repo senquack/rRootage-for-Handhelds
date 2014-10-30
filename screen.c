@@ -2156,7 +2156,11 @@ void drawLinePart(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, 
 
 //senquack - fixed point version (only called from frag.c)
 // note: we dropped the a parameter (always 255 it turns out)
+#ifdef FIXEDMATH
 GLfixed rolllinevertices[4];
+#else
+GLfloat rolllinevertices[4];
+#endif //FIXEDMATH
 GLubyte rolllinecolors[8];
 
 //senquack - BIG TODO - looks like I never followed through completely with batch-drawing roll-lines for some reason:

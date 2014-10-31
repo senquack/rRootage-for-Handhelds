@@ -35,7 +35,6 @@
 #define SCREEN_WIDTH    320
 #define SCREEN_HEIGHT   240
 #define SCREEN_BPP      16
-//#define SCREEN_FLAGS    (SDL_FULLSCREEN | SDL_HWSURFACE)
 #define SCREEN_FLAGS    (SDL_FULLSCREEN)
 //#define LOWRES_SCREEN_WIDTH 320
 //#define LOWRES_SCREEN_HEIGHT 240
@@ -219,8 +218,8 @@ int initGLES()
 //      EGL_GREEN_SIZE,    5,
 //      EGL_ALPHA_SIZE,    0,
 
-      EGL_BUFFER_SIZE,   16,
-//      EGL_BUFFER_SIZE,   32,
+//      EGL_BUFFER_SIZE,   16,
+      EGL_BUFFER_SIZE,   SCREEN_BPP,
 //#endif
       // senquack TODO - Do we really even need a depth buffer?
       EGL_DEPTH_SIZE,    16,     
@@ -337,6 +336,31 @@ int initGLES()
    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+//   //DEBUG
+//  //new support for screen rotations:
+   glMatrixMode(GL_MODELVIEW);
+
+  //DEBUG:
+  settings.rotated = SCREEN_ROTATED_RIGHT;
+   if (settings.rotated == SCREEN_ROTATED_LEFT) {
+      glRotatef (90.0, 0, 0, 1.0);
+   } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
+      glRotatef (-90.0, 0, 0, 1.0);
+   }
+   glPushMatrix();
+//
+//  //new support for screen rotations:
+//   glMatrixMode(GL_PROJECTION);
+//
+//  //DEBUG:
+//  settings.rotated = SCREEN_ROTATED_RIGHT;
+//   if (settings.rotated == SCREEN_ROTATED_LEFT) {
+//      glRotatef (-90.0, 0, 0, 1.0);
+//   } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
+//      glRotatef (90.0, 0, 0, 1.0);
+//   }
+//   glPushMatrix();
+//
    //senquack - TODO : gotta stop calling resize() all the time
    resized (SCREEN_WIDTH, SCREEN_HEIGHT);
    return 0;
@@ -345,6 +369,10 @@ int initGLES()
 // Close down OpenGLES (return 0 for success, 1 for error)
 int closeGLES()
 {
+//   //DEBUG rotation
+   glPopMatrix();
+//   glPopMatrix();
+
    EGLBoolean result;
    printf("Closing OpenGLES..\n");
    result = eglMakeCurrent(egl_screen.display, NULL, NULL, EGL_NO_CONTEXT);
@@ -1188,15 +1216,40 @@ moveScreenShake ()
    }
 }
 
+//senquack DEBUG
+//void drawGLSceneStart() {
+//   glClear(GL_COLOR_BUFFER_BIT);
+//   setEyepos();
+//}
 void drawGLSceneStart() {
-  glClear(GL_COLOR_BUFFER_BIT);
-  setEyepos();
+
+   glClear(GL_COLOR_BUFFER_BIT);
+   setEyepos();
+
+//  //DEBUG:
+//  //new support for screen rotations:
+//   glMatrixMode(GL_MODELVIEW);
+//  settings.rotated = SCREEN_ROTATED_RIGHT;
+//   if (settings.rotated == SCREEN_ROTATED_LEFT) {
+//      glRotatef (90.0, 0, 0, 1.0);
+//   } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
+//      glRotatef (-90.0, 0, 0, 1.0);
+//   }
+//   glPushMatrix();
+
 }
 
-void
-drawGLSceneEnd ()
+//senquack DEBUG
+//void drawGLSceneEnd ()
+//{
+//   glPopMatrix ();
+//}
+void drawGLSceneEnd ()
 {
    glPopMatrix ();
+
+   //new for rotation:
+//   glPopMatrix();
 }
 
 
@@ -2163,7 +2216,6 @@ GLfloat rolllinevertices[4];
 #endif //FIXEDMATH
 GLubyte rolllinecolors[8];
 
-//senquack - BIG TODO - looks like I never followed through completely with batch-drawing roll-lines for some reason:
 //senquack - this allows us to avoid a few hundred unnecessary calls to these two functions:
 void
 prepareDrawRollLine (void)
@@ -5273,17 +5325,12 @@ static GLfloat *shapeptvertptr = &shapeptvertices[0];
 static GLubyte shapeptcolors[1024 * 4 * 6];
 static GLubyte *shapeptcolptr = &shapeptcolors[0];
 
-////senquack - experiment
-//static int samectr = 0;
-//static int diffctr = 0;
-//static int   shouldrotate = 1;
-//static int   lastd = 0;     // keeps track of the direction angle of the last shape so we can 
-//                         //    avoid unnecessary calls to opengl rotation stuff if this shape is the same
 
 //senquack - new function called once before a series of calls to drawShape (for openglES speedup)
 void prepareDrawShapes (void)
 {
 //  glPushMatrix();
+
    glEnable (GL_BLEND);
 #ifdef FIXEDMATH
    glVertexPointer (2, GL_FIXED, 0, shapevertices);
@@ -5293,13 +5340,12 @@ void prepareDrawShapes (void)
    glColorPointer (4, GL_UNSIGNED_BYTE, 0, shapecolors);
    shapeptvertptr = &shapeptvertices[0];
    shapeptcolptr = &shapeptcolors[0];
-// lastd = 0;
-// shouldrotate = 1;
 }
 
 void finishDrawShapes (void)
 {
 // glPopMatrix();
+   glDisable (GL_BLEND);
 
    // now, draw all the cores of the foes (points)
    //senquack BIG TODO: interleave & change drawing of point squares as 4 vertices using triangle strip
@@ -5312,10 +5358,6 @@ void finishDrawShapes (void)
    glDrawArrays (GL_TRIANGLES, 0,
                  ((unsigned int) shapeptcolptr -
                   (unsigned int) (&shapeptcolors[0])) >> 2);
-
-   //senquack - experiment: TODO: go back to this experiment and see about doing more shapes in batches
-// printf("samectr: %d   diffctr: %d\n", samectr, diffctr);
-// samectr = 0; diffctr = 0;
 }
 
 //senquack TODO - MANDATORY: roll this into one fixed/float function
@@ -6377,17 +6419,6 @@ void drawShape (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, in
 {
    GLfixed sz, sz2;           // fixed point versions of above 
 
-//  //senquack - experiment
-//  if (lastd == d) {
-////    samectr++;
-//   shouldrotate = 0;
-//  } else {
-////    diffctr++;
-//   shouldrotate = 1;
-//  }
-//  lastd = d;
-//
-//
 ////  glPushMatrix();
 //  if (shouldrotate) {
 //   glPopMatrix();
@@ -6974,25 +7005,11 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
 {
    GLfloat sz, sz2;       
 
-//  //senquack - experiment
-//  if (lastd == d) {
-////    samectr++;
-//   shouldrotate = 0;
-//  } else {
-////    diffctr++;
-//   shouldrotate = 1;
-//  }
-//  lastd = d;
-//
-//
 ////  glPushMatrix();
 //  if (shouldrotate) {
 //   glPopMatrix();
 //   glPushMatrix();
 //  }
-   glPushMatrix ();
-
-  glTranslatef(x, y, 0);
 
 // //core of shapes
 // shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = r;
@@ -7025,12 +7042,18 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
 
    //senquack BIG TODO: interleave & change drawing of point squares as 4 vertices using triangle strip
    // The core dots that make up each shape are drawn after all shapes are drawn in one huge batch:
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
+   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
+   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
+   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
+   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
+   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
    *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
    *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
    *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
@@ -7043,6 +7066,9 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
    *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
    *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
    *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
+
+   glPushMatrix ();
+   glTranslatef(x, y, 0);
 
    switch (type) {
    case 0:
@@ -7050,7 +7076,9 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
     sz = size * 0.5f;
 
 //    glRotatef((float)d*360/1024, 0, 0, 1);
+
       glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
+
 //    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
 
       //same thing:
@@ -7109,7 +7137,10 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
       // senquack - diamond shape
       sz = size * 0.5f;
 //    glRotatef((float)((cnt*23)&1023)*360/1024, 0, 0, 1);
+
       glRotatef ((float) ((((cnt * 23) & 1023) * 360) >> 10), 0, 0, 1);
+
+
 //    if (shouldrotate) glRotatef((float)((((cnt*23)&1023)*360)>>10), 0, 0, 1);
       //senquack - same thing:
 //    glRotatex(INT2FNUM((((cnt*23)&1023)*360)>>10), 0, 0, INT2FNUM(1));
@@ -7193,7 +7224,9 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
 //  blah = !blah;
 
 //    glRotatef((float)d*360/1024, 0, 0, 1);
+
       glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
+
 //    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
       //same thing:
 //    glRotatex(INT2FNUM((d*360)>>10), 0, 0, INT2FNUM(1));
@@ -7262,7 +7295,10 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
 
       //senquack
 //    glRotatef((float)((cnt*37)&1023)*360/1024, 0, 0, 1);
+
+
       glRotatef ((float) ((((cnt * 37) & 1023) * 360) >> 10), 0, 0, 1);
+
 //    if (shouldrotate) glRotatef((float)((((cnt*37)&1023)*360)>>10), 0, 0, 1);
 
       //same thing:
@@ -7334,7 +7370,9 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
 
       //senquack
 //    glRotatef((float)((cnt*53)&1023)*360/1024, 0, 0, 1);
+
       glRotatef ((float) ((((cnt * 53) & 1023) * 360) >> 10), 0, 0, 1);
+
 //    if (shouldrotate) glRotatef((float)((((cnt*53)&1023)*360)>>10), 0, 0, 1);
       //same thing:
 //    glRotatex(INT2FNUM((((cnt*53)&1023)*360)>>10), 0, 0, INT2FNUM(1));
@@ -7428,7 +7466,9 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
 //  blah = !blah;
 
 //    glRotatef((float)d*360/1024, 0, 0, 1);
+
       glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
+
 //    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
       //same thing:
 //    glRotatex(INT2FNUM((d*360)>>10), 0, 0, INT2FNUM(1));
@@ -7481,7 +7521,9 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
 
       //senquack
 //    glRotatef((float)((cnt*13)&1023)*360/1024, 0, 0, 1);
+
       glRotatef ((float) ((((cnt * 13) & 1023) * 360) >> 10), 0, 0, 1);
+
 //    if (shouldrotate) glRotatef((float)((((cnt*13)&1023)*360)>>10), 0, 0, 1);
 //    glRotatex(INT2FNUM((((cnt*13)&1023)*360)>>10), 0, 0, INT2FNUM(1));
 //    glRotatex((((cnt*13)&1023)*360)<<6, 0, 0, INT2FNUM(1));
@@ -8039,16 +8081,6 @@ void drawShapeIka (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type,
 {
    GLfixed sz, sz2, sz3;
 
-//  //senquack - experiment
-//  if (lastd == d) {
-////    samectr++;
-//   shouldrotate = 0;
-//  } else {
-////    diffctr++;
-//   shouldrotate = 1;
-//  }
-//  lastd = d;
-
    glPushMatrix ();
 //  if (shouldrotate) glPushMatrix();
    glTranslatex (x, y, 0);
@@ -8212,16 +8244,6 @@ void drawShapeIka (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type,
 void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int c)
 {
    GLfloat sz, sz2, sz3;
-
-//  //senquack - experiment
-//  if (lastd == d) {
-////    samectr++;
-//   shouldrotate = 0;
-//  } else {
-////    diffctr++;
-//   shouldrotate = 1;
-//  }
-//  lastd = d;
 
    glPushMatrix ();
 //  if (shouldrotate) glPushMatrix();
@@ -8644,17 +8666,31 @@ void startDrawBoards ()
    glLoadIdentity ();
 }
 #else
+//senquack DEBUG rotation:
+//void startDrawBoards() {
+//  glMatrixMode(GL_PROJECTION);
+//  //senquack - dunno why we do this -- TODO: double check this
+////  glPushMatrix();
+//  glLoadIdentity();
+//  glOrthof(0, 640, 480, 0, -1, 1);
+//  glMatrixMode(GL_MODELVIEW);
+//  glPushMatrix();
+//  glLoadIdentity();
+//}
 void startDrawBoards() {
   glMatrixMode(GL_PROJECTION);
   //senquack - dunno why we do this -- TODO: double check this
 //  glPushMatrix();
   glLoadIdentity();
   glOrthof(0, 640, 480, 0, -1, 1);
+
+
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
 }
 #endif //FIXEDMATH
+
 
 //senquack
 //void endDrawBoards() {
@@ -8668,6 +8704,8 @@ endDrawBoards ()
    finishDrawBoxes ();
 
    glPopMatrix ();
+
+   //DEBUG
 //senquack TODO: make sure we really need to be calling this all the time like in the original code:
    screenResized ();
 }

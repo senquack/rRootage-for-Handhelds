@@ -22,6 +22,7 @@
 //senquack
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "rr.h"
 #include "screen.h"
@@ -708,6 +709,9 @@ usage (char *argv0)
 static void
 parseArgs (int argc, char *argv[])
 {
+   //senquack DEBUG
+//   nowait = 1;
+
 //   int i;
 //   for (i = 1; i < argc; i++) {
 ////    if ( strcmp(argv[i], "-lowres") == 0 ) {
@@ -1069,13 +1073,13 @@ int main (int argc, char *argv[])
       }
 
       drawGLSceneStart ();
-      //DEBUG:
       draw ();
-//      extern void renderCube();
-//      renderCube();
       drawGLSceneEnd ();
       swapGLScene ();
+      //senquack - at least try to be nice to other processes:
+      usleep(0);
    }
+
    quitLast ();
 
    if (full_prefs_filename) free(full_prefs_filename);

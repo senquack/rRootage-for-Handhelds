@@ -456,6 +456,7 @@ void drawLasers ()
                ls->color, laserCnt, t);
       }
    }
+
    finishDrawLaser ();
 #endif //FIXEDMATH
 }

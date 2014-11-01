@@ -603,74 +603,123 @@ void drawTitle() {
    }
    drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
 }
-//senquack - new version of above: supports rotated gamescreen
+////senquack - this was what I adapted for the Wiz, but I went back to the default for the GCW port
+//void drawTitle_rotated() {
+//   int i;
+//   int r, g, b;
+//   int sx, sy;
+//   char *stgChr = "STAGE";
+//   char *quitChr = "QUIT";
+//   char *mdChr[] = {"NORMAL MODE", "PSY MODE", "IKA MODE", "GW MODE"};
+//   //senquack - move these over a bit on rotated screen
+//   //  int mdChrX[] = {270, 330, 330, 350};
+//   int mdChrX[] = {280, 340, 340, 360};
+//   char mdIni[] = {'N', 'P', 'I', 'G'};
+//   drawTitleBoard();
+//
+//   for ( i=-MODE_NUM ; i<STAGE_NUM+1 ; i++ ) {
+//      if ( i < 0 ) {
+//         if ( 4+i == mode ) {
+//            r = 100; g = 100; b = 240;
+//         } else {
+//            r = 150; g = 150; b = 200;
+//         }
+//      } else if ( i < QUIT_STAGE_NUM && hiScore.cleard[mode][i] ) {
+//         r = 240; g = 180; b = 180;
+//      } else {
+//         r = 210; g = 210; b = 240;
+//      }
+//      sx = stageX[i+MODE_NUM]; sy = stageY[i+MODE_NUM];
+//      //senquack - move everything over a tiny bit when screen is rotated:
+//      sx += 10;
+//
+//      if ( i == slcStg ) {
+//         int sz = STG_BOX_SIZE*3/2;
+//         if ( titleCnt < 16 ) sz = sz*titleCnt/16;
+//#ifdef FIXEDMATH
+//         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(sz), INT2FNUM(sz), r, g, b);
+//#else
+//         drawBox(sx, sy, sz, sz, r, g, b);
+//#endif //FIXEDMATH
+//         sz = sz*3/5;
+//         if ( i < 0 ) {
+//            int md = MODE_NUM+i;
+//            drawString(mdChr[md], mdChrX[md], 133, 12, 0, 150, 150, 200);
+//            drawLetter(mdIni[md]-'A'+10, sx, sy, sz, 0, 150, 150, 240);
+//         } else if ( i < QUIT_STAGE_NUM  ) {
+//            makeStageStr(i);
+//            drawString(stageStr, sx-sz, sy, sz, 0, 210, 210, 240);
+//            //senquack - move everything over a tiny bit when screen is rotated:
+//            //	drawString(stgChr, 330, 133, 12, 0, 210, 210, 240);
+//            //	drawString(stageStr, 445, 133, 12, 0, 210, 210, 240);
+//            //	drawNumCenter(hiScore.score[mode][i], 466, 168, 12, 210, 210, 240);
+//            drawString(stgChr, 340, 133, 12, 0, 210, 210, 240);
+//            drawString(stageStr, 455, 133, 12, 0, 210, 210, 240);
+//            drawNumCenter(hiScore.score[mode][i], 476, 168, 12, 210, 210, 240);
+//         } else {
+//            drawLetter('Q'-'A'+10, sx, sy, sz, 0, 210, 210, 240);
+//            //senquack - move everything over a tiny bit when screen is rotated:
+//            //	drawString(quitChr, 410, 133, 12, 0, 210, 210, 240);
+//            drawString(quitChr, 420, 133, 12, 0, 210, 210, 240);
+//         }
+//      } else {
+//#ifdef FIXEDMATH
+//         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(STG_BOX_SIZE)/2, INT2FNUM(STG_BOX_SIZE)/2, r*2/3, g*2/3, b*2/3);
+//#else
+//         drawBox(sx, sy, STG_BOX_SIZE/2, STG_BOX_SIZE/2, r*2/3, g*2/3, b*2/3);
+//#endif //FIXEDMATH
+//      }
+//   }
+//   drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
+//}
 void drawTitle_rotated() {
-   int i;
-   int r, g, b;
-   int sx, sy;
-   char *stgChr = "STAGE";
-   char *quitChr = "QUIT";
-   char *mdChr[] = {"NORMAL MODE", "PSY MODE", "IKA MODE", "GW MODE"};
-   //senquack - move these over a bit on rotated screen
-   //  int mdChrX[] = {270, 330, 330, 350};
-   int mdChrX[] = {280, 340, 340, 360};
-   char mdIni[] = {'N', 'P', 'I', 'G'};
-   drawTitleBoard();
-
-   for ( i=-MODE_NUM ; i<STAGE_NUM+1 ; i++ ) {
+  int i;
+  int r, g, b;
+  int sx, sy;
+  char *stgChr = "STAGE";
+  char *quitChr = "QUIT";
+  char *mdChr[] = {"NORMAL MODE", "PSY MODE", "IKA MODE", "GW MODE"};
+  int mdChrX[] = {270, 330, 330, 350};
+  char mdIni[] = {'N', 'P', 'I', 'G'};
+  drawTitleBoard();
+  
+  for ( i=-MODE_NUM ; i<STAGE_NUM+1 ; i++ ) {
+    if ( i < 0 ) {
+      if ( 4+i == mode ) {
+	r = 100; g = 100; b = 240;
+      } else {
+	r = 150; g = 150; b = 200;
+      }
+    } else if ( i < QUIT_STAGE_NUM && hiScore.cleard[mode][i] ) {
+      r = 240; g = 180; b = 180;
+    } else {
+      r = 210; g = 210; b = 240;
+    }
+    sx = stageX[i+MODE_NUM]; sy = stageY[i+MODE_NUM];
+    if ( i == slcStg ) {
+      int sz = STG_BOX_SIZE*3/2;
+      if ( titleCnt < 16 ) sz = sz*titleCnt/16;
+      drawBox(sx, sy, sz, sz, r, g, b);
+      sz = sz*3/5;
       if ( i < 0 ) {
-         if ( 4+i == mode ) {
-            r = 100; g = 100; b = 240;
-         } else {
-            r = 150; g = 150; b = 200;
-         }
-      } else if ( i < QUIT_STAGE_NUM && hiScore.cleard[mode][i] ) {
-         r = 240; g = 180; b = 180;
+	int md = MODE_NUM+i;
+	drawString(mdChr[md], mdChrX[md], 133, 12, 0, 150, 150, 200);
+	drawLetter(mdIni[md]-'A'+10, sx, sy, sz, 0, 150, 150, 240);
+      } else if ( i < QUIT_STAGE_NUM  ) {
+	makeStageStr(i);
+	drawString(stageStr, sx-sz, sy, sz, 0, 210, 210, 240);
+	drawString(stgChr, 330, 133, 12, 0, 210, 210, 240);
+	drawString(stageStr, 445, 133, 12, 0, 210, 210, 240);
+	drawNumCenter(hiScore.score[mode][i], 466, 168, 12, 210, 210, 240);
       } else {
-         r = 210; g = 210; b = 240;
+	drawLetter('Q'-'A'+10, sx, sy, sz, 0, 210, 210, 240);
+	drawString(quitChr, 410, 133, 12, 0, 210, 210, 240);
       }
-      sx = stageX[i+MODE_NUM]; sy = stageY[i+MODE_NUM];
-      //senquack - move everything over a tiny bit when screen is rotated:
-      sx += 10;
-
-      if ( i == slcStg ) {
-         int sz = STG_BOX_SIZE*3/2;
-         if ( titleCnt < 16 ) sz = sz*titleCnt/16;
-#ifdef FIXEDMATH
-         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(sz), INT2FNUM(sz), r, g, b);
-#else
-         drawBox(sx, sy, sz, sz, r, g, b);
-#endif //FIXEDMATH
-         sz = sz*3/5;
-         if ( i < 0 ) {
-            int md = MODE_NUM+i;
-            drawString(mdChr[md], mdChrX[md], 133, 12, 0, 150, 150, 200);
-            drawLetter(mdIni[md]-'A'+10, sx, sy, sz, 0, 150, 150, 240);
-         } else if ( i < QUIT_STAGE_NUM  ) {
-            makeStageStr(i);
-            drawString(stageStr, sx-sz, sy, sz, 0, 210, 210, 240);
-            //senquack - move everything over a tiny bit when screen is rotated:
-            //	drawString(stgChr, 330, 133, 12, 0, 210, 210, 240);
-            //	drawString(stageStr, 445, 133, 12, 0, 210, 210, 240);
-            //	drawNumCenter(hiScore.score[mode][i], 466, 168, 12, 210, 210, 240);
-            drawString(stgChr, 340, 133, 12, 0, 210, 210, 240);
-            drawString(stageStr, 455, 133, 12, 0, 210, 210, 240);
-            drawNumCenter(hiScore.score[mode][i], 476, 168, 12, 210, 210, 240);
-         } else {
-            drawLetter('Q'-'A'+10, sx, sy, sz, 0, 210, 210, 240);
-            //senquack - move everything over a tiny bit when screen is rotated:
-            //	drawString(quitChr, 410, 133, 12, 0, 210, 210, 240);
-            drawString(quitChr, 420, 133, 12, 0, 210, 210, 240);
-         }
-      } else {
-#ifdef FIXEDMATH
-         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(STG_BOX_SIZE)/2, INT2FNUM(STG_BOX_SIZE)/2, r*2/3, g*2/3, b*2/3);
-#else
-         drawBox(sx, sy, STG_BOX_SIZE/2, STG_BOX_SIZE/2, r*2/3, g*2/3, b*2/3);
-#endif //FIXEDMATH
-      }
-   }
-   drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
+    } else {
+      drawBox(sx, sy, STG_BOX_SIZE/2, STG_BOX_SIZE/2, r*2/3, g*2/3, b*2/3);
+    }
+  }
+  drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
 }
 
 static int goCnt;
@@ -683,7 +732,10 @@ void initGameoverAtr() {
 
 void moveGameover() {
    int btn = getButtonState();
-   if ( goCnt > 900 || (goCnt > 128 && mnp && (btn & PAD_BUTTON1)) ) {
+   //senquack : make it so you can press either button 1 *or* 2 *or* the exit mapping to get back to main menu quicker
+//   if ( goCnt > 900 || (goCnt > 128 && mnp && (btn & PAD_BUTTON1)) ) {
+   if ( goCnt > 900 || (goCnt > 128 && mnp && ((btn & PAD_BUTTON1) || (btn & PAD_BUTTON2) ||
+                                                control_state[settings.map.exit]))) {
       setHiScore(0);
       initTitle();
       return;

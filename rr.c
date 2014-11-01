@@ -61,14 +61,38 @@ static const char *base_prefs_filename = "rr.bin";    // This is where we store 
 char *full_prefs_filename = NULL;               // Fully-qualified prefs filename (used in attractmanager.c)
 
 // portcfg holds our default settings until the config file is read:
+//DEBUG
+//portcfg_settings settings = {    
+//   .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
+//   .rotated                = SCREEN_HORIZ,                // Is screen rotated? Assigned to one of: 
+//                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
+//   .music                  = 1,                           // Is music enabled?
+//   .analog_deadzone        = 8000,                        // Analog joystick deadzone
+//   .map                    = {
+//      .move     = MAP_DPAD,   //Movement mapping
+//      .btn1     = MAP_X,      //Laser mapping
+//      .btn2     = MAP_B,      //Bomb mapping
+//      .btn1_alt = MAP_A,      //Laser alternate mapping
+//      .btn2_alt = MAP_R,      //Bomb alternate mapping
+//      .pause    = MAP_START,  //Pause mapping
+//      .exit     = MAP_SELECT  //Exit to menu mapping 
+//   }
+//};     
 portcfg_settings settings = {    
    .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
-   .rotated                = SCREEN_HORIZ,                // Is screen rotated? Assigned to one of: 
+   .rotated                = SCREEN_ROTATED_LEFT,                // Is screen rotated? Assigned to one of: 
                                                           //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
    .music                  = 1,                           // Is music enabled?
-   .buttons_swapped        = 0,                           // Are laser / bomb buttons swapped?
-   .analog_deadzone        = 5000,                        // Analog joystick deadzone
-   .analog_enabled         = 1
+   .analog_deadzone        = 8000,                        // Analog joystick deadzone
+   .map                    = {
+      .move     = MAP_ABXY,
+      .btn1     = MAP_SELECT,      //Laser mapping
+      .btn2     = MAP_START,      //Bomb mapping
+      .btn1_alt = MAP_NONE,      //Laser alternate mapping
+      .btn2_alt = MAP_ANALOG,      //Bomb alternate mapping
+      .pause    = MAP_L,  //Pause mapping
+      .exit     = MAP_R  //Exit to menu mapping 
+   }
 };     
 
 
@@ -193,13 +217,24 @@ int read_portcfg_settings (const char *filename)
          settings.rotated = clamp (atoi (param), SCREEN_HORIZ, SCREEN_ROTATED_RIGHT);
       } else if (strcasecmp (str, "music") == 0) {
          settings.music = clamp (atoi (param), 0, 1);
-      } else if (strcasecmp (str, "buttons_swapped") == 0) {
-         settings.buttons_swapped = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "analog_deadzone") == 0) {
          settings.analog_deadzone = clamp (atoi (param), 1000, 30000);
-      } else if (strcasecmp (str, "analog_enabled") == 0) {
-         settings.analog_enabled = clamp (atoi (param), 0, 1);
+      } else if (strcasecmp (str, "map_move") == 0) {
+         settings.map.move = clamp(atoi (param), 0, NUM_MAPS-1);
+      } else if (strcasecmp (str, "map_btn1") == 0) {
+         settings.map.btn1 = clamp(atoi (param), 0, NUM_MAPS-1);
+      } else if (strcasecmp (str, "map_btn2") == 0) {
+         settings.map.btn2 = clamp(atoi (param), 0, NUM_MAPS-1);
+      } else if (strcasecmp (str, "map_btn1_alt") == 0) {
+         settings.map.btn1_alt = clamp(atoi (param), 0, NUM_MAPS-1);
+      } else if (strcasecmp (str, "map_btn2_alt") == 0) {
+         settings.map.btn2_alt = clamp(atoi (param), 0, NUM_MAPS-1);
+      } else if (strcasecmp (str, "map_pause") == 0) {
+         settings.map.pause = clamp(atoi (param), 0, NUM_MAPS-1);
+      } else if (strcasecmp (str, "map_exit") == 0) {
+         settings.map.exit = clamp(atoi (param), 0, NUM_MAPS-1);
 #if defined(WIZ)
+         // These will need updating since a lot of code has changed since the Wiz port:
       } else if (strcasecmp (str, "fast_ram") == 0) {
          settings.fast_ram = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "cpu_freq") == 0) {
@@ -226,37 +261,37 @@ int read_portcfg_settings (const char *filename)
             settings.cpu_freq = default_settings.cpu_freq;
          }
       } else if (strcasecmp (str, "buttons_fire") == 0) {
-         settings.buttons[FIRE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.buttons[FIRE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "buttons_fire2") == 0) {
-         settings.buttons[FIRE2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.buttons[FIRE2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "buttons_special") == 0) {
-         settings.buttons[SPECIAL_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.buttons[SPECIAL_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "buttons_special2") == 0) {
-         settings.buttons[SPECIAL2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.buttons[SPECIAL2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "buttons_pause") == 0) {
-         settings.buttons[PAUSE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.buttons[PAUSE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "buttons_exit") == 0) {
-         settings.buttons[EXIT_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.buttons[EXIT_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "buttons_voldown") == 0) {
-         settings.buttons[VOLDOWN_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.buttons[VOLDOWN_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "buttons_volup") == 0) {
-         settings.buttons[VOLUP_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.buttons[VOLUP_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "rbuttons_fire") == 0) {
-         settings.rbuttons[FIRE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.rbuttons[FIRE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "rbuttons_fire2") == 0) {
-         settings.rbuttons[FIRE2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.rbuttons[FIRE2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "rbuttons_special") == 0) {
-         settings.rbuttons[SPECIAL_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.rbuttons[SPECIAL_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "rbuttons_special2") == 0) {
-         settings.rbuttons[SPECIAL2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.rbuttons[SPECIAL2_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "rbuttons_pause") == 0) {
-         settings.rbuttons[PAUSE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.rbuttons[PAUSE_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "rbuttons_exit") == 0) {
-         settings.rbuttons[EXIT_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.rbuttons[EXIT_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "rbuttons_voldown") == 0) {
-         settings.rbuttons[VOLDOWN_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.rbuttons[VOLDOWN_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
       } else if (strcasecmp (str, "rbuttons_volup") == 0) {
-         settings.rbuttons[VOLUP_IDX] = clamp (atoi (param), 0, NUM_BUTTONS);
+         settings.rbuttons[VOLUP_IDX] = clamp (atoi (param), 0, NUM_BUTTONS-1);
 #endif // GP2X/WIZ
       } else {
          printf ("Ignoring unknown setting: %s\n", str);
@@ -266,25 +301,10 @@ int read_portcfg_settings (const char *filename)
    return 1;
 }
 
-//senquack - added control state abstraction
-int control_state[CNUMCONTROLS];
+//senquack - added control state abstractions
+int control_state[CNUMCONTROLS];    // Tracks state of each individual button/control on physical device
 
-int control_pressed(int control)
-{
-	if (control < CNUMCONTROLS)
-		return control_state[control];
-	else
-		printf("Error: invalid parameter to control_pressed(int): %d\n", control);
-		return 0;
-}
-	
-//DKS - this function is used to determine if any button at all is pressed (barring the DPAD directionals)
-int any_control_pressed(void)
-{
-//	return control_state[CHELP] || control_state[CPAUSE] || control_state[CENTER] || control_state[CESCAPE];
-}
-
-//DKS - added this hack function to fix power slider issues on GCW and when enabling/disabling gsensor/analog stick
+//senquack - added this hack function to fix power slider issues on GCW and when enabling/disabling gsensor/analog stick
 // Details: slider issues SDLK_PAUSE keypress before slider daemon
 // handles volume/lcd brightness adjustment, this somehow can interfere
 // with game's directional keystates after it is released.
@@ -975,46 +995,41 @@ int main (int argc, char *argv[])
             case SDL_KEYDOWN:
             case SDL_KEYUP:
                switch(event.key.keysym.sym) {
-                  case SDLK_HOME:	// GCW Power slider - apply hack 
-                     control_reset();
-                     return;
-                     break;
                   case SDLK_UP:
                      control_state[CUP] = (event.type == SDL_KEYDOWN) ? 1 : 0;
-                     control_state[CDOWN] = 0;	// power slider bug hack
                      break;
                   case SDLK_DOWN:
                      control_state[CDOWN] = (event.type == SDL_KEYDOWN) ? 1 : 0;
-                     control_state[CUP] = 0;	// power slider bug hack
                      break;
                   case SDLK_LEFT:
                      control_state[CLEFT] = (event.type == SDL_KEYDOWN) ? 1 : 0;
-                     control_state[CRIGHT] = 0;	// power slider bug hack
                      break;
                   case SDLK_RIGHT:
                      control_state[CRIGHT] = (event.type == SDL_KEYDOWN) ? 1 : 0;
-                     control_state[CLEFT] = 0;	// power slider bug hack
                      break;
                   case SDLK_RETURN:	// GCW Start button
-                     control_state[CPAUSE] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     control_state[CSTART] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
                   case SDLK_ESCAPE:	// GCW Select button
-                     control_state[CESCAPE] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     control_state[CSELECT] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
                   case SDLK_SPACE:	// GCW Y button
+                     control_state[CY] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
                   case SDLK_LALT:	// GCW B button
-                     control_state[CBUTTON2] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     control_state[CB] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
                   case SDLK_LSHIFT:	// GCW X button
-                     control_state[CBUTTON1] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                     control_state[CX] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
                   case SDLK_LCTRL:	// GCW A button
+                     control_state[CA] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
-                  case SDLK_BACKSPACE:	// GCW L trigger
+                  case SDLK_BACKSPACE:	// GCW R trigger
+                     control_state[CR] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
-                  case SDLK_TAB:	      // GCW R trigger
-                     control_state[CBUTTON2] = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                  case SDLK_TAB:	      // GCW L trigger
+                     control_state[CL] = (event.type == SDL_KEYDOWN) ? 1 : 0;
                      break;
                   default:
                      break;
@@ -1023,32 +1038,59 @@ int main (int argc, char *argv[])
       }
 
       // ANALOG JOY:
-      if (settings.analog_enabled && joy_analog) {
+      if (joy_analog) {
          Sint16 xmove, ymove;
          xmove=SDL_JoystickGetAxis(joy_analog,0);
          ymove=SDL_JoystickGetAxis(joy_analog,1);
-         control_state[CANALOGLEFT] 	= (xmove < -settings.analog_deadzone);
-         control_state[CANALOGRIGHT] 	= (xmove > settings.analog_deadzone);
-         control_state[CANALOGUP] 		= (ymove < -settings.analog_deadzone);
-         control_state[CANALOGDOWN] 	= (ymove > settings.analog_deadzone);
+         control_state[C_ANY_ANALOG] = 0;
+         control_state[C_ANY_ANALOG] |=    control_state[CANALOGLEFT] 	= (xmove < -settings.analog_deadzone);
+         control_state[C_ANY_ANALOG] |=    control_state[CANALOGRIGHT] 	= (xmove > settings.analog_deadzone);
+         control_state[C_ANY_ANALOG] |=    control_state[CANALOGUP] 		= (ymove < -settings.analog_deadzone);
+         control_state[C_ANY_ANALOG] |=    control_state[CANALOGDOWN] 	= (ymove > settings.analog_deadzone);
+      }
+
+      /*    Working-around GCW power-slider daemon's bug: if pressed while any other control is pressed,
+         it will eat the key up events and the game's control state can become confused. Resetting the control
+         state is not enough, so we'll do what little we can here to patch it up. 
+            Also, this will help with using A/B/X/Y as a directional control, so game is never confused and gets
+         signal to move up and down or left and right at the same time. */
+      if (settings.map.move == MAP_DPAD) {
+         if (control_state[CUP])       control_state[CDOWN] = 0;
+         if (control_state[CDOWN])     control_state[CUP] = 0;
+         if (control_state[CLEFT])     control_state[CRIGHT] = 0;
+         if (control_state[CRIGHT])    control_state[CLEFT] = 0;
+         // same trick won't work for abxy
+//      } else if (settings.map.move == MAP_ABXY) {
+//         if (control_state[CX])  control_state[CA] = 0;
+//         if (control_state[CA])  control_state[CX] = 0;
+//         if (control_state[CB])  control_state[CY] = 0;
+//         if (control_state[CY])  control_state[CB] = 0;
+      }
+      /* END POWER-SLIDER-BUG WORKAROUND */
+
+      control_state[C_ANY_DPAD] = control_state[CUP] || control_state[CDOWN] ||
+                                    control_state[CLEFT] || control_state[CRIGHT];
+      control_state[C_ANY_ABXY] = control_state[CA] || control_state[CB] ||
+                                    control_state[CX] || control_state[CY];
+      // Handling pausing:
+      if (control_state[settings.map.pause]) {
+         if ( !pPrsd ) {
+            if ( status == IN_GAME ) {
+               status = PAUSE;
+            } else if ( status == PAUSE ) {
+               status = IN_GAME;
+            }
+         }
+         pPrsd = 1;
       } else {
-         control_state[CANALOGUP] = control_state[CANALOGDOWN] =
-            control_state[CANALOGLEFT] = control_state[CANALOGRIGHT] = 0;
-      }
+         pPrsd = 0;
 
-      // Escape doesn't quit whole game, only exits to main menu.
-//      if (control_state[CESCAPE])    done = 1;
-      if (control_state[CESCAPE] && status == IN_GAME) {
-        initGameover();
-      }
-
-      if (control_state[CPAUSE]) {
-         if ( status == IN_GAME ) {
-            status = PAUSE;
-         } else if ( status == PAUSE ) {
-            status = IN_GAME;
+         // Handle quitting current game (as long as we're not paused)
+         if (control_state[settings.map.exit] && (status == IN_GAME)) {    
+            initGameover();
          }
       }
+
 #endif //GCW
 
       nowTick = SDL_GetTicks ();

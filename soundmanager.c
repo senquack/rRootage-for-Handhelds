@@ -275,6 +275,9 @@ initSound ()
 
    useAudio = 1;
    loadSounds ();
+
+   //senquack - adjust volume to sensible level
+	Mix_Volume(-1,40);
 }
 
 // Play/Stop the music/chunk.
@@ -287,6 +290,8 @@ playMusic (int idx)
    if (!useAudio || !settings.music)
       return;
    Mix_PlayMusic (music[idx], -1);
+   //senquack - adjust volume to sensible level
+   Mix_VolumeMusic(80);
 }
 
 void
@@ -312,34 +317,32 @@ stopMusic ()
    }
 }
 
-void playChunk(int idx) {
-  if ( !useAudio ) return;
-  Mix_PlayChannel(chunkChannel[idx], chunk[idx], 0);
-}
-//senquack TODO  - investigate why I said this and then decided not to implement it:
 //senquack - new logic to prevent playing of the laser.wav, as it is 
 //    barely audible and has annoying clicks in it
-//void
-//playChunk (int idx)
-//{
+//void playChunk(int idx) {
+//  if ( !useAudio ) return;
+//  Mix_PlayChannel(chunkChannel[idx], chunk[idx], 0);
+//}
+void
+playChunk (int idx)
+{
 //   if (!useAudio)
 //      return;
-////  if ( !useAudio || idx == 1) return;
-//   Mix_PlayChannel (chunkChannel[idx], chunk[idx], 0);
-//}
+  if ( !useAudio || idx == 1) return;
+   Mix_PlayChannel (chunkChannel[idx], chunk[idx], 0);
+}
 
-void haltChunk(int idx) {
-  if ( !useAudio ) return;
-  Mix_HaltChannel(chunkChannel[idx]);
-}
-//senquack TODO  - investigate why I said this and then decided not to implement it:
 //senquack - new logic to prevent playing of the laser.wav, as it is 
 //    barely audible and has annoying clicks in it
-//void
-//haltChunk (int idx)
-//{
+//void haltChunk(int idx) {
+//  if ( !useAudio ) return;
+//  Mix_HaltChannel(chunkChannel[idx]);
+//}
+void
+haltChunk (int idx)
+{
 //   if (!useAudio)
 //      return;
-////  if ( !useAudio || idx == 1) return;
-//   Mix_HaltChannel (chunkChannel[idx]);
-//}
+  if ( !useAudio || idx == 1) return;
+   Mix_HaltChannel (chunkChannel[idx]);
+}

@@ -76,10 +76,20 @@ typedef struct portcfg_settings
    int rotated;               // Is screen rotated? Assigned to one of: 
                               //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
    int music;                 // Is music enabled?
-   int buttons_swapped;       // Are laser / bomb buttons swapped?
    int analog_deadzone;       // Analog joystick deadzone
-   int analog_enabled;        // Analog joystick enalbed?
+
+   struct {
+      int move;      //Movement mapping
+      int btn1;      //Laser mapping
+      int btn2;      //Bomb mapping
+      int btn1_alt;  //Laser alternate mapping
+      int btn2_alt;  //Bomb alternate mapping
+      int pause;     //Pause mapping
+      int exit;      //Exit to menu mapping 
+   } map;
+
 #if defined(WIZ) || defined(GP2X)
+      // LEFTOVER CRUFT FROM WIZ PORT THAT MAYBE WILL EVENTUALLY BE MERGED BACK IN:
    int cpu_freq;                // if this is 0, overclocking is disabled
    int fast_ram;
    int buttons[NUM_DEFS], rbuttons[NUM_DEFS];   //rbuttons is for rotated button definitions
@@ -89,25 +99,50 @@ typedef struct portcfg_settings
 extern portcfg_settings settings;    //portcfg is our global "current-settings"
 extern char *full_prefs_filename;      // Fully-qualified prefs filename
 
+#ifdef GCW
 //senquack - new controls handling code:
-enum {
+
+enum {   // For accessing our internal controls state (order of these in list does not matter, but recommend C_NONE be 0)
+   CNONE,           // This is for when a control is not mapped to anything
    CUP,
    CDOWN,
    CLEFT,
    CRIGHT,
-   CPAUSE,
-   CESCAPE,
-   CVOLUP,
-   CVOLDOWN,
-   CBUTTON1,
-   CBUTTON2,
+   CA,
+   CB,
+   CX,
+   CY,
+   CL,
+   CR,
+   CSELECT,
+   CSTART,
    CANALOGUP,
    CANALOGDOWN,
    CANALOGLEFT,
    CANALOGRIGHT,
-   CNUMCONTROLS,
+   C_ANY_DPAD,       // This is for seeing if *any* direction of the DPAD is pressed
+   C_ANY_ABXY,       // This is for seeing if *any* of the A/B/X/Y buttons are pressed
+   C_ANY_ANALOG,     // This is for seeing if *any* direction of the analog stick is pressed
+   CNUMCONTROLS
 };
-extern int control_state[CNUMCONTROLS];      // Control state abstraction
 
+enum {   // For mapping internal to  externally-configurable controls (order of these in list does not matter)
+   MAP_NONE = CNONE,        
+   MAP_A = CA,               
+   MAP_B = CB,              
+   MAP_X = CX,
+   MAP_Y = CY,
+   MAP_START  = CSTART,
+   MAP_SELECT = CSELECT,
+   MAP_L = CL,
+   MAP_R = CR,
+   MAP_DPAD = C_ANY_DPAD,
+   MAP_ABXY = C_ANY_ABXY, 
+   MAP_ANALOG = C_ANY_ANALOG,
+   NUM_MAPS
+};
+
+#endif //GCW
+extern int control_state[CNUMCONTROLS];    // Tracks state of each individual button/control on physical device
 int create_dir(const char *dir);
 #endif //RR_H

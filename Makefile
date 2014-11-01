@@ -13,21 +13,27 @@ CXX = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-g++
 PROG   = $(NAME)
 
 #DEFAULT_CFLAGS = `/usr/local/gp2xdev/bin/sdl-config --cflags`  -I/src/gpu940/include/
-DEFAULT_CFLAGS = `/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/sdl-config --cflags`  -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
+DEFAULT_CFLAGS = -DGCW -DLINUX -O2 -mno-shared -Wall -DNDEBUG -I./bulletml \
+                 `/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/sdl-config --cflags`  \
+                 -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
 #senquack TODO: remember to add WIZ define to Makefile
 #LDFLAGS        =  -static  `/usr/local/gp2xdev/bin/sdl-config --libs` -lpng -L. -lbulletml -lSDL_mixer -lSDL_image -lpng -mwindows -lstdc++ -lGL -lm -lpthread -lz -lpng -ljpeg -lgpu940 -lsmpeg -lvorbisidec `/usr/local/gp2xdev/bin/sdl-config --libs`
 #     -lglu32 -lopengl32 -lmingw32 -lmingwex
 LDFLAGS        = `/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/sdl-config --libs` -lGLESv1_CM -lEGL \
-                 -lpng -L./bulletml/ -lbulletml -lSDL_mixer -lSDL_image -lpng -lstdc++ -lm -lpthread -lz 
+                 -L./bulletml/ -lbulletml -lSDL_mixer -lSDL_image -lstdc++ -lm -lpthread -lz 
+
 #MORE_CFLAGS = -DLINUX -O0 -Wall -g
-MORE_CFLAGS = -DLINUX -O2 -Wall -DNDEBUG
-# MORE FLAGS TO ADD FOR MIPS LATER:
-#MORE_CFLAGS += -mno-shared -flto
-#MORE_LDFLAGS += -flto  <---REMEMBER TO MAKE THIS TAKE EFFECT , ALSO REMEMBER TO RECOMPILE BULLETML WITH IT
+#MORE_CFLAGS = -DLINUX -O2 -Wall -DNDEBUG 
 
+MORE_CFLAGS = -std=gnu99 
+MORE_CPPFLAGS = -fno-rtti -fno-exceptions
 
-CFLAGS   = $(DEFAULT_CFLAGS) $(MORE_CFLAGS)
-CPPFLAGS = $(DEFAULT_CFLAGS) $(MORE_CFLAGS) -I./bulletml/
+#NOTE: -flto causes bugs under GCW MIPS toolchain, do not use:
+#MORE_CFLAGS += -flto
+#LDFLAGS += -flto
+
+CFLAGS   = $(DEFAULT_CFLAGS) $(MORE_CFLAGS) 
+CPPFLAGS = $(DEFAULT_CFLAGS) $(MORE_CPPLAGS)
 
 #OBJS =	$(NAME).$(O) \
 #	foe.$(O) foecommand.$(O) barragemanager.$(O) boss.$(O) ship.$(O) laser.$(O) \

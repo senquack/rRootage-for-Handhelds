@@ -12,15 +12,9 @@ LIBS = tinyxml/tinyxml.o tinyxml/tinyxmlparser.o tinyxml/tinyxmlerror.o
 #				  -fsingle-precision-constant 
 #CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGP2X -msoft-float -mcpu=arm920t -mtune=arm920 -fomit-frame-pointer \
 #				  -fsingle-precision-constant 
-CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW -fsingle-precision-constant -ffast-math
-
-#CFLAGS = -O2
-#CFLAGS = -O3 -DNDEBUG -DGP2X -mcpu=arm920t -mtune=arm920t -msoft-float -ffast-math -DGP2X -fomit-frame-pointer
-#CFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGP2X -msoft-float -mcpu=arm920t -mtune=arm920 -ffast-math -fomit-frame-pointer \
-#				  -fsingle-precision-constant 
-#CFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGP2X -msoft-float -mcpu=arm920t -mtune=arm920 -fomit-frame-pointer \
-#				  -fsingle-precision-constant 
-CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW -fsingle-precision-constant -ffast-math
+#CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW -fsingle-precision-constant -ffast-math
+#CXXFLAGS = -DLINUX -O3 -DNDEBUG -Wall -DGCW -fsingle-precision-constant -mno-shared -flto
+CXXFLAGS = -DLINUX -O2 -DNDEBUG -Wall -DGCW -fsingle-precision-constant -mno-shared 
 
 OBJS = bulletmlparser-tinyxml.o bulletmlparser.o bulletmltree.o calc.o formula-variables.o bulletmlrunner.o bulletmlrunnerimpl.o
 

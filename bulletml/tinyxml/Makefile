@@ -46,7 +46,9 @@ RANLIB   = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-ranlib
 #RELEASE_CFLAGS = -O2 -DNDEBUG -DGP2X -mcpu=arm920t -mtune=arm920t -msoft-float -DGP2X -fomit-frame-pointer \
 #				  -fsingle-precision-constant 
 DEBUG_CFLAGS = -Wall -Wno-unknown-pragmas -Wno-format -g -DDDEBUG -DGCW -fsingle-precision-constant -ffast-math
-RELEASE_CFLAGS = -Wall -Wno-unknown-pragmas -Wno-format -O2 -DGCW -fsingle-precision-constant -ffast-math 
+#RELEASE_CFLAGS = -Wall -Wno-unknown-pragmas -Wno-format -O2 -DGCW -fsingle-precision-constant -ffast-math 
+#RELEASE_CFLAGS = -Wall -Wno-unknown-pragmas -Wno-format -O3 -DGCW -fsingle-precision-constant -mno-shared -flto
+RELEASE_CFLAGS = -Wall -Wno-unknown-pragmas -Wno-format -O2 -DGCW -fsingle-precision-constant -mno-shared
 
 LIBS		 :=
 

@@ -338,23 +338,23 @@ int initGLES()
 
 //   //DEBUG
 //  //new support for screen rotations:
-   glMatrixMode(GL_MODELVIEW);
+//   glMatrixMode(GL_MODELVIEW);
 
 //  //DEBUG:
 //  settings.rotated = SCREEN_ROTATED_RIGHT;
-   if (settings.rotated == SCREEN_ROTATED_LEFT) {
-      glRotatef (90.0f, 0.0f, 0.0f, 1.0f);
-      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
-   } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
-      glRotatef (-90.0f, 0.0f, 0.0f, 1.0f);
-      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
-//      glScalef(.1,.1,0);
-   }
-   glPushMatrix();
+//   if (settings.rotated == SCREEN_ROTATED_LEFT) {
+//      glRotatef (90.0f, 0.0f, 0.0f, 1.0f);
+//      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
+//   } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
+//      glRotatef (-90.0f, 0.0f, 0.0f, 1.0f);
+//      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
+////      glScalef(.1,.1,0);
+//   }
+//   glPushMatrix();
 
 //
   //new support for screen rotations:
-   glMatrixMode(GL_PROJECTION);
+//   glMatrixMode(GL_PROJECTION);
 
   //DEBUG:
 //  settings.rotated = SCREEN_ROTATED_RIGHT;
@@ -374,8 +374,8 @@ int initGLES()
 int closeGLES()
 {
 //   //DEBUG rotation
-   glMatrixMode(GL_MODELVIEW);
-   glPopMatrix();
+//   glMatrixMode(GL_MODELVIEW);
+//   glPopMatrix();
 
    EGLBoolean result;
    printf("Closing OpenGLES..\n");
@@ -1199,23 +1199,25 @@ static void setEyepos ()
 }
 #else
 static void setEyepos() {
-  float x, y;
-  glPushMatrix();
-  if ( screenShakeCnt > 0 ) {
-    switch ( screenShakeType ) {
-    case 0:
-      x = (float)randNS2(256)/5000.0f;
-      y = (float)randNS2(256)/5000.0f;
-      break;
-    default:
-      x = (float)randNS2(256)*screenShakeCnt/21000.0f;
-      y = (float)randNS2(256)*screenShakeCnt/21000.0f;
-      break;
-    }
-    gluLookAt(0, 0, zoom, x, y, 0, 0.0f, 1.0f, 0.0f); 
-  } else {
-    gluLookAt(0, 0, zoom, 0, 0, 0, 0.0f, 1.0f, 0.0f);
-  }
+   glMatrixMode(GL_MODELVIEW);      //senquack - just to me sure we're in modelview
+
+   float x, y;
+   glPushMatrix();
+   if ( screenShakeCnt > 0 ) {
+      switch ( screenShakeType ) {
+         case 0:
+            x = (float)randNS2(256)/5000.0f;
+            y = (float)randNS2(256)/5000.0f;
+            break;
+         default:
+            x = (float)randNS2(256)*screenShakeCnt/21000.0f;
+            y = (float)randNS2(256)*screenShakeCnt/21000.0f;
+            break;
+      }
+      gluLookAt(0, 0, zoom, x, y, 0, 0.0f, 1.0f, 0.0f); 
+   } else {
+      gluLookAt(0, 0, zoom, 0, 0, 0, 0.0f, 1.0f, 0.0f);
+   }
 }
 #endif //FIXEDMATH
 
@@ -1239,7 +1241,10 @@ moveScreenShake ()
 //   glClear(GL_COLOR_BUFFER_BIT);
 //   setEyepos();
 //}
-void drawGLSceneStart() {
+void drawGLSceneStart() 
+{
+//   glPushMatrix();
+
 
    glClear(GL_COLOR_BUFFER_BIT);
    setEyepos();
@@ -1254,6 +1259,44 @@ void drawGLSceneStart() {
 //      glRotatef (-90.0, 0, 0, 1.0);
 //   }
 //   glPushMatrix();
+//   glMatrixMode(GL_MODELVIEW);
+
+  //DEBUG:
+   glMatrixMode(GL_MODELVIEW);
+//   glLoadIdentity();        // senquack - normally I'd load identity here to keep from rotating over and over
+                              //       the same matrix, but, at least with etnaviv, I can't do that, it messes
+                              //       things up.
+
+//  static float transx = 0.0f, transy = 0.0f;
+//  static float scalex = 1.0f, scaley = 1.0f;
+//  static float step = .01f;
+//  if (control_state[CY]) transx -= step;
+//  if (control_state[CB]) transx += step;
+//  if (control_state[CX]) transy -= step;
+//  if (control_state[CA]) transy += step;
+//
+//  if (control_state[CANALOGUP]) scalex -= step;
+//  if (control_state[CANALOGDOWN]) scalex += step;
+//  if (control_state[CANALOGLEFT]) scaley -= step;
+//  if (control_state[CANALOGRIGHT]) scaley += step;
+//
+//  printf("transx: %f  transy: %f   scalex: %f  scaley: %f\n", transx, transy, scalex, scaley);
+
+
+   if (settings.rotated == SCREEN_ROTATED_LEFT) {
+      glRotatef (90.0f, 0.0f, 0.0f, 1.0f);
+//      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
+      glScalef(1.4f, 1.4f, 1.0f);      // If you want maximum screen area, but hitbox can move all way top-to-bottom
+   } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
+//      glRotatef (-90.0f, 0.0f, 0.0f, 1.0f);
+//      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
+      glRotatef (-90.0f, 0.0f, 0.0f, 1.0f);
+//      glTranslatef(transx, transy, 0);
+//      glScalef(scalex, scaley, 1.0f);
+//      glScalef(1.35f, 1.35f, 1.0f);    // If you want less borders to where the hitbox can move shown on screen
+      glScalef(1.4f, 1.4f, 1.0f);      // If you want maximum screen area, but hitbox can move all way top-to-bottom
+   }
+//   glPushMatrix();
 
 }
 
@@ -1264,6 +1307,7 @@ void drawGLSceneStart() {
 //}
 void drawGLSceneEnd ()
 {
+   glMatrixMode(GL_MODELVIEW);   // should be a modelview matrix we're popping
    glPopMatrix ();
 
    //new for rotation:
@@ -8696,67 +8740,49 @@ void startDrawBoards ()
 //  glLoadIdentity();
 //}
 void startDrawBoards() {
-//  //DEBUG
-//  glMatrixMode(GL_MODELVIEW);
-//   if (settings.rotated == SCREEN_ROTATED_LEFT) {
-//      glRotatef (90.0, 0, 0, 1.0);
-//   } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
-//      glRotatef (-90.0, 0, 0, 1.0);
-//   }
-
   glMatrixMode(GL_PROJECTION);
-  //senquack - dunno why we do this -- TODO: double check this
   glPushMatrix();
   glLoadIdentity();
   glOrthof(0, 640, 480, 0, -1, 1);
-
-
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
 
-  //debug
-//   glRotatef(-90.0f, 0.0f, 0.0f, 1.0f);   // ROTATE LEFT
-//   glTranslatef(-240.0, 0.0f, 0.0f); // Move horizontally the screen Height
-
-//   glRotatef(90.0f, 0.0f, 0.0f, 1.0f);   // ROTATE RIGHT
-//   glTranslatef(0.0f, -240.0f, 0.0f); // Move horizontally the screen Height  // TOO FAR DOWN AND RIGHT
-
-//   glRotatef(90.0f, 0.0f, 0.0f, 1.0f);   // ROTATE RIGHT
-//   glTranslatef(-120.0f, -320.0f, 0.0f); // Move horizontally the screen Height  // TOO FAR DOWN AND LEFT
-
-//   glRotatef(90.0f, 0.0f, 0.0f, 1.0f);   // ROTATE RIGHT
-//   glTranslatef(-120.0f, -160.0f, 0.0f); // Move horizontally the screen Height  // WAY TOO FAR DOWN AND LEFT
-
-//  //DEBUG
-//  static float tmpx=0, tmpy=0;
-//  if (control_state[CUP]) {
-//     tmpx+=5.0;
-//  } else if (control_state[CDOWN]) {
-//     tmpx-=5.0;
-//  } else if (control_state[CLEFT]) {
-//     tmpy-=5.0;
-//  } else if (control_state[CRIGHT]) {
-//     tmpy+=5.0;
-//  }
-//  printf("TMPX: %f     TMPY: %f\n", tmpx, tmpy);
+//  static float transx = 0.0f, transy = 0.0f;
+//  static float scalex = 1.0f, scaley = 1.0f;
+////  static float step = .01f;
+//  static float stept = 5.0f;
+//  static float steps = .01f;
+//  if (control_state[CY]) transx -= stept;
+//  if (control_state[CB]) transx += stept;
+//  if (control_state[CX]) transy -= stept;
+//  if (control_state[CA]) transy += stept;
+//
+//  if (control_state[CANALOGUP]) scalex -= steps;
+//  if (control_state[CANALOGDOWN]) scalex += steps;
+//  if (control_state[CANALOGLEFT]) scaley -= steps;
+//  if (control_state[CANALOGRIGHT]) scaley += steps;
+//
+//  printf("transx: %f  transy: %f   scalex: %f  scaley: %f\n", transx, transy, scalex, scaley);
 
    if (settings.rotated == SCREEN_ROTATED_LEFT) {
 //      glRotatef (-90.0f, 0.0f, 0.0f, 1.0f);
       // Now, trying to get translate for left-rotation:
 //      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
 //      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
-      glRotatef (-90.0f, 0.0f, 0.0f, 1.0f);
-//      glTranslatef(-720.0f, 0.0f, 0.0f); // here, the ship is centered nicely left-to-right but gameover is a bit to right
+////      glTranslatef(-720.0f, 0.0f, 0.0f); // here, the ship is centered nicely left-to-right but gameover is a bit to right
+//
+//      // here, less negative means shifted further to right:
+//      glTranslatef(-660.0, 0.0f, 0.0f); // here, the ship is centered nicely left-to-right but gameover is a bit to right
+////      glScalef(.1f,.1f,1.0f); // As close to perfect as I can manage
+////      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
+//      glScalef(1.30f,1.34f,1.0f); // As close to perfect as I can manage
 
-      // here, less negative means shifted further to right:
-      glTranslatef(-660.0, 0.0f, 0.0f); // here, the ship is centered nicely left-to-right but gameover is a bit to right
-//      glScalef(tmpx,tmpy,1.0f); // As close to perfect as I can manage
-//      glScalef(.1f,.1f,1.0f); // As close to perfect as I can manage
-//      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
-      glScalef(1.32f,1.34f,1.0f); // As close to perfect as I can manage
+      //OK good values: transx: -690, transy: -5, scalex: 1.41, scaley: 1.36
+      glRotatef (-90.0f, 0.0f, 0.0f, 1.0f);
+      glTranslatef(-690.0, -5.0f, 0.0f); 
+      glScalef(1.41f, 1.36f, 1.0f);
    } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
-      glRotatef (90.0f, 0.0f, 0.0f, 1.0f);
 //   glTranslatef(-90.0f, -550.0f, 0.0f); // Move horizontally the screen Height  // TOO FAR DOWN AND RIGHT
    //THE MORE NEGATIVE THE Y VALUE HERE, THE HIGHER THE ROTATED-RIGHT IMAGE IS, -550.0f is about centered
    // THE MORE NEGATIVE THE X VALUE HERE, THE MORE-TO-THE-LEFT THE ROTATED-RIGHT IMAGE IS
@@ -8764,12 +8790,16 @@ void startDrawBoards() {
 
    //OK, -650 for y is damned close,
    // OK, now "GAME OVER" is centered perfectly, but title screen is too far down and to right!?!:
-   glTranslatef(-240.0f, -640.0f, 0.0f); // Move horizontally the screen Height  // TOO FAR DOWN AND RIGHT
-      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
+//   glTranslatef(-240.0f, -640.0f, 0.0f); // Move horizontally the screen Height  // TOO FAR DOWN AND RIGHT
+//      glScalef(1.5f,1.34f,1.0f); // As close to perfect as I can manage
+
+      //OK good values: transx: -210 transy: -645, scalex: 1.41, scaley: 1.36
+      glRotatef (90.0f, 0.0f, 0.0f, 1.0f);
+      glTranslatef(-210.0f, -645.0f, 0.0f); 
+      glScalef(1.41f,1.36f,1.0f); 
    }
 }
 #endif //FIXEDMATH
-
 
 //senquack
 //void endDrawBoards() {
@@ -8782,10 +8812,13 @@ endDrawBoards ()
    //senquack - box drawing is now done as a batch:
    finishDrawBoxes ();
 
+   glMatrixMode(GL_MODELVIEW);   // senquack - just to be sure we're in modelview
    glPopMatrix ();
 
    //DEBUG
+//   glMatrixMode(GL_PROJECTION);
 //   glPopMatrix();
+
 //senquack TODO: make sure we really need to be calling this all the time like in the original code:
    screenResized ();
 }

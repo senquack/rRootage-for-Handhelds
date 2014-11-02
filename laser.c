@@ -390,7 +390,7 @@ void drawLasers ()
    Laser *ls;
    int t;
 
-   prepareDrawLaserx ();
+   prepareDrawLaser ();
 
    //senquack - moved this outside the loop
    // senquack - rolled divide-by-10000 and convert-to-fixed into one multiply:
@@ -432,16 +432,20 @@ void drawLasers ()
    finishDrawLaser ();
 #else
    float x, y;
+   prepareDrawLaser ();
    int i;
    Laser *ls;
    int t;
+
+   //moved this out of the loop
+   x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
+
    for ( i=0 ; i<LASER_MAX ; i++ ) {
       if ( laser[i].cnt == NOT_EXIST ) continue;
       //Changed by Albert because of strange crashes...
       //    if ( laser[i].cnt != NOT_EXIST )
       {
          ls = &(laser[i]);
-         x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
          y = -(float)(ship.pos.y+ls->y) / FIELD_SCREEN_RATIO;
          if ( ls->cnt > 1 )       t = 1;
          else if ( ls->cnt == 1 ) t = 0;

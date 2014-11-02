@@ -85,13 +85,13 @@ portcfg_settings settings = {
    .music                  = 1,                           // Is music enabled?
    .analog_deadzone        = 8000,                        // Analog joystick deadzone
    .map                    = {
-      .move     = MAP_ABXY,
+      .move     = MAP_DPAD,
       .btn1     = MAP_SELECT,      //Laser mapping
       .btn2     = MAP_START,      //Bomb mapping
       .btn1_alt = MAP_NONE,      //Laser alternate mapping
-      .btn2_alt = MAP_ANALOG,      //Bomb alternate mapping
-      .pause    = MAP_L,  //Pause mapping
-      .exit     = MAP_R  //Exit to menu mapping 
+      .btn2_alt = MAP_NONE,      //Bomb alternate mapping
+      .pause    = MAP_R,  //Pause mapping
+      .exit     = MAP_L  //Exit to menu mapping 
    }
 };     
 
@@ -630,16 +630,16 @@ static void draw ()
 {
    switch (status) {
    case TITLE:
-//      //printf("draw(): Drawing TITLE\n");
-//      //printf("draw(): Drawing TITLE - drawBackground\n");
+      //printf("draw(): Drawing TITLE\n");
+      //printf("draw(): Drawing TITLE - drawBackground\n");
       drawBackground ();
 //      //printf("draw(): Drawing TITLE - drawBoss\n");
       drawBoss ();
-//      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
+////      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
       drawBulletsWake ();
-//      //printf("draw(): Drawing TITLE - drawBullets\n");
+////      //printf("draw(): Drawing TITLE - drawBullets\n");
       drawBullets ();
-//      //printf("draw(): Drawing TITLE - startDrawBoards\n");
+////      //printf("draw(): Drawing TITLE - startDrawBoards\n");
       startDrawBoards ();
 //      //printf("draw(): Drawing TITLE - drawSideBoards\n");
       drawSideBoards ();
@@ -668,7 +668,7 @@ static void draw ()
       drawBullets ();
       startDrawBoards ();
       drawSideBoards ();
-//senquack - support rotated screen:
+////senquack - support rotated screen:
 //  drawBossState();
 //    if (screenRotated) 
       if (settings.rotated)

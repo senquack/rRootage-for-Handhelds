@@ -252,6 +252,8 @@ void drawSideBoards ();
 void drawTitleBoard ();
 
 int drawNum (int n, int x, int y, int s, int r, int g, int b);
+//senquack made a new function to draw horizontally:
+int drawNumHoriz (int n, int x, int y, int s, int r, int g, int b);
 int drawNumRight (int n, int x, int y, int s, int r, int g, int b);
 int drawNumCenter (int n, int x, int y, int s, int r, int g, int b);
 int drawTimeCenter (int n, int x, int y, int s, int r, int g, int b);

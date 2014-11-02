@@ -231,6 +231,9 @@ void drawScore() {
    if (!settings.rotated) {
       drawNum(score, 118, 24, 28, 200, 200, 222);
       drawNum(bonusScore/10*10, 24, 14, 16, 200, 200, 222);
+
+   } else {
+      drawNumHoriz(score, 310, 65, 6, 210, 210, 240);
    }
 }
 
@@ -328,8 +331,10 @@ void drawRPanel_rotated() {
       // narrowing it down to somewhere better for rotation:
       //    drawString(lStr, 185, 45, 6, 0, 200, 200, 222);
       //    drawLetter(left, 245, 45, 6, 0, 230, 180, 150);
-      drawString(lStr, 175, 45, 6, 0, 200, 200, 222);
-      drawLetter(left, 220, 45, 6, 0, 230, 180, 150);
+//      drawString(lStr, 175, 45, 6, 0, 200, 200, 222);
+//      drawLetter(left, 220, 45, 6, 0, 230, 180, 150);
+      drawString(lStr, 165, 45, 6, 0, 200, 200, 222);
+      drawLetter(left, 210, 45, 6, 0, 230, 180, 150);
 
       switch ( mode ) {
          case NORMAL_MODE:
@@ -339,8 +344,10 @@ void drawRPanel_rotated() {
             // narrowing it down to somewhere better for rotation:
             //      drawString(bStr, 270, 45, 9, 0, 200, 200, 222);
             //      drawLetter(bomb, 330, 45, 9, 0, 230, 180, 150);
-            drawString(bStr, 235, 45, 6, 0, 200, 200, 222);
-            drawLetter(bomb, 280, 45, 6, 0, 230, 180, 150);
+//            drawString(bStr, 235, 45, 6, 0, 200, 200, 222);
+//            drawLetter(bomb, 280, 45, 6, 0, 230, 180, 150);
+            drawString(bStr, 225, 45, 6, 0, 200, 200, 222);
+            drawLetter(bomb, 270, 45, 6, 0, 230, 180, 150);
             break;
          case PSY_MODE:
             ml = ship.grzCnt/40;
@@ -387,9 +394,12 @@ void drawRPanel_rotated() {
 
    if (status != TITLE)
    {
-      drawString(stageStr, 295, 45, 6, 0, 200, 200, 222);
-      drawLetter(38, 312, 45, 6, 0, 200, 200, 222);
-      drawNumCenter(scene+1, 319, 45, 6, 200, 200, 222);
+//      drawString(stageStr, 295, 45, 6, 0, 200, 200, 222);
+//      drawLetter(38, 312, 45, 6, 0, 200, 200, 222);
+//      drawNumCenter(scene+1, 319, 45, 6, 200, 200, 222);
+      drawString(stageStr, 285, 45, 6, 0, 200, 200, 222);
+      drawLetter(38, 302, 45, 6, 0, 200, 200, 222);
+      drawNumCenter(scene+1, 309, 45, 6, 200, 200, 222);
    }
 
 }

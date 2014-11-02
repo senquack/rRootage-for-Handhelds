@@ -80,18 +80,18 @@ char *full_prefs_filename = NULL;               // Fully-qualified prefs filenam
 //};     
 portcfg_settings settings = {    
    .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
-   .rotated                = SCREEN_ROTATED_LEFT,                // Is screen rotated? Assigned to one of: 
+   .rotated                = SCREEN_ROTATED_RIGHT,        // Is screen rotated? Assigned to one of: 
                                                           //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
    .music                  = 1,                           // Is music enabled?
    .analog_deadzone        = 8000,                        // Analog joystick deadzone
    .map                    = {
       .move     = MAP_DPAD,
-      .btn1     = MAP_SELECT,      //Laser mapping
-      .btn2     = MAP_START,      //Bomb mapping
-      .btn1_alt = MAP_NONE,      //Laser alternate mapping
-      .btn2_alt = MAP_NONE,      //Bomb alternate mapping
-      .pause    = MAP_R,  //Pause mapping
-      .exit     = MAP_L  //Exit to menu mapping 
+      .btn1     = MAP_R,      //Laser mapping
+      .btn2     = MAP_ANALOG, //Bomb mapping
+      .btn1_alt = MAP_Y,      //Laser alternate mapping
+      .btn2_alt = MAP_A,      //Bomb alternate mapping
+      .pause    = MAP_START,  //Pause mapping
+      .exit     = MAP_SELECT  //Exit to menu mapping 
    }
 };     
 

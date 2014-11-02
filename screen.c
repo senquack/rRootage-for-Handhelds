@@ -1449,14 +1449,22 @@ void drawGLSceneEnd ()
 //senquack TODO: interleave & verify we really need this many vertices:
 #ifdef FIXEDMATH
 static GLfixed boxvertices[2000 * 2];
+//static GLfixed boxlinevertices[2600 * 2];  // Need 8 line vertices for every 6 box vertices
 static GLubyte boxcolors[2000 * 4];
+//static GLubyte boxlinecolors[2600 * 4];
 static GLfixed *boxvertptr;
+//static GLfixed *boxlinevertptr;
 static GLubyte *boxcolptr;
+//static GLubyte *boxlinecolptr;
 #else
-static GLfloat boxvertices[2000 * 2];
-static GLubyte boxcolors[2000 * 4];
+static GLfloat boxvertices[1950 * 2];
+//static GLfloat boxlinevertices[2600 * 2];  // Need 8 line vertices for every 6 box vertices
+static GLubyte boxcolors[1950 * 4];
+//static GLubyte boxlinecolors[2600 * 4];
 static GLfloat *boxvertptr;
+//static GLfloat *boxlinevertptr;
 static GLubyte *boxcolptr;
+//static GLubyte *boxlinecolptr;
 #endif //FIXEDMATH
 
 //senquack - new function called once before a series of calls to drawShape (for openglES speedup)
@@ -1464,6 +1472,8 @@ void prepareDrawBoxes (void)
 {
    boxvertptr = &boxvertices[0];
    boxcolptr = &boxcolors[0];
+//   boxlinevertptr = &boxlinevertices[0];
+//   boxlinecolptr = &boxlinecolors[0];
 }
 
 void finishDrawBoxes (void)
@@ -1477,8 +1487,18 @@ void finishDrawBoxes (void)
    glColorPointer (4, GL_UNSIGNED_BYTE, 0, boxcolors);
    int numboxvertices = ((unsigned int) boxcolptr - (unsigned int) (&boxcolors[0])) >> 2;
    //senquack - never seemed to go above 1500 vertices here (higher when using non-rotated mode)
-// printf("printing boxes with %d vertices\n", numboxvertices);
    glDrawArrays (GL_TRIANGLES, 0, numboxvertices);
+// printf("printing boxes with %d vertices\n", numboxvertices);
+
+//#ifdef FIXEDMATH
+//   glVertexPointer (2, GL_FIXED, 0, boxlinevertices);
+//#else
+//   glVertexPointer (2, GL_FLOAT, 0, boxlinevertices);
+//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, boxlinecolors);
+//#endif //FIXEDMATH
+//   int numboxlinevertices = ((unsigned int) boxlinecolptr - (unsigned int) (&boxlinecolors[0])) >> 2;
+//   glDrawArrays (GL_LINES, 0, numboxlinevertices);
+//// printf("printing boxes with %d line vertices\n", numboxlinevertices);
 }
 
 //void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, 
@@ -1534,6 +1554,7 @@ void drawBox(GLfixed x, GLfixed y, GLfixed width, GLfixed height, int r, int g, 
 void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, int b)
 {
 #endif //FIXEDMATH
+   //TRIANGLES:
    *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
    *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
    *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
@@ -1546,6 +1567,24 @@ void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, 
    *boxvertptr++ = x - width; *boxvertptr++ = y + height;
    *boxvertptr++ = x + width; *boxvertptr++ = y + height;
    *boxvertptr++ = x + width; *boxvertptr++ = y - height;
+
+//   //LINES:
+//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
+//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
+//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
+//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
+//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
+//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
+//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
+//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
+//   *boxlinevertptr++ = x - width; *boxlinevertptr++ = y - height;
+//   *boxlinevertptr++ = x - width; *boxlinevertptr++ = y + height;
+//   *boxlinevertptr++ = x - width; *boxlinevertptr++ = y + height;
+//   *boxlinevertptr++ = x + width; *boxlinevertptr++ = y + height;
+//   *boxlinevertptr++ = x + width; *boxlinevertptr++ = y + height;
+//   *boxlinevertptr++ = x + width; *boxlinevertptr++ = y - height;
+//   *boxlinevertptr++ = x + width; *boxlinevertptr++ = y - height;
+//   *boxlinevertptr++ = x - width; *boxlinevertptr++ = y - height;
 }
 
 //void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
@@ -8928,11 +8967,15 @@ drawSideBoards ()
 {
 // if (screenRotated) {
    if (settings.rotated) {
-      glEnable (GL_BLEND);
 
+      glDisable (GL_BLEND);
+      // We only need very slender sideboards when rotated:
+      drawBoard (140, 0, 19, 480);
+      drawBoard (480, 0, 20, 480);
+      glEnable (GL_BLEND);
       //senquack - box drawing is now done as a batch:
       prepareDrawBoxes ();
-
+      drawScore();
       drawRPanel_rotated ();
    } else {
       glDisable (GL_BLEND);
@@ -9876,7 +9919,7 @@ void drawTitleBoard ()
 //   memset (colors, 255, 5*4);
    memset (colors, 255, 6*4);
 
-   // I disabled the line outlines, because it added little artistically but caused gaps in pixels
+   // I disabled the line outlines, because it added little artistically and caused gaps in pixels
    //    in different scalings, and got sick of futzing with it.
    
 ////  glBegin(GL_LINE_LOOP);
@@ -9938,12 +9981,24 @@ void drawTitleBoard ()
 #endif //FIXEDMATH
 
 // Draw the numbers.
-//senquack - TODO: change these and others to accept floats and fixed?
 int drawNum (int n, int x, int y, int s, int r, int g, int b)
 {
    for (;;) {
       drawLetter (n % 10, x, y, s, 3, r, g, b);
       y += s * 1.7f;
+      n /= 10;
+      if (n <= 0)
+         break;
+   }
+   return y;
+}
+
+//senquack - made a version to draw a number right-justified, horizontally)
+int drawNumHoriz (int n, int x, int y, int s, int r, int g, int b)
+{
+   for (;;) {
+      drawLetter (n % 10, x, y, s, 0, r, g, b);
+      x -= s * 1.7f;
       n /= 10;
       if (n <= 0)
          break;

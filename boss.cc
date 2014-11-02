@@ -432,7 +432,6 @@ setAttackRank (Attack * at, float rank)
 }
 
 //senquack - complete conversion to floats:
-//senquack TODO: double-check this conversion to float didn't screw up barrages:
 //static void setAttack(Attack *at, double rank, int center) {
 static void
 setAttack (Attack * at, float rank, int center)
@@ -845,7 +844,6 @@ createBoss (int seed, float rank, int round)
       sra = tr / vbgn;
       for (i = 0; i < bgn; i++) {
          if (tr > 0 && vbg[i]) {
-   //senquack TODO: make sure conversion to floats from doubles here didn't mess up the bullet patterns, etc:
 //senquack - complete conversion to floats:
 // sr = ((double)randN(((int)(sra*256+1))))/256 + sra/2;
             sr = ((float) randN (((int) (sra * 256 + 1)))) / 256 + sra / 2;
@@ -1052,7 +1050,8 @@ addBossTreeFrag (BossTree * bt)
     addBossFrag((bt->x[i+1]+bt->x[i])/2 + x,
        -(bt->y[i+1]+bt->y[i])/2 + y,
        (bt->z[i+1]+bt->z[i])/2, 
-       (float)dst/512, deg);
+//       (float)dst/512, deg);
+       (float)(dst>>9), deg);
   }
   for ( i=0 ; i<bt->epNum ; i++ ) {
     ox =  (int)((bt->ex[i]-bt->x[bpn])*256);
@@ -1063,7 +1062,8 @@ addBossTreeFrag (BossTree * bt)
     addBossFrag((bt->ex[i]+bt->x[bpn])/2 + x,
        -(bt->ey[i]+bt->y[bpn])/2 + y,
        (bt->ez[i]+bt->z[bpn])/2, 
-       (float)dst/512, deg);
+//       (float)dst/512, deg);
+       (float)(dst>>9), deg);
   }
 #endif //FIXEDMATH
 }
@@ -1747,9 +1747,7 @@ checkHitUpside ()
    return boss.y + boss.collisionYUp;
 }
 
-//senquack - TODO: clean up this cruft from figuring out GP2X freezing was ultimately bug in line drawing in GPU940:
-                  /// ALSO: clean up all these old iterations left commented-out as I worked on Wiz version!
-//senquack - one of the 2 causes of freezing is in drawBossWing 
+//senquack - converted from 3D to 2D OpenGLES interleaved batch-drawing with fixed-point support
 //static void drawBossWing(float x1, float y1, float z1, float x2, float y2, float z2,
 //        BossWing *wg) {
 //  int i;
@@ -1761,171 +1759,91 @@ checkHitUpside ()
 //        boss.r, boss.g, boss.b);
 //  }
 //}
-//static void drawBossWing(float x1, float y1, float z1, float x2, float y2, float z2,
-//        BossWing *wg) {
-//  int i;
-//  float sz = wg->size;
-//  for ( i=0 ; i<wg->wingNum ; i++ ) {
-//    drawSquare(x2, y2, z2, x1, y1, z1,
-//        x1+wg->x[i][0]*sz, y1+wg->y[i][0]*sz, z1+wg->z[i][0]*sz, 
-//        x2+wg->x[i][1]*sz, y2+wg->y[i][1]*sz, z2+wg->z[i][1]*sz,
-//        boss.r, boss.g, boss.b);
-//  }
-//}
-//static void drawBossWingx(GLfixed x1, GLfixed y1, GLfixed z1, GLfixed x2, GLfixed y2, GLfixed z2,
-//        BossWing *wg) {
-//
-// //senquack - experiment:
-// z1 = 0; z2 = 0;
-//
-//  int i;
-////  float sz = wg->size;
-//  GLfixed sz = wg->fsize;
-//  for ( i=0 ; i<wg->wingNum ; i++ ) {
-////    drawSquare(x2, y2, z2, x1, y1, z1,
-////         x1+wg->x[i][0]*sz, y1+wg->y[i][0]*sz, z1+wg->z[i][0]*sz, 
-////         x2+wg->x[i][1]*sz, y2+wg->y[i][1]*sz, z2+wg->z[i][1]*sz,
-////         boss.r, boss.g, boss.b);
-//    drawSquarex(x2, y2, z2, x1, y1, z1,
-//        x1+FMUL(wg->fx[i][0],sz), y1+FMUL(wg->fy[i][0],sz), z1+FMUL(wg->fz[i][0],sz), 
-//        x2+FMUL(wg->fx[i][1],sz), y2+FMUL(wg->fy[i][1],sz), z2+FMUL(wg->fz[i][1],sz),
-//        boss.r, boss.g, boss.b);
-////    drawWingx(x2, y2, z2, x1, y1, z1,
-////         x1+FMUL(wg->fx[i][0],sz), y1+FMUL(wg->fy[i][0],sz), z1+FMUL(wg->fz[i][0],sz), 
-////         x2+FMUL(wg->fx[i][1],sz), y2+FMUL(wg->fy[i][1],sz), z2+FMUL(wg->fz[i][1],sz),
-////         boss.r, boss.g, boss.b);
-//  }
-//}
-//senquack TODO: these probably can be shrunk down greatly from the Wiz version, since I noted below that
-//       only 400 total vertices ever seems to be drawn:
+
+typedef struct {
 #ifdef FIXEDMATH
-static GLfixed wingvertices[1024 * 2];
-static GLubyte wingcolors[1024 * 4];
-static GLfixed *wingvertptr;
-static GLubyte *wingcolptr;
-
-//senquack - added this for GLES1.1 fixed-point
-static void
-prepareDrawBossWings (void)
-{
-   wingvertptr = &(wingvertices[0]);
-   wingcolptr = &(wingcolors[0]);
-}
-
-//senquack - added this for GLES1.1 fixed-point
-static void
-finishDrawBossWings (void)
-{
-   int numwingvertices =
-      ((unsigned int) wingcolptr - (unsigned int) &(wingcolors[0])) >> 2;
-   //senquack - never seemed to go over 400 vertices total:
-// printf("Drawing wings with %d vertices\n", numwingvertices);
-   glVertexPointer (2, GL_FIXED, 0, wingvertices);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, wingcolors);
-   glDrawArrays (GL_TRIANGLES, 0, numwingvertices);
-}
-
-//senquack - added this for GLES1.1 fixed-point
-static void
-drawBossWing (GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, BossWing * wg)
-{
-   int i;
-   GLfixed sz = wg->fsize;
-   GLubyte r = boss.r, g = boss.g, b = boss.b;
-   GLfixed tmpx, tmpy;
-   for (i = 0; i < wg->wingNum; i++) {
-
-      tmpx = x1 + FMUL (wg->fx[i][0], sz);
-      tmpy = y1 + FMUL (wg->fy[i][0], sz);
-
-      //senquack TODO: optimize RGBA here, interleave also
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingvertptr++ = x2;
-      *wingvertptr++ = y2;
-      *wingvertptr++ = x1;
-      *wingvertptr++ = y1;
-      *wingvertptr++ = tmpx;
-      *wingvertptr++ = tmpy;
-      *wingvertptr++ = x1;
-      *wingvertptr++ = y1;
-      *wingvertptr++ = tmpx;
-      *wingvertptr++ = tmpy;
-      *wingvertptr++ = x2 + FMUL (wg->fx[i][1], sz);
-      *wingvertptr++ = y2 + FMUL (wg->fy[i][1], sz);
-   }
-}
+   GLfixed x,y;
 #else
-//senquack TODO: these probably can be shrunk down greatly from the Wiz version, since I noted below that
-//       only 400 total vertices ever seems to be drawn:
-static GLfloat wingvertices[1024 * 2];
-static GLubyte wingcolors[1024 * 4];
-static GLfloat *wingvertptr;
-static GLubyte *wingcolptr;
+   GLfloat x,y;
+#endif //FIXEDMATH
+   GLubyte r,g,b,a;
+} wingvertice;
+   
+static wingvertice wingverticedata[700];       //Never seems to go much above 400, so 700 to be extra safe
+static wingvertice *wingverticeptr;
 
-//senquack - added this for GLES1.1 float-point
-static void
-prepareDrawBossWings(void)
+//senquack - new function called once before a series of calls to drawShape (for openglES speedup)
+void prepareDrawBossWings (void)
 {
-   wingvertptr = &(wingvertices[0]);
-   wingcolptr = &(wingcolors[0]);
+   wingverticeptr = &wingverticedata[0];
 }
 
-//senquack - added this for GLES1.1 float-point
-static void
-finishDrawBossWings(void)
+void finishDrawBossWings (void)
 {
-   //senquack TODO: this is not the best way, because what if we're running on a 64-bit CPU?:
-   int numwingvertices = ((unsigned int) wingcolptr - (unsigned int) &(wingcolors[0])) >> 2;
-   //senquack - never seemed to go over 400 vertices total:
-// printf("Drawing wings with %d vertices\n", numwingvertices);
-   glVertexPointer (2, GL_FLOAT, 0, wingvertices);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, wingcolors);
+   glEnable (GL_BLEND);
+#ifdef FIXEDMATH
+   glVertexPointer (2, GL_FIXED, sizeof(wingvertice), &wingverticedata[0].x);
+#else
+   glVertexPointer (2, GL_FLOAT, sizeof(wingvertice), &wingverticedata[0].x);
+#endif //FIXEDMATH
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(wingvertice), &wingverticedata[0].r);
+   int numwingvertices = ((unsigned int) wingverticeptr - (unsigned int) (&wingverticedata[0])) / sizeof(wingvertice);
    glDrawArrays (GL_TRIANGLES, 0, numwingvertices);
+//   printf("printing wings with %d vertices\n", numwingvertices);
 }
 
-//senquack - added this for GLES1.1 fixed-point
-static void
-drawBossWing(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWing * wg)
+#ifdef FIXEDMATH
+static void drawBossWing (GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, BossWing * wg)
+#else
+static void drawBossWing (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWing * wg)
+#endif //FIXEDMATH
 {
    int i;
+#ifdef FIXEDMATH
+   GLfixed sz = wg->fsize;
+   GLfixed tmpx, tmpy;
+#else
    GLfloat sz = wg->size;
-   GLubyte r = boss.r, g = boss.g, b = boss.b;
    GLfloat tmpx, tmpy;
-   for (i = 0; i < wg->wingNum; i++) {
-
-      tmpx = x1 + wg->x[i][0] * sz;
-      tmpy = y1 + wg->y[i][0] * sz;
-
-      //senquack TODO: optimize RGBA here, interleave also
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingcolptr++ = r; *wingcolptr++ = g; *wingcolptr++ = b; *wingcolptr++ = 64;
-      *wingvertptr++ = x2;
-      *wingvertptr++ = y2;
-      *wingvertptr++ = x1;
-      *wingvertptr++ = y1;
-      *wingvertptr++ = tmpx;
-      *wingvertptr++ = tmpy;
-      *wingvertptr++ = x1;
-      *wingvertptr++ = y1;
-      *wingvertptr++ = tmpx;
-      *wingvertptr++ = tmpy;
-      *wingvertptr++ = x2 + wg->x[i][1] * sz;
-      *wingvertptr++ = y2 + wg->y[i][1] * sz;
-   }
-}
 #endif //FIXEDMATH
 
+   GLubyte r = boss.r, g = boss.g, b = boss.b;
 
-//senquack - optimizing for wiz v1.1
+   for (i = 0; i < wg->wingNum; i++) {
+#ifdef FIXEDMATH
+      tmpx = x1 + FMUL (wg->fx[i][0], sz);
+      tmpy = y1 + FMUL (wg->fy[i][0], sz);
+#else
+      tmpx = x1 + wg->x[i][0] * sz;
+      tmpy = y1 + wg->y[i][0] * sz;
+#endif //FIXEDMATH
+
+      wingverticeptr->x = x2;       wingverticeptr->y = y2;
+      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
+      wingverticeptr++;
+      wingverticeptr->x = x1;       wingverticeptr->y = y1;
+      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
+      wingverticeptr++;
+      wingverticeptr->x = tmpx;     wingverticeptr->y = tmpy;
+      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
+      wingverticeptr++;
+      wingverticeptr->x = x1;       wingverticeptr->y = y1;
+      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
+      wingverticeptr++;
+      wingverticeptr->x = tmpx;     wingverticeptr->y = tmpy;
+      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
+      wingverticeptr++;
+#ifdef FIXEDMATH
+      wingverticeptr->x = x2 + FMUL(wg->x[i][1], sz);   wingverticeptr->y = y2 + FMUL(wg->y[i][1], sz);
+#else
+      wingverticeptr->x = x2 + wg->x[i][1] * sz;   wingverticeptr->y = y2 + wg->y[i][1] * sz;
+#endif //FIXEDMATH
+      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
+      wingverticeptr++;
+   }
+}
+
+//senquack - optimized for OpenGLES 
 //void drawBoss() {
 //  float x, y;
 //  float x1, y1, z1, x2, y2, z2;
@@ -2211,12 +2129,9 @@ void drawBoss ()
       switch (boss.state) {
       case CREATING:
       case CHANGE:
-         crBpn =
-            (bpn + 1) * (BOSS_PATTERN_CHANGE_CNT - boss.stateCnt -
+         crBpn = (bpn + 1) * (BOSS_PATTERN_CHANGE_CNT - boss.stateCnt -
                          1) / BOSS_PATTERN_CHANGE_CNT;
-         crBpl =
-            255 -
-            (boss.stateCnt % (BOSS_PATTERN_CHANGE_CNT / (bpn + 1)) * 256) /
+         crBpl = 255 - (boss.stateCnt % (BOSS_PATTERN_CHANGE_CNT / (bpn + 1)) * 256) /
             (BOSS_PATTERN_CHANGE_CNT / (bpn + 1));
          break;
       }

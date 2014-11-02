@@ -89,7 +89,7 @@ void swapGLScene ()
    if (eglSwapBuffers(egl_screen.display, egl_screen.surface) != GL_TRUE) {
       printf("OpenGLES: eglSwapBuffers failed!\n");
    } else {
-//      printf("FPS: %d\n", fps());
+      printf("FPS: %d\n", fps());
    }
 }
 
@@ -1446,59 +1446,36 @@ void drawGLSceneEnd ()
 //  glPopMatrix();
 //}
 
-//senquack TODO: interleave & verify we really need this many vertices:
+typedef struct {
 #ifdef FIXEDMATH
-static GLfixed boxvertices[2000 * 2];
-//static GLfixed boxlinevertices[2600 * 2];  // Need 8 line vertices for every 6 box vertices
-static GLubyte boxcolors[2000 * 4];
-//static GLubyte boxlinecolors[2600 * 4];
-static GLfixed *boxvertptr;
-//static GLfixed *boxlinevertptr;
-static GLubyte *boxcolptr;
-//static GLubyte *boxlinecolptr;
+   GLfixed x,y;
 #else
-static GLfloat boxvertices[1950 * 2];
-//static GLfloat boxlinevertices[2600 * 2];  // Need 8 line vertices for every 6 box vertices
-static GLubyte boxcolors[1950 * 4];
-//static GLubyte boxlinecolors[2600 * 4];
-static GLfloat *boxvertptr;
-//static GLfloat *boxlinevertptr;
-static GLubyte *boxcolptr;
-//static GLubyte *boxlinecolptr;
+   GLfloat x,y;
 #endif //FIXEDMATH
+   GLubyte r,g,b,a;
+} boxvertice;
+   
+static boxvertice boxverticedata[2000];       
+static boxvertice *boxverticeptr;
 
-//senquack - new function called once before a series of calls to drawShape (for openglES speedup)
 void prepareDrawBoxes (void)
 {
-   boxvertptr = &boxvertices[0];
-   boxcolptr = &boxcolors[0];
-//   boxlinevertptr = &boxlinevertices[0];
-//   boxlinecolptr = &boxlinecolors[0];
+   boxverticeptr = &boxverticedata[0];
 }
 
 void finishDrawBoxes (void)
 {
    glEnable (GL_BLEND);
 #ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, 0, boxvertices);
+   glVertexPointer (2, GL_FIXED, sizeof(boxvertice), &boxverticedata[0].x);
 #else
-   glVertexPointer (2, GL_FLOAT, 0, boxvertices);
+   glVertexPointer (2, GL_FLOAT, sizeof(boxvertice), &boxverticedata[0].x);
 #endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, boxcolors);
-   int numboxvertices = ((unsigned int) boxcolptr - (unsigned int) (&boxcolors[0])) >> 2;
-   //senquack - never seemed to go above 1500 vertices here (higher when using non-rotated mode)
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(boxvertice), &boxverticedata[0].r);
+   int numboxvertices = ((unsigned int) boxverticeptr - (unsigned int) (&boxverticedata[0])) / sizeof(boxvertice);
    glDrawArrays (GL_TRIANGLES, 0, numboxvertices);
-// printf("printing boxes with %d vertices\n", numboxvertices);
-
-//#ifdef FIXEDMATH
-//   glVertexPointer (2, GL_FIXED, 0, boxlinevertices);
-//#else
-//   glVertexPointer (2, GL_FLOAT, 0, boxlinevertices);
-//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, boxlinecolors);
-//#endif //FIXEDMATH
-//   int numboxlinevertices = ((unsigned int) boxlinecolptr - (unsigned int) (&boxlinecolors[0])) >> 2;
-//   glDrawArrays (GL_LINES, 0, numboxlinevertices);
-//// printf("printing boxes with %d line vertices\n", numboxlinevertices);
+//    printf("printing boxes with %d vertices\n", numboxvertices);
+   //senquack - never seemed to go above 1500 vertices here (higher when using non-rotated mode)
 }
 
 //void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, 
@@ -1554,37 +1531,37 @@ void drawBox(GLfixed x, GLfixed y, GLfixed width, GLfixed height, int r, int g, 
 void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, int b)
 {
 #endif //FIXEDMATH
-   //TRIANGLES:
-   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-   *boxvertptr++ = x - width; *boxvertptr++ = y - height;
-   *boxvertptr++ = x - width; *boxvertptr++ = y + height;
-   *boxvertptr++ = x + width; *boxvertptr++ = y - height;
-   *boxvertptr++ = x - width; *boxvertptr++ = y + height;
-   *boxvertptr++ = x + width; *boxvertptr++ = y + height;
-   *boxvertptr++ = x + width; *boxvertptr++ = y - height;
-
-//   //LINES:
-//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
-//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
-//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
-//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
-//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
-//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
-//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
-//   *boxlinecolptr++ = r; *boxlinecolptr++ = g; *boxlinecolptr++ = b; *boxlinecolptr++ = 255;
-//   *boxlinevertptr++ = x - width; *boxlinevertptr++ = y - height;
-//   *boxlinevertptr++ = x - width; *boxlinevertptr++ = y + height;
-//   *boxlinevertptr++ = x - width; *boxlinevertptr++ = y + height;
-//   *boxlinevertptr++ = x + width; *boxlinevertptr++ = y + height;
-//   *boxlinevertptr++ = x + width; *boxlinevertptr++ = y + height;
-//   *boxlinevertptr++ = x + width; *boxlinevertptr++ = y - height;
-//   *boxlinevertptr++ = x + width; *boxlinevertptr++ = y - height;
-//   *boxlinevertptr++ = x - width; *boxlinevertptr++ = y - height;
+//   //TRIANGLES:
+//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
+//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
+//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
+//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
+//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
+//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
+//   *boxvertptr++ = x - width; *boxvertptr++ = y - height;
+//   *boxvertptr++ = x - width; *boxvertptr++ = y + height;
+//   *boxvertptr++ = x + width; *boxvertptr++ = y - height;
+//   *boxvertptr++ = x - width; *boxvertptr++ = y + height;
+//   *boxvertptr++ = x + width; *boxvertptr++ = y + height;
+//   *boxvertptr++ = x + width; *boxvertptr++ = y - height;
+   boxverticeptr->x = x - width; boxverticeptr->y = y - height;
+   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
+   boxverticeptr++;
+   boxverticeptr->x = x - width; boxverticeptr->y = y + height;
+   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
+   boxverticeptr++;
+   boxverticeptr->x = x + width; boxverticeptr->y = y - height;
+   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
+   boxverticeptr++;
+   boxverticeptr->x = x - width; boxverticeptr->y = y + height;
+   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
+   boxverticeptr++;
+   boxverticeptr->x = x + width; boxverticeptr->y = y + height;
+   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
+   boxverticeptr++;
+   boxverticeptr->x = x + width; boxverticeptr->y = y - height;
+   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
+   boxverticeptr++;
 }
 
 //void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
@@ -1967,40 +1944,59 @@ void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, 
 // 
 // glDrawArrays(GL_LINES, 0, 2);
 //}
-//senquack BIG todo - can we optimize this to draw lines in large batch instead of individually?
+
+typedef struct {
+#ifdef FIXEDMATH
+   GLfixed x,y;
+#else
+   GLfloat x,y;
+#endif //FIXEDMATH
+   GLubyte r,g,b,a;
+} linevertice;
+   
+static linevertice lineverticedata[2600];       //never seem to need more than 2100 or so, but be safe
+static linevertice *lineverticeptr;
+
+//senquack - new function called once before a series of calls to drawShape (for openglES speedup)
+void prepareDrawLines (void)
+{
+   lineverticeptr = &lineverticedata[0];
+}
+
+void finishDrawLines (void)
+{
+   glEnable (GL_BLEND);
+#ifdef FIXEDMATH
+   glVertexPointer (2, GL_FIXED, sizeof(linevertice), &lineverticedata[0].x);
+#else
+   glVertexPointer (2, GL_FLOAT, sizeof(linevertice), &lineverticedata[0].x);
+#endif //FIXEDMATH
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(linevertice), &lineverticedata[0].r);
+   int numlinevertices = ((unsigned int) lineverticeptr - (unsigned int) (&lineverticedata[0])) / sizeof(linevertice);
+   glDrawArrays (GL_LINES, 0, numlinevertices);
+//    printf("printing lines with %d vertices\n", numlinevertices);
+}
+
+//senquack - converted to GLES and now lines are drawn in one huge batch
+//void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
+//	      GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
+//  glColor4ub(r, g, b, a);
+//  glBegin(GL_LINES);
+//  glVertex3f(x1, y1, z1);
+//  glVertex3f(x2, y2, z2);
+//  glEnd();
+//}
 #ifdef FIXEDMATH
 void drawLine(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, int r, int g, int b, int a)
-{
-   GLfixed line[4];
-   line[0] = x1;
-   line[1] = y1;
-   line[2] = x2;
-   line[3] = y2;
-
-   GLubyte colors[8] = { r, g, b, a, r, g, b, a };
-
-   glVertexPointer (2, GL_FIXED, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-// glEnableClientState(GL_COLOR_ARRAY);
-
-   glDrawArrays (GL_LINES, 0, 2);
-}
 #else
-void drawLine(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, int b, int a)
+inline void drawLine(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, int b, int a)
 {
-   GLfloat line[4];
-   line[0] = x1;
-   line[1] = y1;
-   line[2] = x2;
-   line[3] = y2;
-   GLubyte colors[8] = { r, g, b, a, r, g, b, a };
-   
-   glVertexPointer (2, GL_FLOAT, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-// glEnableClientState(GL_COLOR_ARRAY);
-   glDrawArrays (GL_LINES, 0, 2);
+   lineverticeptr->x = x1; lineverticeptr->y = y1;
+   lineverticeptr->r = r; lineverticeptr->g = g; lineverticeptr->b = b; lineverticeptr->a = a;
+   lineverticeptr++;
+   lineverticeptr->x = x2; lineverticeptr->y = y2;
+   lineverticeptr->r = r; lineverticeptr->g = g; lineverticeptr->b = b; lineverticeptr->a = a;
+   lineverticeptr++;
 }
 #endif //FIXEDMATH
 

@@ -634,10 +634,12 @@ static void draw ()
       //printf("draw(): Drawing TITLE - drawBackground\n");
       drawBackground ();
 //      //printf("draw(): Drawing TITLE - drawBoss\n");
+      prepareDrawLines();
       drawBoss ();
 ////      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
       drawBulletsWake ();
 ////      //printf("draw(): Drawing TITLE - drawBullets\n");
+      finishDrawLines();
       drawBullets ();
 ////      //printf("draw(): Drawing TITLE - startDrawBoards\n");
       startDrawBoards ();
@@ -659,10 +661,12 @@ static void draw ()
       //senquack
 //    printf("draw(): Drawing STAGE_CLEAR\n");
       drawBackground ();
+      prepareDrawLines();
       drawBoss ();
       drawLasers ();
       drawShots ();
       drawBulletsWake ();
+      finishDrawLines();
       drawFrags ();
       drawShip ();
       drawBullets ();
@@ -681,8 +685,10 @@ static void draw ()
       //senquack
 //    printf("draw(): Drawing GAMEOVER\n");
       drawBackground ();
+      prepareDrawLines();
       drawBoss ();
       drawBulletsWake ();
+      finishDrawLines();
       drawFrags ();
       drawBullets ();
       startDrawBoards ();
@@ -694,10 +700,12 @@ static void draw ()
       //senquack
 //    printf("draw(): Drawing PAUSE\n");
       drawBackground ();
+      prepareDrawLines();
       drawBoss ();
       drawLasers ();
       drawShots ();
       drawBulletsWake ();
+      finishDrawLines();
       drawFrags ();
       drawShip ();
       drawBullets ();

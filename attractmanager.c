@@ -233,7 +233,8 @@ void drawScore() {
       drawNum(bonusScore/10*10, 24, 14, 16, 200, 200, 222);
 
    } else {
-      drawNumHoriz(score, 310, 65, 6, 210, 210, 240);
+      if (status != TITLE)
+         drawNumHoriz(score, 310, 65, 6, 210, 210, 240);
    }
 }
 
@@ -328,9 +329,6 @@ void drawRPanel_rotated() {
       //orig; had to be adjusted below to support screen-rotation:
       //    drawString(lStr, 40+480, 280, 18, 1, 200, 200, 222);
       //    drawLetter(left, 40+480, 420, 18, 1, 230, 180, 150);
-      // narrowing it down to somewhere better for rotation:
-      //    drawString(lStr, 185, 45, 6, 0, 200, 200, 222);
-      //    drawLetter(left, 245, 45, 6, 0, 230, 180, 150);
 //      drawString(lStr, 175, 45, 6, 0, 200, 200, 222);
 //      drawLetter(left, 220, 45, 6, 0, 230, 180, 150);
       drawString(lStr, 165, 45, 6, 0, 200, 200, 222);
@@ -341,9 +339,6 @@ void drawRPanel_rotated() {
             //orig; had to be adjusted below to support screen-rotation:
             //      drawString(bStr, 90+480, 280, 18, 1, 200, 200, 222);
             //      drawLetter(bomb, 90+480, 420, 18, 1, 230, 180, 150);
-            // narrowing it down to somewhere better for rotation:
-            //      drawString(bStr, 270, 45, 9, 0, 200, 200, 222);
-            //      drawLetter(bomb, 330, 45, 9, 0, 230, 180, 150);
 //            drawString(bStr, 235, 45, 6, 0, 200, 200, 222);
 //            drawLetter(bomb, 280, 45, 6, 0, 230, 180, 150);
             drawString(bStr, 225, 45, 6, 0, 200, 200, 222);

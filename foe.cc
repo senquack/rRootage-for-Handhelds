@@ -638,7 +638,7 @@ moveFoes ()
                   inab * inab / inaa / inaa;
                //if ( hd >= 0 && hd < SHIP_HIT_WIDTH && vctSize(&bmv) < 1280 ) {
                if (hd >= 0 && hd < SHIP_HIT_WIDTH) {
-                  destroyShip ();
+//                  destroyShip ();
                   removeFoe (fe);
                   continue;
                }
@@ -905,7 +905,6 @@ drawBullets ()
          fx = (int) ((float) fe->pos.x * 6.5536f);  // roll fixed point conversion and division into one multiply
          fy = (int) (-(float) fe->pos.y * 6.5536f);
 #else
-//senquack TODO: poss. optimization w/ inverse:
          x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
          y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
 #endif //FIXEDMATH

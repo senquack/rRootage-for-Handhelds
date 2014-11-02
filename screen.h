@@ -117,6 +117,9 @@ void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, 
 void prepareDrawBoxes (void);
 void finishDrawBoxes (void);
 
+//senquack - added these to support batch drawing of boxes:
+void preparedrawLines();
+void finishDrawLines();
 //senquack - converted to 2D (no need for z coordinate)
 //void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
 //       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a);

@@ -5403,59 +5403,59 @@ void drawCircle (GLfloat x, GLfloat y, GLfloat width, int cnt,
 //  glPopMatrix();
 //}
 
-//senquack BIG TODO - make sure we really need 1024 shape points on the screen at once:
-//senquack ALSO BIG TODO : interleave drawing of points
-#ifdef FIXEDMATH
-static GLfixed shapevertices[2 * 8];    // array capable of holding up to 8 2D vertices
-#else
-static GLfloat shapevertices[2 * 8];    // array capable of holding up to 8 2D vertices
-#endif //FIXEDMATH
-static GLubyte shapecolors[4 * 8];  // array capable of holding up to 8 RGBA colors
-
-#ifdef FIXEDMATH
-static GLfixed shapeptvertices[1024 * 2 * 6];
-static GLfixed *shapeptvertptr = &shapeptvertices[0];
-#else
-static GLfloat shapeptvertices[1024 * 2 * 6];
-static GLfloat *shapeptvertptr = &shapeptvertices[0];
-#endif //FIXEDMATH
-static GLubyte shapeptcolors[1024 * 4 * 6];
-static GLubyte *shapeptcolptr = &shapeptcolors[0];
-
-
-//senquack - new function called once before a series of calls to drawShape (for openglES speedup)
-void prepareDrawShapes (void)
-{
-//  glPushMatrix();
-
-   glEnable (GL_BLEND);
-#ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, 0, shapevertices);
-#else
-   glVertexPointer (2, GL_FLOAT, 0, shapevertices);
-#endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, shapecolors);
-   shapeptvertptr = &shapeptvertices[0];
-   shapeptcolptr = &shapeptcolors[0];
-}
-
-void finishDrawShapes (void)
-{
-// glPopMatrix();
-   glDisable (GL_BLEND);
-
-   // now, draw all the cores of the foes (points)
-   //senquack BIG TODO: interleave & change drawing of point squares as 4 vertices using triangle strip
-#ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, 0, shapeptvertices);
-#else
-   glVertexPointer (2, GL_FLOAT, 0, shapeptvertices);
-#endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, shapeptcolors);
-   glDrawArrays (GL_TRIANGLES, 0,
-                 ((unsigned int) shapeptcolptr -
-                  (unsigned int) (&shapeptcolors[0])) >> 2);
-}
+////senquack BIG TODO - make sure we really need 1024 shape points on the screen at once:
+////senquack ALSO BIG TODO : interleave drawing of points
+//#ifdef FIXEDMATH
+//static GLfixed shapevertices[2 * 12];    // array capable of holding up to 8 2D vertices
+//#else
+//static GLfloat shapevertices[2 * 12];    // array capable of holding up to 8 2D vertices
+//#endif //FIXEDMATH
+//static GLubyte shapecolors[4 * 12];  // array capable of holding up to 8 RGBA colors
+//
+//#ifdef FIXEDMATH
+//static GLfixed shapeptvertices[1024 * 2 * 6];
+//static GLfixed *shapeptvertptr = &shapeptvertices[0];
+//#else
+//static GLfloat shapeptvertices[1024 * 2 * 6];
+//static GLfloat *shapeptvertptr = &shapeptvertices[0];
+//#endif //FIXEDMATH
+//static GLubyte shapeptcolors[1024 * 4 * 6];
+//static GLubyte *shapeptcolptr = &shapeptcolors[0];
+//
+//
+////senquack - new function called once before a series of calls to drawShape (for openglES speedup)
+//void prepareDrawShapes (void)
+//{
+////  glPushMatrix();
+//
+//   glEnable (GL_BLEND);
+//#ifdef FIXEDMATH
+//   glVertexPointer (2, GL_FIXED, 0, shapevertices);
+//#else
+//   glVertexPointer (2, GL_FLOAT, 0, shapevertices);
+//#endif //FIXEDMATH
+//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, shapecolors);
+//   shapeptvertptr = &shapeptvertices[0];
+//   shapeptcolptr = &shapeptcolors[0];
+//}
+//
+//void finishDrawShapes (void)
+//{
+//// glPopMatrix();
+//   glDisable (GL_BLEND);
+//
+//   // now, draw all the cores of the foes (points)
+//   //senquack BIG TODO: interleave & change drawing of point squares as 4 vertices using triangle strip
+//#ifdef FIXEDMATH
+//   glVertexPointer (2, GL_FIXED, 0, shapeptvertices);
+//#else
+//   glVertexPointer (2, GL_FLOAT, 0, shapeptvertices);
+//#endif //FIXEDMATH
+//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, shapeptcolors);
+//   glDrawArrays (GL_TRIANGLES, 0,
+//                 ((unsigned int) shapeptcolptr -
+//                  (unsigned int) (&shapeptcolors[0])) >> 2);
+//}
 
 //senquack TODO - MANDATORY: roll this into one fixed/float function
 //senquack - experimenting a bit for speedups
@@ -6584,6 +6584,7 @@ void drawShape (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, in
 
 //    glRotatef((float)d*360/1024, 0, 0, 1);
       glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
+
 //    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
 
       //same thing:
@@ -7098,607 +7099,652 @@ void drawShape (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, in
 //  if (shouldrotate) glPopMatrix();
 }
 #else
+typedef struct {
+#ifdef FIXEDMATH
+   GLfixed x,y;
+#else
+   GLfloat x,y;
+#endif //FIXEDMATH
+   GLubyte r,g,b,a;
+} shapevertice;
+
+// Most complicated shape (circle) requires 18 vertexes, and each point inside the shapes needs 6 vertexes:
+#define FOE_MAX 1024  // pulled from foe.cc
+static shapevertice shapeverticedata[FOE_MAX * 18 + FOE_MAX * 6]; 
+static shapevertice *shapeverticeptr;
+
+void prepareDrawShapes (void)
+{
+   shapeverticeptr = &shapeverticedata[0];
+}
+
+void finishDrawShapes (void)
+{
+   glEnable (GL_BLEND);
+#ifdef FIXEDMATH
+   glVertexPointer (2, GL_FIXED, sizeof(shapevertice), &shapeverticedata[0].x);
+#else
+   glVertexPointer (2, GL_FLOAT, sizeof(shapevertice), &shapeverticedata[0].x);
+#endif //FIXEDMATH
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(shapevertice), &shapeverticedata[0].r);
+   int numshapevertices = ((unsigned int) shapeverticeptr - (unsigned int) (&shapeverticedata[0])) / sizeof(shapevertice);
+   glDrawArrays (GL_TRIANGLES, 0, numshapevertices);
+    printf("drawing shapes with %d vertices\n", numshapevertices);
+   glDisable (GL_BLEND);
+}
+
+//USING ORIGINAL GAME'S LOOKUP TABLE:
+//#define COS_LOOKUP(degree) ((float)(sctbl[(degree) + 256]) / 256.0f)
+//#define SIN_LOOKUP(degree) ((float)(sctbl[(1024-d)]) / 256.0f)
+// A BIT OPTIMIZED VERSION OF ABOVE:
+#define COS_LOOKUP(degree) ((float)(sctbl[(degree) + 256]) * (1.0f/256.0f))
+#define SIN_LOOKUP(degree) ((float)(sctbl[1024-(degree)]) * (1.0f/256.0f))
+
+// USING LIBM:
+//#define COS_LOOKUP(degree) cosf(((float)-(degree) / 1024.0f * 2 * M_PI ))
+//#define SIN_LOOKUP(degree) sinf(((float)-(degree) / 1024.0f * 2 * M_PI ))
+//#define COS_LOOKUP(degree) cos(((double)-(degree) / 1024.0l * 2.0l * M_PIl ))
+//#define SIN_LOOKUP(degree) sin(((double)-(degree) / 1024.0l * 2.0l * M_PIl ))
+
+//#define COS_LOOKUP(degree) cosf(((float)(degree) / 1024.0f * 2 * M_PI ))
+//#define SIN_LOOKUP(degree) sinf(((float)(degree) / 1024.0f * 2 * M_PI ))
+
+//CLOCKWISE:
+#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) + y * SIN_LOOKUP(degree))
+#define Y_ROT(x,y,degree) (-x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
+//#define X_ROT(x,y,degree) ((double)x * COS_LOOKUP(degree) + (double)y * SIN_LOOKUP(degree))
+//#define Y_ROT(x,y,degree) (-(double)x * SIN_LOOKUP(degree) + (double)y * COS_LOOKUP(degree))
+
+//COUNTERCLOCKWISE: (not what we're looking for)
+//#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) - y * SIN_LOOKUP(degree))
+//#define Y_ROT(x,y,degree) (x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
 void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int r, int g, int b)
 {
    GLfloat sz, sz2;       
+// //core of shapes - changed alpha to 255 from 220 to make them a bit more visible
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
 
-////  glPushMatrix();
-//  if (shouldrotate) {
-//   glPopMatrix();
-//   glPushMatrix();
-//  }
+   shapeverticeptr->x = x - SHAPE_POINT_SIZE; shapeverticeptr->y = y - SHAPE_POINT_SIZE;
+   shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 255;
+   shapeverticeptr++;
+   shapeverticeptr->x = x - SHAPE_POINT_SIZE; shapeverticeptr->y = y + SHAPE_POINT_SIZE;
+   shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 255;
+   shapeverticeptr++;
+   shapeverticeptr->x = x + SHAPE_POINT_SIZE; shapeverticeptr->y = y - SHAPE_POINT_SIZE;
+   shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 255;
+   shapeverticeptr++;
+   shapeverticeptr->x = x + SHAPE_POINT_SIZE; shapeverticeptr->y = y + SHAPE_POINT_SIZE;
+   shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 255;
+   shapeverticeptr++;
+   shapeverticeptr->x = x + SHAPE_POINT_SIZE; shapeverticeptr->y = y - SHAPE_POINT_SIZE;
+   shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 255;
+   shapeverticeptr++;
+   shapeverticeptr->x = x - SHAPE_POINT_SIZE; shapeverticeptr->y = y + SHAPE_POINT_SIZE;
+   shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 255;
+   shapeverticeptr++;
 
-// //core of shapes
-// shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = r;
-// shapecolors[1] = shapecolors[5] = shapecolors[9] = shapecolors[13] = g;
-// shapecolors[2] = shapecolors[6] = shapecolors[10] = shapecolors[14] = b;
-// shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] = 255;
-// shapevertices[0] = -SHAPE_POINT_SIZE_X;   shapevertices[1] = -SHAPE_POINT_SIZE_X;
-// shapevertices[2] = SHAPE_POINT_SIZE_X;    shapevertices[3] = -SHAPE_POINT_SIZE_X;
-// shapevertices[4] = SHAPE_POINT_SIZE_X;    shapevertices[5] = SHAPE_POINT_SIZE_X;
-// shapevertices[6] = -SHAPE_POINT_SIZE_X;   shapevertices[7] = SHAPE_POINT_SIZE_X;
-// glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-
-   //senquack BIG TODO: interleave & change drawing of point squares as 4 vertices using triangle strip
-   // The core dots that make up each shape are drawn after all shapes are drawn in one huge batch:
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 255;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
-
-   glPushMatrix ();
-   glTranslatef(x, y, 0);
+//   glPushMatrix ();
+//   glTranslatef(x, y, 0);
 
    switch (type) {
-   case 0:
-      //triangle shape
-    sz = size * 0.5f;
-
-//    glRotatef((float)d*360/1024, 0, 0, 1);
-
-      glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
-
-//    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
-
-      //same thing:
-//    glRotatex(INT2FNUM((d*360)>>10), 0, 0, INT2FNUM(1));
-//    glRotatex((d*360)<<6, 0, 0, INT2FNUM(1));
-
-      //senquack - no need for this
-//    glDisable(GL_BLEND);
-//    glBegin(GL_LINE_LOOP);
-//    glVertex3f(-sz, -sz,  0);
-//    glVertex3f( sz, -sz,  0);
-//    glVertex3f( 0, size,  0);
-//    glEnd();
-
-      // for speedup on wiz:
-//    glEnable(GL_BLEND);
-
-////    glColor4i(r, g, b, 150);
-//    glColor4i(r, g, b, 150);
+//   case 0:
+//      //triangle shape
+//    sz = size * 0.5f;
+////    glRotatef((float)d*360/1024, 0, 0, 1);
+////
+////      shapecolors[0] = shapecolors[4] = r;
+////      shapecolors[1] = shapecolors[5] = g;
+////      shapecolors[2] = shapecolors[6] = b;
+////      shapecolors[3] = shapecolors[7] = shapecolors[11] = 150;
+////      shapecolors[8] = SHAPE_BASE_COLOR_R;
+////      shapecolors[9] = SHAPE_BASE_COLOR_G;
+////      shapecolors[10] = SHAPE_BASE_COLOR_B;
+////      shapevertices[0] = -sz;
+////      shapevertices[1] = -sz;
+////      shapevertices[2] = sz;
+////      shapevertices[3] = -sz;
+////      shapevertices[4] = 0;
+////      shapevertices[5] = size;
 //
-//  //senquack - converting to 2D for speed:
-////    glBegin(GL_TRIANGLE_FAN);
-////    glVertex3f(-sz, -sz,  0);
-////    glVertex3f( sz, -sz,  0);
-//////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-////    glVertex3f( 0, size,  0);
-////    glEnd();
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(-sz, -sz);
-//    glVertex2f( sz, -sz);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex2f( 0, size);
-//    glEnd();
-
-      shapecolors[0] = shapecolors[4] = r;
-      shapecolors[1] = shapecolors[5] = g;
-      shapecolors[2] = shapecolors[6] = b;
-      shapecolors[3] = shapecolors[7] = shapecolors[11] = 150;
-      shapecolors[8] = SHAPE_BASE_COLOR_R;
-      shapecolors[9] = SHAPE_BASE_COLOR_G;
-      shapecolors[10] = SHAPE_BASE_COLOR_B;
-      shapevertices[0] = -sz;
-      shapevertices[1] = -sz;
-      shapevertices[2] = sz;
-      shapevertices[3] = -sz;
-      shapevertices[4] = 0;
-      shapevertices[5] = size;
-// glVertexPointer(2, GL_FIXED, 0, shapevertices);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, shapecolors);
-      glDrawArrays (GL_TRIANGLES, 0, 3);
-
-      break;
-   case 1:
-      // senquack - diamond shape
-      sz = size * 0.5f;
-//    glRotatef((float)((cnt*23)&1023)*360/1024, 0, 0, 1);
-
-      glRotatef ((float) ((((cnt * 23) & 1023) * 360) >> 10), 0, 0, 1);
-
-
-//    if (shouldrotate) glRotatef((float)((((cnt*23)&1023)*360)>>10), 0, 0, 1);
-      //senquack - same thing:
-//    glRotatex(INT2FNUM((((cnt*23)&1023)*360)>>10), 0, 0, INT2FNUM(1));
-//    glRotatex((((cnt*23)&1023)*360)<<6, 0, 0, INT2FNUM(1));
-
-      //senquack - no need for this
-//    glDisable(GL_BLEND);
-//    glBegin(GL_LINE_LOOP);
-//    glVertex3f(  0, -size,  0);
-//    glVertex3f( sz,     0,  0);
-//    glVertex3f(  0,  size,  0);
-//    glVertex3f(-sz,     0,  0);
-//    glEnd();
-
-      // for speedup on wiz:
-//    glEnable(GL_BLEND);
-
-////    glColor4i(r, g, b, 180);
-//    glColor4i(r, g, b, 180);
 //
-//  //senquack - converting to 2D for speed:
-////    glBegin(GL_TRIANGLE_FAN);
-////    glVertex3f(  0, -size,  0);
-////    glVertex3f( sz,     0,  0);
-//////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-////    glVertex3f(  0,  size,  0);
-////    glVertex3f(-sz,     0,  0);
-////    glEnd();
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(  0, -size);
-//    glVertex2f( sz,     0);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex2f(  0,  size);
-//    glVertex2f(-sz,     0);
-//    glEnd();
-
-      shapecolors[0] = shapecolors[4] = r;
-      shapecolors[1] = shapecolors[5] = g;
-      shapecolors[2] = shapecolors[6] = b;
-      shapecolors[3] = shapecolors[7] = 180;
-      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
-      shapecolors[9] = shapecolors[13] = SHAPE_BASE_COLOR_G;
-      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
-      shapecolors[11] = shapecolors[15] = 150;
-      shapevertices[0] = 0;
-      shapevertices[1] = -size;
-      shapevertices[2] = sz;
-      shapevertices[3] = 0;
-      shapevertices[4] = 0;
-      shapevertices[5] = size;
-      shapevertices[6] = -sz;
-      shapevertices[7] = 0;
-// glVertexPointer(2, GL_FIXED, 0, shapevertices);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, shapecolors);
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-
-      break;
-   case 2:
-      //rectangular shape
-//    sz = size/4; sz2 = size/3*2;
-//    sz = size>>2; sz2 = FDIV(size,INT2FNUM(3)) << 1;
-//    sz = size>>2; sz2 = f2x(x2f(size) / 3.0 * 2.0);
-
-//      sz = size >> 2;
-//      sz2 = FMUL (size, 43691);    //43690 = 2/3 in fixed point
-      //senquack TODO: make sure converting fixed back to float, we got all this right:
-      sz = size * 0.25f;
-      sz2 = size * (2.0f/3.0f);
-
-
-//  // TEMP DEBUGGING:
-//  if (!blah)
-//  {
-//     sz = f2x(x2f(size) / 4.0);
-//     sz2 = f2x(x2f(size) / 3.0 * 2.0);
-//  } else {
-//     sz = size>>2; sz2 = FMUL(size,43691);  //43690 = 2/3 in fixed point
-//  }
-//  blah = !blah;
-
-//    glRotatef((float)d*360/1024, 0, 0, 1);
-
-      glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
-
-//    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
-      //same thing:
-//    glRotatex(INT2FNUM((d*360)>>10), 0, 0, INT2FNUM(1));
-//    glRotatex((d*360)<<6, 0, 0, INT2FNUM(1));
-
-      //senquack - no need for this
-//    glDisable(GL_BLEND);
-//    glBegin(GL_LINE_LOOP);
-//    glVertex3f(-sz, -sz2,  0);
-//    glVertex3f( sz, -sz2,  0);
-//    glVertex3f( sz,  sz2,  0);
-//    glVertex3f(-sz,  sz2,  0);
-//    glEnd();
-
-      //senquack - converting to 2D for speed:
-//    glEnable(GL_BLEND);
-////    glColor4i(r, g, b, 120);
-//    glColor4i(r, g, b, 120);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex3f(-sz, -sz2,  0);
-//    glVertex3f( sz, -sz2,  0);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex3f( sz, sz2,  0);
-//    glVertex3f(-sz, sz2,  0);
-//    glEnd();
-
-      // for speedup on wiz:
-//    glEnable(GL_BLEND);
-
-////    glColor4i(r, g, b, 120);
-//    glColor4i(r, g, b, 120);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(-sz, -sz2);
-//    glVertex2f( sz, -sz2);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex2f( sz, sz2);
-//    glVertex2f(-sz, sz2);
-//    glEnd();
-
-      shapecolors[0] = shapecolors[4] = r;
-      shapecolors[1] = shapecolors[5] = g;
-      shapecolors[2] = shapecolors[6] = b;
-      shapecolors[3] = shapecolors[7] = 120;
-      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
-      shapecolors[9] = shapecolors[13] = SHAPE_BASE_COLOR_G;
-      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
-      shapecolors[11] = shapecolors[15] = 150;
-      shapevertices[0] = -sz;
-      shapevertices[1] = -sz2;
-      shapevertices[2] = sz;
-      shapevertices[3] = -sz2;
-      shapevertices[4] = sz;
-      shapevertices[5] = sz2;
-      shapevertices[6] = -sz;
-      shapevertices[7] = sz2;
-// glVertexPointer(2, GL_FIXED, 0, shapevertices);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, shapecolors);
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-      break;
-
-   case 3:
-      //senquack - square shape
-    sz = size * 0.5f;
-
-      //senquack
-//    glRotatef((float)((cnt*37)&1023)*360/1024, 0, 0, 1);
-
-
-      glRotatef ((float) ((((cnt * 37) & 1023) * 360) >> 10), 0, 0, 1);
-
-//    if (shouldrotate) glRotatef((float)((((cnt*37)&1023)*360)>>10), 0, 0, 1);
-
-      //same thing:
-//    glRotatex(INT2FNUM((((cnt*37)&1023)*360)>>10), 0, 0, INT2FNUM(1));
-//    glRotatex((((cnt*37)&1023)*360)<<6, 0, 0, INT2FNUM(1));
-
-      //senquack - no need for this
-//    glDisable(GL_BLEND);
-//    glBegin(GL_LINE_LOOP);
-//    glVertex3f(-sz, -sz,  0);
-//    glVertex3f( sz, -sz,  0);
-//    glVertex3f( sz,  sz,  0);
-//    glVertex3f(-sz,  sz,  0);
-//    glEnd();
-
-      //senquack - converting to 2D for speed:
-
-      // for speedup on wiz:
-//    glEnable(GL_BLEND);
-
-////    glColor4i(r, g, b, 180);
-//    glColor4i(r, g, b, 180);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex3f(-sz, -sz,  0);
-//    glVertex3f( sz, -sz,  0);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex3f( sz,  sz,  0);
-//    glVertex3f(-sz,  sz,  0);
-//    glEnd();
-
-//    glEnable(GL_BLEND);
-////    glColor4i(r, g, b, 180);
-//    glColor4i(r, g, b, 180);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(-sz, -sz);
-//    glVertex2f( sz, -sz);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex2f( sz,  sz);
-//    glVertex2f(-sz,  sz);
-//    glEnd();
-
-      shapecolors[0] = shapecolors[4] = r;
-      shapecolors[1] = shapecolors[5] = g;
-      shapecolors[2] = shapecolors[6] = b;
-      shapecolors[3] = shapecolors[7] = 180;
-      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
-      shapecolors[9] = shapecolors[13] = SHAPE_BASE_COLOR_G;
-      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
-      shapecolors[11] = shapecolors[15] = 150;
-      shapevertices[0] = -sz;
-      shapevertices[1] = -sz;
-      shapevertices[2] = sz;
-      shapevertices[3] = -sz;
-      shapevertices[4] = sz;
-      shapevertices[5] = sz;
-      shapevertices[6] = -sz;
-      shapevertices[7] = sz;
-// glVertexPointer(2, GL_FIXED, 0, shapevertices);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, shapecolors);
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-
-      break;
-   case 4:
-      // circular shape
-      sz = size * 0.5f;
-      sz2 = size * 0.25f;         // added this because of simplicity later on
-
-      //senquack
-//    glRotatef((float)((cnt*53)&1023)*360/1024, 0, 0, 1);
-
-      glRotatef ((float) ((((cnt * 53) & 1023) * 360) >> 10), 0, 0, 1);
-
-//    if (shouldrotate) glRotatef((float)((((cnt*53)&1023)*360)>>10), 0, 0, 1);
-      //same thing:
-//    glRotatex(INT2FNUM((((cnt*53)&1023)*360)>>10), 0, 0, INT2FNUM(1));
-//    glRotatex((((cnt*53)&1023)*360)<<6, 0, 0, INT2FNUM(1));
-
-      //senquack - no need for this
-//    glDisable(GL_BLEND);
-//    glBegin(GL_LINE_LOOP);
-//    glVertex3f(-sz/2, -sz,  0);
-//    glVertex3f( sz/2, -sz,  0);
-//    glVertex3f( sz,  -sz/2,  0);
-//    glVertex3f( sz,   sz/2,  0);
-//    glVertex3f( sz/2,  sz,  0);
-//    glVertex3f(-sz/2,  sz,  0);
-//    glVertex3f(-sz,   sz/2,  0);
-//    glVertex3f(-sz,  -sz/2,  0);
-//    glEnd();
-
-      // for speedup on wiz:
-//    glEnable(GL_BLEND);
-
-////    glColor4i(r, g, b, 220);
-//    glColor4i(r, g, b, 220);
+////      shapevertices[0] = X_ROT(-sz, -sz, d);
+////      shapevertices[1] = Y_ROT(-sz, -sz, d);
+////      shapevertices[2] = X_ROT(sz, -sz, d);
+////      shapevertices[3] = Y_ROT(sz, -sz, d);
+////      shapevertices[4] = X_ROT(0, size, d);
+////      shapevertices[5] = Y_ROT(0, size, d);
+////      glDrawArrays (GL_TRIANGLES, 0, 3);
 //
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(-sz/2, -sz);
-//    glVertex2f( sz/2, -sz);
-//    glVertex2f( sz,  -sz/2);
-//    glVertex2f( sz,   sz/2);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex2f( sz/2,  sz);
-//    glVertex2f(-sz/2,  sz);
-//    glVertex2f(-sz,   sz/2);
-//    glVertex2f(-sz,  -sz/2);
-//    glEnd();
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, -sz, d);  shapeverticeptr->y = y + Y_ROT(sz, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(0, size, d);  shapeverticeptr->y = y + Y_ROT(0, size, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+////      printf("SMALL x:%f  y: %f  d: %d   size: %f   sz: %f   \n", x, y, d, size, sz);
+//      break;
 
-      shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = r;
-      shapecolors[1] = shapecolors[5] = shapecolors[9] = shapecolors[13] = g;
-      shapecolors[2] = shapecolors[6] = shapecolors[10] = shapecolors[14] = b;
-      shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] =
-         220;
-      shapecolors[16] = shapecolors[20] = shapecolors[24] = shapecolors[28] =
-         SHAPE_BASE_COLOR_R;
-      shapecolors[17] = shapecolors[21] = shapecolors[25] = shapecolors[29] =
-         SHAPE_BASE_COLOR_G;
-      shapecolors[18] = shapecolors[22] = shapecolors[26] = shapecolors[30] =
-         SHAPE_BASE_COLOR_B;
-      shapecolors[19] = shapecolors[23] = shapecolors[27] = shapecolors[31] =
-         150;
-      shapevertices[0] = -sz2;
-      shapevertices[1] = -sz;
-      shapevertices[2] = sz2;
-      shapevertices[3] = -sz;
-      shapevertices[4] = sz;
-      shapevertices[5] = -sz2;
-      shapevertices[6] = sz;
-      shapevertices[7] = sz2;
-      shapevertices[8] = sz2;
-      shapevertices[9] = sz;
-      shapevertices[10] = -sz2;
-      shapevertices[11] = sz;
-      shapevertices[12] = -sz;
-      shapevertices[13] = sz2;
-      shapevertices[14] = -sz;
-      shapevertices[15] = -sz2;
-// glVertexPointer(2, GL_FIXED, 0, shapevertices);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, shapecolors);
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 8);
-      break;
-
+//   case 1:
+//      /* CASE 1: DIAMOND SHAPE */
+//      sz = size * 0.5f;
+//      d = (cnt*23)&1023;
+////    glRotatef((float)((cnt*23)&1023)*360/1024, 0, 0, 1);
+////      shapecolors[0] = shapecolors[4] = r;
+////      shapecolors[1] = shapecolors[5] = g;
+////      shapecolors[2] = shapecolors[6] = b;
+////      shapecolors[3] = shapecolors[7] = 180;
+////      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
+////      shapecolors[9] = shapecolors[13] = SHAPE_BASE_COLOR_G;
+////      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
+////      shapecolors[11] = shapecolors[15] = 150;
+//////      shapevertices[0] = 0;
+//////      shapevertices[1] = -size;
+//////      shapevertices[2] = sz;
+//////      shapevertices[3] = 0;
+//////      shapevertices[4] = 0;
+//////      shapevertices[5] = size;
+//////      shapevertices[6] = -sz;
+//////      shapevertices[7] = 0;
+////      shapevertices[0] = X_ROT(0, -size, d);
+////      shapevertices[1] = Y_ROT(0, -size, d);
+////      shapevertices[2] = X_ROT(sz, 0, d);
+////      shapevertices[3] = Y_ROT(sz, 0, d);
+////      shapevertices[4] = X_ROT(0, size, d);
+////      shapevertices[5] = Y_ROT(0, size, d);
+////      shapevertices[6] = X_ROT(-sz, 0, d);
+////      shapevertices[7] = Y_ROT(-sz, 0, d);
+//      shapeverticeptr->x = x + X_ROT(0, -size, d); shapeverticeptr->y = y + Y_ROT(0, -size, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, 0, d); shapeverticeptr->y = y + Y_ROT(sz, 0, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(0, size, d); shapeverticeptr->y = y + Y_ROT(0, size, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(0, size, d); shapeverticeptr->y = y + Y_ROT(0, size, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz, 0, d); shapeverticeptr->y = y + Y_ROT(-sz, 0, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(0, -size, d); shapeverticeptr->y = y + Y_ROT(0, -size, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+//      shapeverticeptr++;
+////      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
+//      break;
+//   case 2:
+//      /* CASE 2 - RECTANGULAR SHAPE */
+//      sz = size * 0.25f;
+//      sz2 = size * (2.0f/3.0f);
+////    glRotatef((float)d*360/1024, 0, 0, 1);
+////      shapecolors[0] = shapecolors[4] = r;
+////      shapecolors[1] = shapecolors[5] = 255;
+////      shapecolors[2] = shapecolors[6] = b;
+////      shapecolors[3] = shapecolors[7] = 120;
+////      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
+////      shapecolors[9] = shapecolors[13] = 255;
+////      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
+////      shapecolors[11] = shapecolors[15] = 150;
+////      shapevertices[0] = -sz;
+////      shapevertices[1] = -sz2;
+////      shapevertices[2] = sz;
+////      shapevertices[3] = -sz2;
+////      shapevertices[4] = sz;
+////      shapevertices[5] = sz2;
+////      shapevertices[6] = -sz;
+////      shapevertices[7] = sz2;
+////      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
+//
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
+//      shapeverticeptr++;
+//      break;
+//
+//   case 3:
+//      /* CASE 3 - SQUARE SHAPE */
+//    sz = size * 0.5f;
+////    glRotatef((float)((cnt*37)&1023)*360/1024, 0, 0, 1);
+//////      shapecolors[0] = shapecolors[4] = r;
+//////      shapecolors[1] = shapecolors[5] = g;
+//////      shapecolors[2] = shapecolors[6] = b;
+//////      shapecolors[3] = shapecolors[7] = 180;
+//////      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
+//////      shapecolors[9] = shapecolors[13] = SHAPE_BASE_COLOR_G;
+//////      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
+//////      shapecolors[11] = shapecolors[15] = 150;
+////      d = (cnt*37)&1023;
+//////      shapevertices[0] = -sz;
+//////      shapevertices[1] = -sz;
+//////      shapevertices[2] = sz;
+//////      shapevertices[3] = -sz;
+//////      shapevertices[4] = sz;
+//////      shapevertices[5] = sz;
+//////      shapevertices[6] = -sz;
+//////      shapevertices[7] = sz;
+////      shapevertices[0] = X_ROT(-sz, -sz, d);
+////      shapevertices[1] = Y_ROT(-sz, -sz, d);
+////      shapevertices[2] = X_ROT(sz, -sz, d);
+////      shapevertices[3] = Y_ROT(sz, -sz, d);
+////      shapevertices[4] = X_ROT(sz, sz, d);
+////      shapevertices[5] = Y_ROT(sz, sz, d);
+////      shapevertices[6] = X_ROT(sz, sz, d);
+////      shapevertices[7] = Y_ROT(sz, sz, d);
+////      shapevertices[8] = X_ROT(-sz, sz, d);
+////      shapevertices[9] = Y_ROT(-sz, sz, d);
+////      shapevertices[10] = X_ROT(-sz, -sz, d);
+////      shapevertices[11] = Y_ROT(-sz, -sz, d);
+//////      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
+////      glDrawArrays (GL_TRIANGLES, 0, 6);
+//      d = (cnt*37)&1023;
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, -sz, d); shapeverticeptr->y = y + Y_ROT(sz, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, sz, d); shapeverticeptr->y = y + Y_ROT(sz, sz, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, sz, d); shapeverticeptr->y = y + Y_ROT(sz, sz, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz, sz, d); shapeverticeptr->y = y + Y_ROT(-sz, sz, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+//      shapeverticeptr++;
+//      break;
+//   case 4:
+//      /* CASE 4 - CIRCULAR SHAPE */
+//      sz = size * 0.5f;
+//      sz2 = size * 0.25f;        
+//      d = (cnt * 53) & 1023;
+//////    glRotatef((float)((cnt*53)&1023)*360/1024, 0, 0, 1);
+////      shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = r;
+////      shapecolors[1] = shapecolors[5] = shapecolors[9] = shapecolors[13] = g;
+////      shapecolors[2] = shapecolors[6] = shapecolors[10] = shapecolors[14] = b;
+////      shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] =
+////         220;
+////      shapecolors[16] = shapecolors[20] = shapecolors[24] = shapecolors[28] =
+////         SHAPE_BASE_COLOR_R;
+////      shapecolors[17] = shapecolors[21] = shapecolors[25] = shapecolors[29] =
+////         SHAPE_BASE_COLOR_G;
+////      shapecolors[18] = shapecolors[22] = shapecolors[26] = shapecolors[30] =
+////         SHAPE_BASE_COLOR_B;
+////      shapecolors[19] = shapecolors[23] = shapecolors[27] = shapecolors[31] =
+////         150;
+////      shapevertices[0] = -sz2;
+////      shapevertices[1] = -sz;
+////      shapevertices[2] = sz2;
+////      shapevertices[3] = -sz;
+////      shapevertices[4] = sz;
+////      shapevertices[5] = -sz2;
+////      shapevertices[6] = sz;
+////      shapevertices[7] = sz2;
+////      shapevertices[8] = sz2;
+////      shapevertices[9] = sz;
+////      shapevertices[10] = -sz2;
+////      shapevertices[11] = sz;
+////      shapevertices[12] = -sz;
+////      shapevertices[13] = sz2;
+////      shapevertices[14] = -sz;
+////      shapevertices[15] = -sz2;
+////      glDrawArrays (GL_TRIANGLE_FAN, 0, 8);
+//
+//      //Triangle 1 / 6
+//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(sz2, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      //Triangle 2 / 6
+//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      //Triangle 3 / 6
+//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz2, sz, d); shapeverticeptr->y = y + Y_ROT(sz2, sz, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      //Triangle 4 / 6
+//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz2, sz, d); shapeverticeptr->y = y + Y_ROT(sz2, sz, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz2, sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, sz, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      //Triangle 5 / 6
+//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz2, sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, sz, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      //Triangle 6 / 6
+//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//
+//      break;
    case 5:
-      // triangle shape
+      /* CASE 5 - BIG TRIANGLE SHAPE */
 //    sz = size*2/3; sz2 = size/5;
+
       sz = size * (2.0f/3.0f);
       sz2 = size * 0.2f;
 
-
-      // TEMP DEBUGGING:
-//  if (!blah)
-//  {
-//     sz = f2x(x2f(size) * 2.0 / 3.0);
-//     sz2 = f2x(x2f(size) / 5.0);
-//     printf("orig size\n");
-//  } else {
-//     sz = FMUL(size,43691);   //43690 = 2/3 in fixed point
-////      sz2 = FDIV(size, INT2FNUM(5));
-//     sz2 = FMUL(size,13107);  //13107 is 1/5 in fixed point
-//     printf("alt size\n");
-//  }
-//  blah = !blah;
-
 //    glRotatef((float)d*360/1024, 0, 0, 1);
+//      shapecolors[0] = shapecolors[4] = r;
+//      shapecolors[1] = shapecolors[5] = g;
+//      shapecolors[2] = shapecolors[6] = b;
+//      shapecolors[3] = shapecolors[7] = shapecolors[11] = 150;
+//      shapecolors[8] = SHAPE_BASE_COLOR_R;
+//      shapecolors[9] = SHAPE_BASE_COLOR_G;
+//      shapecolors[10] = SHAPE_BASE_COLOR_B;
+//      shapevertices[0] = -sz;
+//      shapevertices[1] = -sz + sz2;
+//      shapevertices[2] = sz;
+//      shapevertices[3] = -sz + sz2;
+//      shapevertices[4] = 0;
+//      shapevertices[5] = sz + sz2;
+//      glDrawArrays (GL_TRIANGLES, 0, 3);
 
-      glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
+//      // THIS WILL DRAW THE SHAPES PROPERLY, JUST UNROTATED:
+//      shapeverticeptr->x = x -sz; shapeverticeptr->y = y -sz+sz2;
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x; shapeverticeptr->y = y + sz+sz2;
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x +sz; shapeverticeptr->y = y -sz+sz2;
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
 
-//    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
-      //same thing:
-//    glRotatex(INT2FNUM((d*360)>>10), 0, 0, INT2FNUM(1));
-//    glRotatex((d*360)<<6, 0, 0, INT2FNUM(1));
+      //TRIED TWICE TO OFFSET BEFORE ROTATING AND SHIFT BACK, JUST AS BAD:
+//      float yshift = 0.2f; // need to center the triangle before rotating and adjust opposite this afterwards
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz+sz2+yshift, d); 
+//      shapeverticeptr->y = y + Y_ROT(-sz, -sz+sz2+yshift, d) - yshift;
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(0, sz+sz2+yshift, d); 
+//      shapeverticeptr->y = y + Y_ROT(0, sz+sz2+yshift, d) - yshift;
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, -sz+sz2+yshift, d);
+//      shapeverticeptr->y = y + Y_ROT(sz, -sz+sz2+yshift, d) - yshift;
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
 
-      //senquack - no need for this
-//    glDisable(GL_BLEND);
-//    glBegin(GL_LINE_STRIP);
-//    glVertex3f(-sz, -sz+sz2,  0);
-//    glVertex3f( 0, sz+sz2,  0);
-//    glVertex3f( sz, -sz+sz2,  0);
-//    glEnd();
 
-      // for speedup on wiz:
-//    glEnable(GL_BLEND);
+      
+////      shapeverticeptr->x = x + X_ROT(-sz, -sz+sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz+sz2, d);
+////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      printf("VERTEX 1 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+////      shapeverticeptr++;
+////      shapeverticeptr->x = x + X_ROT(sz, -sz+sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz+sz2, d);
+////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      printf("VERTEX 2 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+////      shapeverticeptr++;
+////      shapeverticeptr->x = x + X_ROT(0, sz+sz2, d); shapeverticeptr->y = y + Y_ROT(0, sz+sz2, d);
+////      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+////      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+////      printf("VERTEX 3 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+////      shapeverticeptr++;
+////      printf("d: %d   size: %f   sz: %f    sz2: %f\n", d, size, sz, sz2);
 
-////    glColor4i(r, g, b, 150);
-//    glColor4i(r, g, b, 150);
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz+sz2, 0); shapeverticeptr->y = y + Y_ROT(-sz, -sz+sz2, 0);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      printf("VERTEX 1 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, -sz+sz2, 0); shapeverticeptr->y = y + Y_ROT(sz, -sz+sz2, 0);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      printf("VERTEX 2 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(0, sz+sz2, 0); shapeverticeptr->y = y + Y_ROT(0, sz+sz2, 0);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+////      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+////      printf("VERTEX 3 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+//      shapeverticeptr++;
+//      printf("d: %d   size: %f   sz: %f    sz2: %f\n", d, size, sz, sz2);
+       
+////      shapeverticeptr->x = x+0.5; shapeverticeptr->y = y+0.5;
+////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      shapeverticeptr++;
+////      shapeverticeptr->x = x-0.5; shapeverticeptr->y = y+0.5;
+////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      shapeverticeptr++;
+////      shapeverticeptr->x = x; shapeverticeptr->y = y-0.5;
+//////      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//////      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      shapeverticeptr++;
 //
-//  //senquack - converting to 2D for speed:
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(-sz, -sz+sz2);
-//    glVertex2f( sz, -sz+sz2);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex2f( 0, sz+sz2);
-//    glEnd();
+      // I can draw things and rotate them just fine THIS way:
+//      shapeverticeptr->x = x+X_ROT(0.5,0.5,d); shapeverticeptr->y = y+Y_ROT(0.5,0.5,d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x+X_ROT(-0.5,0.5,d); shapeverticeptr->y = y+Y_ROT(-0.5,0.5,d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x+X_ROT(0,-0.5,d); shapeverticeptr->y = y+Y_ROT(0,-0.5,d);
+//
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+////      printf("case 5 test\n");
+//      printf("BIG x:%f  y: %f  d: %d   size: %f   sz: %f    sz2: %f\n", x, y, d, size, sz, sz2);
 
-      shapecolors[0] = shapecolors[4] = r;
-      shapecolors[1] = shapecolors[5] = g;
-      shapecolors[2] = shapecolors[6] = b;
-      shapecolors[3] = shapecolors[7] = shapecolors[11] = 150;
-      shapecolors[8] = SHAPE_BASE_COLOR_R;
-      shapecolors[9] = SHAPE_BASE_COLOR_G;
-      shapecolors[10] = SHAPE_BASE_COLOR_B;
-      shapevertices[0] = -sz;
-      shapevertices[1] = -sz + sz2;
-      shapevertices[2] = sz;
-      shapevertices[3] = -sz + sz2;
-      shapevertices[4] = 0;
-      shapevertices[5] = sz + sz2;
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, shapecolors);
-// glVertexPointer(2, GL_FIXED, 0, shapevertices);
-      glDrawArrays (GL_TRIANGLES, 0, 3);
+//      // HERE, I CAN DRAW TRIANGLES THAT AIM OUTWARDS LIKE THEY ARE SUPPOSED TO BE:
+//      shapeverticeptr->x = x+X_ROT(0,0.5,d); shapeverticeptr->y = y+Y_ROT(0,0.5,d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x+X_ROT(0.5,-0.5,d); shapeverticeptr->y = y+Y_ROT(0.5,-0.5,d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x+X_ROT(-0.5,-0.5,d); shapeverticeptr->y = y+Y_ROT(-0.5,-0.5,d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
 
+//      // HERE, I CAN DRAW TRIANGLES THAT AIM OUTWARDS LIKE THEY ARE SUPPOSED TO BE:
+//      shapeverticeptr->x = x+X_ROT(0,0.5,d); shapeverticeptr->y = y+Y_ROT(0,0.5,d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x+X_ROT(0.5,-0.5,d); shapeverticeptr->y = y+Y_ROT(0.5,-0.5,d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x+X_ROT(-0.5,-0.5,d); shapeverticeptr->y = y+Y_ROT(-0.5,-0.5,d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      printf("case 5 test\n");
+//      printf("BIG x:%f  y: %f  d: %d   size: %f   sz: %f    sz2: %f\n", x, y, d, size, sz, sz2);
+//
+//      // Trying with height above and below origins exactly the same, STILL won't work
+//      shapeverticeptr->x = x + X_ROT(-sz, -sz-sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz-sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+////      printf("VERTEX 1 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+//      shapeverticeptr++;
+//      shapeverticeptr->x = x + X_ROT(sz, -sz-sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz-sz2, d);
+//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+//      shapeverticeptr++;
+////      printf("VERTEX 2 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+//      shapeverticeptr->x = x + X_ROT(0, sz+sz2, d); shapeverticeptr->y = y + Y_ROT(0, sz+sz2, d);
+//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+////      printf("VERTEX 3 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
+//      shapeverticeptr++;
       break;
    case 6:
-      //senquack - hexagonal shape
+      /* CASE 6: HEXAGON */
+     
       sz = size * 0.5f;
-
-      //senquack
-//    glRotatef((float)((cnt*13)&1023)*360/1024, 0, 0, 1);
-
-      glRotatef ((float) ((((cnt * 13) & 1023) * 360) >> 10), 0, 0, 1);
-
-//    if (shouldrotate) glRotatef((float)((((cnt*13)&1023)*360)>>10), 0, 0, 1);
-//    glRotatex(INT2FNUM((((cnt*13)&1023)*360)>>10), 0, 0, INT2FNUM(1));
-//    glRotatex((((cnt*13)&1023)*360)<<6, 0, 0, INT2FNUM(1));
-
-      //senquack - no need for this
-//    glDisable(GL_BLEND);
-//    glBegin(GL_LINE_LOOP);
-//    glVertex3f(-sz, -sz,  0);
-//    glVertex3f(  0, -sz,  0);
-//    glVertex3f( sz,   0,  0);
-//    glVertex3f( sz,  sz,  0);
-//    glVertex3f(  0,  sz,  0);
-//    glVertex3f(-sz,   0,  0);
-//    glEnd();
-
-      //senquack - converting to 2D for speed:
-
-      // for speedup on wiz:
-//    glEnable(GL_BLEND);
-
+      d = (cnt * 13) & 1023;
+//      //senquack
+////    glRotatef((float)((cnt*13)&1023)*360/1024, 0, 0, 1);
+////    glDisable(GL_BLEND);
+////    glEnable(GL_BLEND);
+//////    glColor4i(r, g, b, 210);
 ////    glColor4i(r, g, b, 210);
-//    glColor4i(r, g, b, 210);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex3f(-sz, -sz,  0);
-//    glVertex3f(  0, -sz,  0);
-//    glVertex3f( sz,   0,  0);
+////    glBegin(GL_TRIANGLE_FAN);
+////    glVertex3f(-sz, -sz,  0);
+////    glVertex3f(  0, -sz,  0);
+////    glVertex3f( sz,   0,  0);
+//////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
 ////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex3f( sz,  sz,  0);
-//    glVertex3f(  0,  sz,  0);
-//    glVertex3f(-sz,   0,  0);
-//    glEnd();
+////    glVertex3f( sz,  sz,  0);
+////    glVertex3f(  0,  sz,  0);
+////    glVertex3f(-sz,   0,  0);
+////    glEnd();
+//      shapecolors[0] = shapecolors[4] = shapecolors[8] = r;
+//      shapecolors[1] = shapecolors[5] = shapecolors[9] = g;
+//      shapecolors[2] = shapecolors[6] = shapecolors[10] = b;
+//      shapecolors[3] = shapecolors[7] = shapecolors[11] = 210;
+//      shapecolors[12] = shapecolors[16] = shapecolors[20] =
+//         SHAPE_BASE_COLOR_R;
+//      shapecolors[13] = shapecolors[17] = shapecolors[21] =
+//         SHAPE_BASE_COLOR_G;
+//      shapecolors[14] = shapecolors[18] = shapecolors[22] =
+//         SHAPE_BASE_COLOR_B;
+//      shapecolors[15] = shapecolors[19] = shapecolors[23] = 150;
+//      shapevertices[0] = -sz;
+//      shapevertices[1] = -sz;
+//      shapevertices[2] = 0;
+//      shapevertices[3] = -sz;
+//      shapevertices[4] = sz;
+//      shapevertices[5] = 0;
+//      shapevertices[6] = sz;
+//      shapevertices[7] = sz;
+//      shapevertices[8] = 0;
+//      shapevertices[9] = sz;
+//      shapevertices[10] = -sz;
+//      shapevertices[11] = 0;
+//      glDrawArrays (GL_TRIANGLE_FAN, 0, 6);
 
-//    glEnable(GL_BLEND);
-////    glColor4i(r, g, b, 210);
-//    glColor4i(r, g, b, 210);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(-sz, -sz);
-//    glVertex2f(  0, -sz);
-//    glVertex2f( sz,   0);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-//    glVertex2f( sz,  sz);
-//    glVertex2f(  0,  sz);
-//    glVertex2f(-sz,   0);
-//    glEnd();
-
-      shapecolors[0] = shapecolors[4] = shapecolors[8] = r;
-      shapecolors[1] = shapecolors[5] = shapecolors[9] = g;
-      shapecolors[2] = shapecolors[6] = shapecolors[10] = b;
-      shapecolors[3] = shapecolors[7] = shapecolors[11] = 210;
-      shapecolors[12] = shapecolors[16] = shapecolors[20] =
-         SHAPE_BASE_COLOR_R;
-      shapecolors[13] = shapecolors[17] = shapecolors[21] =
-         SHAPE_BASE_COLOR_G;
-      shapecolors[14] = shapecolors[18] = shapecolors[22] =
-         SHAPE_BASE_COLOR_B;
-      shapecolors[15] = shapecolors[19] = shapecolors[23] = 150;
-      shapevertices[0] = -sz;
-      shapevertices[1] = -sz;
-      shapevertices[2] = 0;
-      shapevertices[3] = -sz;
-      shapevertices[4] = sz;
-      shapevertices[5] = 0;
-      shapevertices[6] = sz;
-      shapevertices[7] = sz;
-      shapevertices[8] = 0;
-      shapevertices[9] = sz;
-      shapevertices[10] = -sz;
-      shapevertices[11] = 0;
-// glVertexPointer(2, GL_FIXED, 0, shapevertices);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, shapecolors);
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 6);
-
+      //Triangle 1 / 4
+      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 210;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(0, -sz, d);  shapeverticeptr->y = y + Y_ROT(0, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 210;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, 0, d);  shapeverticeptr->y = y + Y_ROT(sz, 0, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 210;
+      shapeverticeptr++;
+      //Triangle 2 / 4
+      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 210;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, 0, d);  shapeverticeptr->y = y + Y_ROT(sz, 0, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 210;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, sz, d);  shapeverticeptr->y = y + Y_ROT(sz, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      //Triangle 3 / 4
+      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 210;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, sz, d);  shapeverticeptr->y = y + Y_ROT(sz, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(0, sz, d);  shapeverticeptr->y = y + Y_ROT(0, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      //Triangle 4 / 4
+      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 210;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(0, sz, d);  shapeverticeptr->y = y + Y_ROT(0, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, 0, d);  shapeverticeptr->y = y + Y_ROT(-sz, 0, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
       break;
    }
-   glPopMatrix ();
-//  if (shouldrotate) glPopMatrix();
+//   glPopMatrix ();
+////  if (shouldrotate) glPopMatrix();
 }
 #endif //FIXEDMATH
 
@@ -8340,159 +8386,159 @@ void drawShapeIka (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type,
 #else
 void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int c)
 {
-   GLfloat sz, sz2, sz3;
-
-   glPushMatrix ();
-//  if (shouldrotate) glPushMatrix();
-   glTranslatef (x, y, 0);
-//  glColor4i(ikaClr[c][0][0], ikaClr[c][0][1], ikaClr[c][0][2], 255);
-//  glDisable(GL_BLEND);
-
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex2f(-SHAPE_POINT_SIZE, -SHAPE_POINT_SIZE);
-////  glVertex2f( SHAPE_POINT_SIZE, -SHAPE_POINT_SIZE);
-////  glVertex2f( SHAPE_POINT_SIZE,  SHAPE_POINT_SIZE);
-////  glVertex2f(-SHAPE_POINT_SIZE,  SHAPE_POINT_SIZE);
-////  glEnd();
-// shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = ikaClr[c][0][0];
-// shapecolors[1] = shapecolors[5] = shapecolors[9] = shapecolors[13] = ikaClr[c][0][1];
-// shapecolors[2] = shapecolors[6] = shapecolors[10] = shapecolors[14] = ikaClr[c][0][2];
-// shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] = 255;
+//   GLfloat sz, sz2, sz3;
 //
-// shapevertices[0] = -SHAPE_POINT_SIZE_X;   shapevertices[1] = -SHAPE_POINT_SIZE_X;
-// shapevertices[2] = SHAPE_POINT_SIZE_X;    shapevertices[3] = -SHAPE_POINT_SIZE_X;
-// shapevertices[4] = SHAPE_POINT_SIZE_X;    shapevertices[5] = SHAPE_POINT_SIZE_X;
-// shapevertices[6] = -SHAPE_POINT_SIZE_X;   shapevertices[7] = SHAPE_POINT_SIZE_X;
-// glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-   GLubyte r, g, b;
-   r = ikaClr[c][0][0]; g = ikaClr[c][0][1]; b = ikaClr[c][0][2];
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
-   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
-   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
-
-//  glColor4i(ikaClr[c][0][0], ikaClr[c][0][1], ikaClr[c][0][2], 255);
-//    glEnable(GL_BLEND);
-
-   switch (type) {
-   case 0:
-//    sz = size/2; sz2 = sz/3; sz3 = size*2/3;
-      sz = size * 0.5f;
-      sz2 = size * (1.0f / 3.0f);
-      sz3 = size * (2.0f / 3.0f);
-//    glRotatef((float)d*360/1024, 0, 0, 1);
-      glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
-//    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
-//    glRotatex((d*360)<<6, 0, 0, INT2FNUM(1));
-
-//    glColor4i(ikaClr[c][1][0], ikaClr[c][1][1], ikaClr[c][1][2], 250);
-
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(-sz, -sz3);
-//    glVertex2f( sz, -sz3);
+//   glPushMatrix ();
+////  if (shouldrotate) glPushMatrix();
+//   glTranslatef (x, y, 0);
+////  glColor4i(ikaClr[c][0][0], ikaClr[c][0][1], ikaClr[c][0][2], 255);
+////  glDisable(GL_BLEND);
+//
+//////  glBegin(GL_TRIANGLE_FAN);
+//////  glVertex2f(-SHAPE_POINT_SIZE, -SHAPE_POINT_SIZE);
+//////  glVertex2f( SHAPE_POINT_SIZE, -SHAPE_POINT_SIZE);
+//////  glVertex2f( SHAPE_POINT_SIZE,  SHAPE_POINT_SIZE);
+//////  glVertex2f(-SHAPE_POINT_SIZE,  SHAPE_POINT_SIZE);
+//////  glEnd();
+//// shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = ikaClr[c][0][0];
+//// shapecolors[1] = shapecolors[5] = shapecolors[9] = shapecolors[13] = ikaClr[c][0][1];
+//// shapecolors[2] = shapecolors[6] = shapecolors[10] = shapecolors[14] = ikaClr[c][0][2];
+//// shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] = 255;
+////
+//// shapevertices[0] = -SHAPE_POINT_SIZE_X;   shapevertices[1] = -SHAPE_POINT_SIZE_X;
+//// shapevertices[2] = SHAPE_POINT_SIZE_X;    shapevertices[3] = -SHAPE_POINT_SIZE_X;
+//// shapevertices[4] = SHAPE_POINT_SIZE_X;    shapevertices[5] = SHAPE_POINT_SIZE_X;
+//// shapevertices[6] = -SHAPE_POINT_SIZE_X;   shapevertices[7] = SHAPE_POINT_SIZE_X;
+//// glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//   GLubyte r, g, b;
+//   r = ikaClr[c][0][0]; g = ikaClr[c][0][1]; b = ikaClr[c][0][2];
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 192;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
+//// *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 128;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
+//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 96;
+//   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = x + SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = y - SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = x - SHAPE_POINT_SIZE;
+//   *shapeptvertptr++ = y + SHAPE_POINT_SIZE;
+//
+////  glColor4i(ikaClr[c][0][0], ikaClr[c][0][1], ikaClr[c][0][2], 255);
+////    glEnable(GL_BLEND);
+//
+//   switch (type) {
+//   case 0:
+////    sz = size/2; sz2 = sz/3; sz3 = size*2/3;
+//      sz = size * 0.5f;
+//      sz2 = size * (1.0f / 3.0f);
+//      sz3 = size * (2.0f / 3.0f);
+////    glRotatef((float)d*360/1024, 0, 0, 1);
+//      glRotatef ((float) ((d * 360) >> 10), 0, 0, 1);
+////    if (shouldrotate) glRotatef((float)((d*360)>>10), 0, 0, 1);
+////    glRotatex((d*360)<<6, 0, 0, INT2FNUM(1));
+//
+////    glColor4i(ikaClr[c][1][0], ikaClr[c][1][1], ikaClr[c][1][2], 250);
+//
+////    glBegin(GL_TRIANGLE_FAN);
+////    glVertex2f(-sz, -sz3);
+////    glVertex2f( sz, -sz3);
+//////    glColor4i(ikaClr[c][2][0], ikaClr[c][2][1], ikaClr[c][2][2], 250);
+////    glVertex2f( sz2, sz3);
+////    glVertex2f(-sz2, sz3);
+//
+//      shapecolors[0] = shapecolors[4] = ikaClr[c][1][0];
+//      shapecolors[1] = shapecolors[5] = ikaClr[c][1][1];
+//      shapecolors[2] = shapecolors[6] = ikaClr[c][1][2];
+//
+//      shapecolors[8] = shapecolors[12] = ikaClr[c][2][0];
+//      shapecolors[9] = shapecolors[13] = ikaClr[c][2][1];
+//      shapecolors[10] = shapecolors[14] = ikaClr[c][2][2];
+//
+//      shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] =
+//         250;
+//
+//      shapevertices[0] = -sz;
+//      shapevertices[1] = -sz3;
+//      shapevertices[2] = sz;
+//      shapevertices[3] = -sz3;
+//      shapevertices[4] = sz2;
+//      shapevertices[5] = sz3;
+//      shapevertices[6] = -sz2;
+//      shapevertices[7] = sz3;
+//      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
+//
+////    glEnd();
+//      break;
+//   case 1:
+////    sz = size/2;
+//      sz = size * 0.5f;
+//      sz2 = size * 0.25f;         // added this because of simplicity later on
+////    glRotatef((float)((cnt*53)&1023)*360/1024, 0, 0, 1);
+//      glRotatef ((float) ((((cnt * 53) & 1023) * 360) >> 10), 0, 0, 1);
+////    if (shouldrotate) glRotatef((float)((((cnt*53)&1023)*360)>>10), 0, 0, 1);
+////    glRotatex((((cnt*53)&1023)*360)<<6, 0, 0, INT2FNUM(1));
+//
+////    glColor4i(ikaClr[c][1][0], ikaClr[c][1][1], ikaClr[c][1][2], 250);
+////    glBegin(GL_TRIANGLE_FAN);
+////    glVertex2f(-sz/2, -sz);
+////    glVertex2f( sz/2, -sz);
+////    glVertex2f( sz,  -sz/2);
+////    glVertex2f( sz,   sz/2);
 ////    glColor4i(ikaClr[c][2][0], ikaClr[c][2][1], ikaClr[c][2][2], 250);
-//    glVertex2f( sz2, sz3);
-//    glVertex2f(-sz2, sz3);
-
-      shapecolors[0] = shapecolors[4] = ikaClr[c][1][0];
-      shapecolors[1] = shapecolors[5] = ikaClr[c][1][1];
-      shapecolors[2] = shapecolors[6] = ikaClr[c][1][2];
-
-      shapecolors[8] = shapecolors[12] = ikaClr[c][2][0];
-      shapecolors[9] = shapecolors[13] = ikaClr[c][2][1];
-      shapecolors[10] = shapecolors[14] = ikaClr[c][2][2];
-
-      shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] =
-         250;
-
-      shapevertices[0] = -sz;
-      shapevertices[1] = -sz3;
-      shapevertices[2] = sz;
-      shapevertices[3] = -sz3;
-      shapevertices[4] = sz2;
-      shapevertices[5] = sz3;
-      shapevertices[6] = -sz2;
-      shapevertices[7] = sz3;
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-
-//    glEnd();
-      break;
-   case 1:
-//    sz = size/2;
-      sz = size * 0.5f;
-      sz2 = size * 0.25f;         // added this because of simplicity later on
-//    glRotatef((float)((cnt*53)&1023)*360/1024, 0, 0, 1);
-      glRotatef ((float) ((((cnt * 53) & 1023) * 360) >> 10), 0, 0, 1);
-//    if (shouldrotate) glRotatef((float)((((cnt*53)&1023)*360)>>10), 0, 0, 1);
-//    glRotatex((((cnt*53)&1023)*360)<<6, 0, 0, INT2FNUM(1));
-
-//    glColor4i(ikaClr[c][1][0], ikaClr[c][1][1], ikaClr[c][1][2], 250);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex2f(-sz/2, -sz);
-//    glVertex2f( sz/2, -sz);
-//    glVertex2f( sz,  -sz/2);
-//    glVertex2f( sz,   sz/2);
-//    glColor4i(ikaClr[c][2][0], ikaClr[c][2][1], ikaClr[c][2][2], 250);
-//    glVertex2f( sz/2,  sz);
-//    glVertex2f(-sz/2,  sz);
-//    glVertex2f(-sz,   sz/2);
-//    glVertex2f(-sz,  -sz/2);
-      shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = ikaClr[c][1][0];
-      shapecolors[1] = shapecolors[5] = shapecolors[9] = shapecolors[13] = ikaClr[c][1][1];
-      shapecolors[2] = shapecolors[6] = shapecolors[10] = shapecolors[14] = ikaClr[c][1][2];
-      shapecolors[16] = shapecolors[20] = shapecolors[24] = shapecolors[28] = ikaClr[c][2][0];
-      shapecolors[17] = shapecolors[21] = shapecolors[25] = shapecolors[29] = ikaClr[c][2][1];
-      shapecolors[18] = shapecolors[22] = shapecolors[26] = shapecolors[30] = ikaClr[c][2][2];
-      shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] =
-         shapecolors[19] = shapecolors[23] = shapecolors[27] = shapecolors[31] = 250;
-      shapevertices[0] = -sz2;
-      shapevertices[1] = -sz;
-      shapevertices[2] = sz2;
-      shapevertices[3] = -sz;
-      shapevertices[4] = sz;
-      shapevertices[5] = -sz2;
-      shapevertices[6] = sz;
-      shapevertices[7] = sz2;
-      shapevertices[8] = sz2;
-      shapevertices[9] = sz;
-      shapevertices[10] = -sz2;
-      shapevertices[11] = sz;
-      shapevertices[12] = -sz;
-      shapevertices[13] = sz2;
-      shapevertices[14] = -sz;
-      shapevertices[15] = -sz2;
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 8);
-//    glEnd();
-      break;
-   }
-   glPopMatrix ();
-//  if (shouldrotate) glPopMatrix();
+////    glVertex2f( sz/2,  sz);
+////    glVertex2f(-sz/2,  sz);
+////    glVertex2f(-sz,   sz/2);
+////    glVertex2f(-sz,  -sz/2);
+//      shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = ikaClr[c][1][0];
+//      shapecolors[1] = shapecolors[5] = shapecolors[9] = shapecolors[13] = ikaClr[c][1][1];
+//      shapecolors[2] = shapecolors[6] = shapecolors[10] = shapecolors[14] = ikaClr[c][1][2];
+//      shapecolors[16] = shapecolors[20] = shapecolors[24] = shapecolors[28] = ikaClr[c][2][0];
+//      shapecolors[17] = shapecolors[21] = shapecolors[25] = shapecolors[29] = ikaClr[c][2][1];
+//      shapecolors[18] = shapecolors[22] = shapecolors[26] = shapecolors[30] = ikaClr[c][2][2];
+//      shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] =
+//         shapecolors[19] = shapecolors[23] = shapecolors[27] = shapecolors[31] = 250;
+//      shapevertices[0] = -sz2;
+//      shapevertices[1] = -sz;
+//      shapevertices[2] = sz2;
+//      shapevertices[3] = -sz;
+//      shapevertices[4] = sz;
+//      shapevertices[5] = -sz2;
+//      shapevertices[6] = sz;
+//      shapevertices[7] = sz2;
+//      shapevertices[8] = sz2;
+//      shapevertices[9] = sz;
+//      shapevertices[10] = -sz2;
+//      shapevertices[11] = sz;
+//      shapevertices[12] = -sz;
+//      shapevertices[13] = sz2;
+//      shapevertices[14] = -sz;
+//      shapevertices[15] = -sz2;
+//      glDrawArrays (GL_TRIANGLE_FAN, 0, 8);
+////    glEnd();
+//      break;
+//   }
+//   glPopMatrix ();
+////  if (shouldrotate) glPopMatrix();
 }
 #endif //FIXEDMATH
 

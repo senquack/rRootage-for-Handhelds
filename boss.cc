@@ -1050,8 +1050,7 @@ addBossTreeFrag (BossTree * bt)
     addBossFrag((bt->x[i+1]+bt->x[i])/2 + x,
        -(bt->y[i+1]+bt->y[i])/2 + y,
        (bt->z[i+1]+bt->z[i])/2, 
-//       (float)dst/512, deg);
-       (float)(dst>>9), deg);
+       (float)dst/512, deg);
   }
   for ( i=0 ; i<bt->epNum ; i++ ) {
     ox =  (int)((bt->ex[i]-bt->x[bpn])*256);
@@ -1062,8 +1061,7 @@ addBossTreeFrag (BossTree * bt)
     addBossFrag((bt->ex[i]+bt->x[bpn])/2 + x,
        -(bt->ey[i]+bt->y[bpn])/2 + y,
        (bt->ez[i]+bt->z[bpn])/2, 
-//       (float)dst/512, deg);
-       (float)(dst>>9), deg);
+       (float)dst/512, deg);
   }
 #endif //FIXEDMATH
 }
@@ -2107,8 +2105,6 @@ void drawBoss ()
    int bpn;
    crBpn = crBpl = 0;
 
-   //senquack - BIG TODO: create constant float inverse of FIELD_SCREEN_RATIO and multiply instead of divide for this 
-   //       and many other sections of code, including fixed version of this above:
    x =  (float)boss.x / FIELD_SCREEN_RATIO;
    y = -(float)boss.y / FIELD_SCREEN_RATIO;
 

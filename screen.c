@@ -7129,46 +7129,32 @@ void finishDrawShapes (void)
    glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(shapevertice), &shapeverticedata[0].r);
    int numshapevertices = ((unsigned int) shapeverticeptr - (unsigned int) (&shapeverticedata[0])) / sizeof(shapevertice);
    glDrawArrays (GL_TRIANGLES, 0, numshapevertices);
-    printf("drawing shapes with %d vertices\n", numshapevertices);
+//    printf("drawing shapes with %d vertices\n", numshapevertices);
    glDisable (GL_BLEND);
 }
 
-//USING ORIGINAL GAME'S LOOKUP TABLE:
+//USING ORIGINAL GAME'S LOOKUP TABLE TO ROTATE AND BATCH DRAW ALL BULLETS - senquack... MASSIVE speedup
 //#define COS_LOOKUP(degree) ((float)(sctbl[(degree) + 256]) / 256.0f)
 //#define SIN_LOOKUP(degree) ((float)(sctbl[(1024-d)]) / 256.0f)
 // A BIT OPTIMIZED VERSION OF ABOVE:
 #define COS_LOOKUP(degree) ((float)(sctbl[(degree) + 256]) * (1.0f/256.0f))
 #define SIN_LOOKUP(degree) ((float)(sctbl[1024-(degree)]) * (1.0f/256.0f))
 
-// USING LIBM:
+// USING LIBM (for testing & verification):
 //#define COS_LOOKUP(degree) cosf(((float)-(degree) / 1024.0f * 2 * M_PI ))
 //#define SIN_LOOKUP(degree) sinf(((float)-(degree) / 1024.0f * 2 * M_PI ))
-//#define COS_LOOKUP(degree) cos(((double)-(degree) / 1024.0l * 2.0l * M_PIl ))
-//#define SIN_LOOKUP(degree) sin(((double)-(degree) / 1024.0l * 2.0l * M_PIl ))
-
-//#define COS_LOOKUP(degree) cosf(((float)(degree) / 1024.0f * 2 * M_PI ))
-//#define SIN_LOOKUP(degree) sinf(((float)(degree) / 1024.0f * 2 * M_PI ))
 
 //CLOCKWISE:
 #define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) + y * SIN_LOOKUP(degree))
 #define Y_ROT(x,y,degree) (-x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
-//#define X_ROT(x,y,degree) ((double)x * COS_LOOKUP(degree) + (double)y * SIN_LOOKUP(degree))
-//#define Y_ROT(x,y,degree) (-(double)x * SIN_LOOKUP(degree) + (double)y * COS_LOOKUP(degree))
-
 //COUNTERCLOCKWISE: (not what we're looking for)
 //#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) - y * SIN_LOOKUP(degree))
 //#define Y_ROT(x,y,degree) (x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
+
 void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int r, int g, int b)
 {
    GLfloat sz, sz2;       
 // //core of shapes - changed alpha to 255 from 220 to make them a bit more visible
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-//   *shapeptcolptr++ = r; *shapeptcolptr++ = g; *shapeptcolptr++ = b; *shapeptcolptr++ = 220;
-
    shapeverticeptr->x = x - SHAPE_POINT_SIZE; shapeverticeptr->y = y - SHAPE_POINT_SIZE;
    shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 255;
    shapeverticeptr++;
@@ -7192,510 +7178,192 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
 //   glTranslatef(x, y, 0);
 
    switch (type) {
-//   case 0:
-//      //triangle shape
-//    sz = size * 0.5f;
-////    glRotatef((float)d*360/1024, 0, 0, 1);
-////
-////      shapecolors[0] = shapecolors[4] = r;
-////      shapecolors[1] = shapecolors[5] = g;
-////      shapecolors[2] = shapecolors[6] = b;
-////      shapecolors[3] = shapecolors[7] = shapecolors[11] = 150;
-////      shapecolors[8] = SHAPE_BASE_COLOR_R;
-////      shapecolors[9] = SHAPE_BASE_COLOR_G;
-////      shapecolors[10] = SHAPE_BASE_COLOR_B;
-////      shapevertices[0] = -sz;
-////      shapevertices[1] = -sz;
-////      shapevertices[2] = sz;
-////      shapevertices[3] = -sz;
-////      shapevertices[4] = 0;
-////      shapevertices[5] = size;
-//
-//
-////      shapevertices[0] = X_ROT(-sz, -sz, d);
-////      shapevertices[1] = Y_ROT(-sz, -sz, d);
-////      shapevertices[2] = X_ROT(sz, -sz, d);
-////      shapevertices[3] = Y_ROT(sz, -sz, d);
-////      shapevertices[4] = X_ROT(0, size, d);
-////      shapevertices[5] = Y_ROT(0, size, d);
-////      glDrawArrays (GL_TRIANGLES, 0, 3);
-//
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, -sz, d);  shapeverticeptr->y = y + Y_ROT(sz, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(0, size, d);  shapeverticeptr->y = y + Y_ROT(0, size, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-////      printf("SMALL x:%f  y: %f  d: %d   size: %f   sz: %f   \n", x, y, d, size, sz);
-//      break;
+   case 0:
+      /* CASE 0 : TRIANGLE SHAPE */
+      sz = size * 0.5f;
+      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, -sz, d);  shapeverticeptr->y = y + Y_ROT(sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(0, size, d);  shapeverticeptr->y = y + Y_ROT(0, size, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      break;
+   case 1:
+      /* CASE 1: DIAMOND SHAPE */
+      sz = size * 0.5f;
+      d = (cnt*23)&1023;
+      shapeverticeptr->x = x + X_ROT(0, -size, d); shapeverticeptr->y = y + Y_ROT(0, -size, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, 0, d); shapeverticeptr->y = y + Y_ROT(sz, 0, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(0, size, d); shapeverticeptr->y = y + Y_ROT(0, size, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(0, size, d); shapeverticeptr->y = y + Y_ROT(0, size, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, 0, d); shapeverticeptr->y = y + Y_ROT(-sz, 0, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(0, -size, d); shapeverticeptr->y = y + Y_ROT(0, -size, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+      shapeverticeptr++;
+      break;
+   case 2:
+      /* CASE 2 - RECTANGULAR SHAPE */
+      sz = size * 0.25f;
+      sz2 = size * (2.0f/3.0f);
+      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
+      shapeverticeptr++;
+      break;
+   case 3:
+      /* CASE 3 - SQUARE SHAPE */
+      sz = size * 0.5f;
+      d = (cnt*37)&1023;
+      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, -sz, d); shapeverticeptr->y = y + Y_ROT(sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, sz, d); shapeverticeptr->y = y + Y_ROT(sz, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, sz, d); shapeverticeptr->y = y + Y_ROT(sz, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, sz, d); shapeverticeptr->y = y + Y_ROT(-sz, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
+      shapeverticeptr++;
+      break;
+   case 4:
+      /* CASE 4 - CIRCULAR SHAPE */
+      sz = size * 0.5f;
+      sz2 = size * 0.25f;        
+      d = (cnt * 53) & 1023;
+      //Triangle 1 / 6
+      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(sz2, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      //Triangle 2 / 6
+      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      //Triangle 3 / 6
+      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz2, sz, d); shapeverticeptr->y = y + Y_ROT(sz2, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      //Triangle 4 / 6
+      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz2, sz, d); shapeverticeptr->y = y + Y_ROT(sz2, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz2, sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      //Triangle 5 / 6
+      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz2, sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, sz, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      //Triangle 6 / 6
+      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
 
-//   case 1:
-//      /* CASE 1: DIAMOND SHAPE */
-//      sz = size * 0.5f;
-//      d = (cnt*23)&1023;
-////    glRotatef((float)((cnt*23)&1023)*360/1024, 0, 0, 1);
-////      shapecolors[0] = shapecolors[4] = r;
-////      shapecolors[1] = shapecolors[5] = g;
-////      shapecolors[2] = shapecolors[6] = b;
-////      shapecolors[3] = shapecolors[7] = 180;
-////      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
-////      shapecolors[9] = shapecolors[13] = SHAPE_BASE_COLOR_G;
-////      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
-////      shapecolors[11] = shapecolors[15] = 150;
-//////      shapevertices[0] = 0;
-//////      shapevertices[1] = -size;
-//////      shapevertices[2] = sz;
-//////      shapevertices[3] = 0;
-//////      shapevertices[4] = 0;
-//////      shapevertices[5] = size;
-//////      shapevertices[6] = -sz;
-//////      shapevertices[7] = 0;
-////      shapevertices[0] = X_ROT(0, -size, d);
-////      shapevertices[1] = Y_ROT(0, -size, d);
-////      shapevertices[2] = X_ROT(sz, 0, d);
-////      shapevertices[3] = Y_ROT(sz, 0, d);
-////      shapevertices[4] = X_ROT(0, size, d);
-////      shapevertices[5] = Y_ROT(0, size, d);
-////      shapevertices[6] = X_ROT(-sz, 0, d);
-////      shapevertices[7] = Y_ROT(-sz, 0, d);
-//      shapeverticeptr->x = x + X_ROT(0, -size, d); shapeverticeptr->y = y + Y_ROT(0, -size, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, 0, d); shapeverticeptr->y = y + Y_ROT(sz, 0, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(0, size, d); shapeverticeptr->y = y + Y_ROT(0, size, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(0, size, d); shapeverticeptr->y = y + Y_ROT(0, size, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz, 0, d); shapeverticeptr->y = y + Y_ROT(-sz, 0, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(0, -size, d); shapeverticeptr->y = y + Y_ROT(0, -size, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
-//      shapeverticeptr++;
-////      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-//      break;
-//   case 2:
-//      /* CASE 2 - RECTANGULAR SHAPE */
-//      sz = size * 0.25f;
-//      sz2 = size * (2.0f/3.0f);
-////    glRotatef((float)d*360/1024, 0, 0, 1);
-////      shapecolors[0] = shapecolors[4] = r;
-////      shapecolors[1] = shapecolors[5] = 255;
-////      shapecolors[2] = shapecolors[6] = b;
-////      shapecolors[3] = shapecolors[7] = 120;
-////      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
-////      shapecolors[9] = shapecolors[13] = 255;
-////      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
-////      shapecolors[11] = shapecolors[15] = 150;
-////      shapevertices[0] = -sz;
-////      shapevertices[1] = -sz2;
-////      shapevertices[2] = sz;
-////      shapevertices[3] = -sz2;
-////      shapevertices[4] = sz;
-////      shapevertices[5] = sz2;
-////      shapevertices[6] = -sz;
-////      shapevertices[7] = sz2;
-////      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-//
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 120;
-//      shapeverticeptr++;
-//      break;
-//
-//   case 3:
-//      /* CASE 3 - SQUARE SHAPE */
-//    sz = size * 0.5f;
-////    glRotatef((float)((cnt*37)&1023)*360/1024, 0, 0, 1);
-//////      shapecolors[0] = shapecolors[4] = r;
-//////      shapecolors[1] = shapecolors[5] = g;
-//////      shapecolors[2] = shapecolors[6] = b;
-//////      shapecolors[3] = shapecolors[7] = 180;
-//////      shapecolors[8] = shapecolors[12] = SHAPE_BASE_COLOR_R;
-//////      shapecolors[9] = shapecolors[13] = SHAPE_BASE_COLOR_G;
-//////      shapecolors[10] = shapecolors[14] = SHAPE_BASE_COLOR_B;
-//////      shapecolors[11] = shapecolors[15] = 150;
-////      d = (cnt*37)&1023;
-//////      shapevertices[0] = -sz;
-//////      shapevertices[1] = -sz;
-//////      shapevertices[2] = sz;
-//////      shapevertices[3] = -sz;
-//////      shapevertices[4] = sz;
-//////      shapevertices[5] = sz;
-//////      shapevertices[6] = -sz;
-//////      shapevertices[7] = sz;
-////      shapevertices[0] = X_ROT(-sz, -sz, d);
-////      shapevertices[1] = Y_ROT(-sz, -sz, d);
-////      shapevertices[2] = X_ROT(sz, -sz, d);
-////      shapevertices[3] = Y_ROT(sz, -sz, d);
-////      shapevertices[4] = X_ROT(sz, sz, d);
-////      shapevertices[5] = Y_ROT(sz, sz, d);
-////      shapevertices[6] = X_ROT(sz, sz, d);
-////      shapevertices[7] = Y_ROT(sz, sz, d);
-////      shapevertices[8] = X_ROT(-sz, sz, d);
-////      shapevertices[9] = Y_ROT(-sz, sz, d);
-////      shapevertices[10] = X_ROT(-sz, -sz, d);
-////      shapevertices[11] = Y_ROT(-sz, -sz, d);
-//////      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-////      glDrawArrays (GL_TRIANGLES, 0, 6);
-//      d = (cnt*37)&1023;
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, -sz, d); shapeverticeptr->y = y + Y_ROT(sz, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, sz, d); shapeverticeptr->y = y + Y_ROT(sz, sz, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, sz, d); shapeverticeptr->y = y + Y_ROT(sz, sz, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz, sz, d); shapeverticeptr->y = y + Y_ROT(-sz, sz, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 180;
-//      shapeverticeptr++;
-//      break;
-//   case 4:
-//      /* CASE 4 - CIRCULAR SHAPE */
-//      sz = size * 0.5f;
-//      sz2 = size * 0.25f;        
-//      d = (cnt * 53) & 1023;
-//////    glRotatef((float)((cnt*53)&1023)*360/1024, 0, 0, 1);
-////      shapecolors[0] = shapecolors[4] = shapecolors[8] = shapecolors[12] = r;
-////      shapecolors[1] = shapecolors[5] = shapecolors[9] = shapecolors[13] = g;
-////      shapecolors[2] = shapecolors[6] = shapecolors[10] = shapecolors[14] = b;
-////      shapecolors[3] = shapecolors[7] = shapecolors[11] = shapecolors[15] =
-////         220;
-////      shapecolors[16] = shapecolors[20] = shapecolors[24] = shapecolors[28] =
-////         SHAPE_BASE_COLOR_R;
-////      shapecolors[17] = shapecolors[21] = shapecolors[25] = shapecolors[29] =
-////         SHAPE_BASE_COLOR_G;
-////      shapecolors[18] = shapecolors[22] = shapecolors[26] = shapecolors[30] =
-////         SHAPE_BASE_COLOR_B;
-////      shapecolors[19] = shapecolors[23] = shapecolors[27] = shapecolors[31] =
-////         150;
-////      shapevertices[0] = -sz2;
-////      shapevertices[1] = -sz;
-////      shapevertices[2] = sz2;
-////      shapevertices[3] = -sz;
-////      shapevertices[4] = sz;
-////      shapevertices[5] = -sz2;
-////      shapevertices[6] = sz;
-////      shapevertices[7] = sz2;
-////      shapevertices[8] = sz2;
-////      shapevertices[9] = sz;
-////      shapevertices[10] = -sz2;
-////      shapevertices[11] = sz;
-////      shapevertices[12] = -sz;
-////      shapevertices[13] = sz2;
-////      shapevertices[14] = -sz;
-////      shapevertices[15] = -sz2;
-////      glDrawArrays (GL_TRIANGLE_FAN, 0, 8);
-//
-//      //Triangle 1 / 6
-//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(sz2, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      //Triangle 2 / 6
-//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      //Triangle 3 / 6
-//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, sz2, d); shapeverticeptr->y = y + Y_ROT(sz, sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz2, sz, d); shapeverticeptr->y = y + Y_ROT(sz2, sz, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      //Triangle 4 / 6
-//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz2, sz, d); shapeverticeptr->y = y + Y_ROT(sz2, sz, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz2, sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, sz, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      //Triangle 5 / 6
-//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz2, sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, sz, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      //Triangle 6 / 6
-//      shapeverticeptr->x = x + X_ROT(-sz2, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz2, -sz, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 220;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz, sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, sz2, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz2, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//
-//      break;
+      break;
    case 5:
       /* CASE 5 - BIG TRIANGLE SHAPE */
-//    sz = size*2/3; sz2 = size/5;
-
       sz = size * (2.0f/3.0f);
       sz2 = size * 0.2f;
-
-//    glRotatef((float)d*360/1024, 0, 0, 1);
-//      shapecolors[0] = shapecolors[4] = r;
-//      shapecolors[1] = shapecolors[5] = g;
-//      shapecolors[2] = shapecolors[6] = b;
-//      shapecolors[3] = shapecolors[7] = shapecolors[11] = 150;
-//      shapecolors[8] = SHAPE_BASE_COLOR_R;
-//      shapecolors[9] = SHAPE_BASE_COLOR_G;
-//      shapecolors[10] = SHAPE_BASE_COLOR_B;
-//      shapevertices[0] = -sz;
-//      shapevertices[1] = -sz + sz2;
-//      shapevertices[2] = sz;
-//      shapevertices[3] = -sz + sz2;
-//      shapevertices[4] = 0;
-//      shapevertices[5] = sz + sz2;
-//      glDrawArrays (GL_TRIANGLES, 0, 3);
-
-//      // THIS WILL DRAW THE SHAPES PROPERLY, JUST UNROTATED:
-//      shapeverticeptr->x = x -sz; shapeverticeptr->y = y -sz+sz2;
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x; shapeverticeptr->y = y + sz+sz2;
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x +sz; shapeverticeptr->y = y -sz+sz2;
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-
-      //TRIED TWICE TO OFFSET BEFORE ROTATING AND SHIFT BACK, JUST AS BAD:
-//      float yshift = 0.2f; // need to center the triangle before rotating and adjust opposite this afterwards
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz+sz2+yshift, d); 
-//      shapeverticeptr->y = y + Y_ROT(-sz, -sz+sz2+yshift, d) - yshift;
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(0, sz+sz2+yshift, d); 
-//      shapeverticeptr->y = y + Y_ROT(0, sz+sz2+yshift, d) - yshift;
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, -sz+sz2+yshift, d);
-//      shapeverticeptr->y = y + Y_ROT(sz, -sz+sz2+yshift, d) - yshift;
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-
-
-      
-////      shapeverticeptr->x = x + X_ROT(-sz, -sz+sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz+sz2, d);
-////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      printf("VERTEX 1 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-////      shapeverticeptr++;
-////      shapeverticeptr->x = x + X_ROT(sz, -sz+sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz+sz2, d);
-////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      printf("VERTEX 2 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-////      shapeverticeptr++;
-////      shapeverticeptr->x = x + X_ROT(0, sz+sz2, d); shapeverticeptr->y = y + Y_ROT(0, sz+sz2, d);
-////      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-////      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-////      printf("VERTEX 3 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-////      shapeverticeptr++;
-////      printf("d: %d   size: %f   sz: %f    sz2: %f\n", d, size, sz, sz2);
-
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz+sz2, 0); shapeverticeptr->y = y + Y_ROT(-sz, -sz+sz2, 0);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      printf("VERTEX 1 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, -sz+sz2, 0); shapeverticeptr->y = y + Y_ROT(sz, -sz+sz2, 0);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      printf("VERTEX 2 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(0, sz+sz2, 0); shapeverticeptr->y = y + Y_ROT(0, sz+sz2, 0);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-////      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-////      printf("VERTEX 3 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-//      shapeverticeptr++;
-//      printf("d: %d   size: %f   sz: %f    sz2: %f\n", d, size, sz, sz2);
-       
-////      shapeverticeptr->x = x+0.5; shapeverticeptr->y = y+0.5;
-////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      shapeverticeptr++;
-////      shapeverticeptr->x = x-0.5; shapeverticeptr->y = y+0.5;
-////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      shapeverticeptr++;
-////      shapeverticeptr->x = x; shapeverticeptr->y = y-0.5;
-//////      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//////      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      shapeverticeptr++;
-//
-      // I can draw things and rotate them just fine THIS way:
-//      shapeverticeptr->x = x+X_ROT(0.5,0.5,d); shapeverticeptr->y = y+Y_ROT(0.5,0.5,d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x+X_ROT(-0.5,0.5,d); shapeverticeptr->y = y+Y_ROT(-0.5,0.5,d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x+X_ROT(0,-0.5,d); shapeverticeptr->y = y+Y_ROT(0,-0.5,d);
-//
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-////      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-////      printf("case 5 test\n");
-//      printf("BIG x:%f  y: %f  d: %d   size: %f   sz: %f    sz2: %f\n", x, y, d, size, sz, sz2);
-
-//      // HERE, I CAN DRAW TRIANGLES THAT AIM OUTWARDS LIKE THEY ARE SUPPOSED TO BE:
-//      shapeverticeptr->x = x+X_ROT(0,0.5,d); shapeverticeptr->y = y+Y_ROT(0,0.5,d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x+X_ROT(0.5,-0.5,d); shapeverticeptr->y = y+Y_ROT(0.5,-0.5,d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x+X_ROT(-0.5,-0.5,d); shapeverticeptr->y = y+Y_ROT(-0.5,-0.5,d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-
-//      // HERE, I CAN DRAW TRIANGLES THAT AIM OUTWARDS LIKE THEY ARE SUPPOSED TO BE:
-//      shapeverticeptr->x = x+X_ROT(0,0.5,d); shapeverticeptr->y = y+Y_ROT(0,0.5,d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x+X_ROT(0.5,-0.5,d); shapeverticeptr->y = y+Y_ROT(0.5,-0.5,d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x+X_ROT(-0.5,-0.5,d); shapeverticeptr->y = y+Y_ROT(-0.5,-0.5,d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      printf("case 5 test\n");
-//      printf("BIG x:%f  y: %f  d: %d   size: %f   sz: %f    sz2: %f\n", x, y, d, size, sz, sz2);
-//
-//      // Trying with height above and below origins exactly the same, STILL won't work
-//      shapeverticeptr->x = x + X_ROT(-sz, -sz-sz2, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz-sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-////      printf("VERTEX 1 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-//      shapeverticeptr++;
-//      shapeverticeptr->x = x + X_ROT(sz, -sz-sz2, d); shapeverticeptr->y = y + Y_ROT(sz, -sz-sz2, d);
-//      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
-//      shapeverticeptr++;
-////      printf("VERTEX 2 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-//      shapeverticeptr->x = x + X_ROT(0, sz+sz2, d); shapeverticeptr->y = y + Y_ROT(0, sz+sz2, d);
-//      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
-//      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
-////      printf("VERTEX 3 x1: %f y1: %f\n", shapeverticeptr->x, shapeverticeptr->y);
-//      shapeverticeptr++;
+      float shiftx = SIN_LOOKUP(d) * sz2;   float shifty = COS_LOOKUP(d) * sz2;
+      shapeverticeptr->x = x + X_ROT(-sz, -sz, d) + shiftx; shapeverticeptr->y = y + Y_ROT(-sz, -sz, d) + shifty;
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(0, sz, d) + shiftx; shapeverticeptr->y = y + Y_ROT(0, sz, d) + shifty;
+      shapeverticeptr->r = SHAPE_BASE_COLOR_R; shapeverticeptr->g = SHAPE_BASE_COLOR_G; 
+      shapeverticeptr->b = SHAPE_BASE_COLOR_B; shapeverticeptr->a = 150;
+      shapeverticeptr++;
+      shapeverticeptr->x = x + X_ROT(sz, -sz, d) + shiftx; shapeverticeptr->y = y + Y_ROT(sz, -sz, d) + shifty;
+      shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 150;
+      shapeverticeptr++;
       break;
    case 6:
       /* CASE 6: HEXAGON */
-     
       sz = size * 0.5f;
       d = (cnt * 13) & 1023;
-//      //senquack
-////    glRotatef((float)((cnt*13)&1023)*360/1024, 0, 0, 1);
-////    glDisable(GL_BLEND);
-////    glEnable(GL_BLEND);
-//////    glColor4i(r, g, b, 210);
-////    glColor4i(r, g, b, 210);
-////    glBegin(GL_TRIANGLE_FAN);
-////    glVertex3f(-sz, -sz,  0);
-////    glVertex3f(  0, -sz,  0);
-////    glVertex3f( sz,   0,  0);
-//////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-////    glColor4i(SHAPE_BASE_COLOR_R, SHAPE_BASE_COLOR_G, SHAPE_BASE_COLOR_B, 150);
-////    glVertex3f( sz,  sz,  0);
-////    glVertex3f(  0,  sz,  0);
-////    glVertex3f(-sz,   0,  0);
-////    glEnd();
-//      shapecolors[0] = shapecolors[4] = shapecolors[8] = r;
-//      shapecolors[1] = shapecolors[5] = shapecolors[9] = g;
-//      shapecolors[2] = shapecolors[6] = shapecolors[10] = b;
-//      shapecolors[3] = shapecolors[7] = shapecolors[11] = 210;
-//      shapecolors[12] = shapecolors[16] = shapecolors[20] =
-//         SHAPE_BASE_COLOR_R;
-//      shapecolors[13] = shapecolors[17] = shapecolors[21] =
-//         SHAPE_BASE_COLOR_G;
-//      shapecolors[14] = shapecolors[18] = shapecolors[22] =
-//         SHAPE_BASE_COLOR_B;
-//      shapecolors[15] = shapecolors[19] = shapecolors[23] = 150;
-//      shapevertices[0] = -sz;
-//      shapevertices[1] = -sz;
-//      shapevertices[2] = 0;
-//      shapevertices[3] = -sz;
-//      shapevertices[4] = sz;
-//      shapevertices[5] = 0;
-//      shapevertices[6] = sz;
-//      shapevertices[7] = sz;
-//      shapevertices[8] = 0;
-//      shapevertices[9] = sz;
-//      shapevertices[10] = -sz;
-//      shapevertices[11] = 0;
-//      glDrawArrays (GL_TRIANGLE_FAN, 0, 6);
-
       //Triangle 1 / 4
       shapeverticeptr->x = x + X_ROT(-sz, -sz, d); shapeverticeptr->y = y + Y_ROT(-sz, -sz, d);
       shapeverticeptr->r = r; shapeverticeptr->g = g; shapeverticeptr->b = b; shapeverticeptr->a = 210;
@@ -7743,8 +7411,6 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
       shapeverticeptr++;
       break;
    }
-//   glPopMatrix ();
-////  if (shouldrotate) glPopMatrix();
 }
 #endif //FIXEDMATH
 

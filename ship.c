@@ -52,6 +52,10 @@ resetPlayer ()
 {
    bonusScore = 10;
    bomb = 3;
+
+   //senquack - added cheat to give extra bombs (but disables saving of high scores)
+   bomb += settings.extra_bombs;
+
    ship.grzInvCnt = ship.rollingCnt = ship.grzf = 0;
    ship.grzWdt = GRZ_WIDTH;
    ship.absEng = 0;

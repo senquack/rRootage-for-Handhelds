@@ -86,7 +86,10 @@ typedef struct portcfg_settings
    int music;                 // Is music enabled?
    int analog_deadzone;       // Analog joystick deadzone
    int draw_outlines;         // Which bullet outlines to draw, if any
-
+   int extra_lives;           // Cheat which adds up to 6 extra lives at start 
+                              // (but disables ability to save new high scores)
+   int extra_bombs;           // Cheat which adds up to 6 extra bomb at start 
+                              // (but disables ability to save new high scores)
    struct {
       int move;      //Movement mapping
       int btn1;      //Laser mapping

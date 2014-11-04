@@ -85,6 +85,10 @@ portcfg_settings settings = {
    .music                  = 1,                           // Is music enabled?
    .analog_deadzone        = 8000,                        // Analog joystick deadzone
    .draw_outlines          = DRAW_OUTLINES_IKA,           // Which mode of bullet-outline drawing to use
+   .extra_lives            = 0,                           // Cheat which adds up to 6 extra lives at start 
+                                                          //   (but disables ability to save new high scores)
+   .extra_bombs            = 0,                           // Cheat which adds up to 6 extra bombs at start 
+                                                          //   (but disables ability to save new high scores)
    .map                    = {
       .move     = MAP_DPAD,
       .btn1     = MAP_R,      //Laser mapping
@@ -221,6 +225,10 @@ int read_portcfg_settings (const char *filename)
          settings.analog_deadzone = clamp (atoi (param), 1000, 30000);
       } else if (strcasecmp (str, "draw_outlines") == 0) {
          settings.draw_outlines = clamp (atoi (param), 0, NUM_DRAW_OUTLINES-1);
+      } else if (strcasecmp (str, "extra_lives") == 0) {
+         settings.extra_lives = clamp (atoi (param), 0, 6);
+      } else if (strcasecmp (str, "extra_bombs") == 0) {
+         settings.extra_bombs = clamp (atoi (param), 0, 6);
       } else if (strcasecmp (str, "map_move") == 0) {
          settings.map.move = clamp(atoi (param), 0, NUM_MAPS-1);
       } else if (strcasecmp (str, "map_btn1") == 0) {

@@ -172,6 +172,10 @@ void initGameStateFirst() {
    nextExtend = 200000;
    neAdd = 300000;
    left = 2;
+
+   //senquack - added cheat to give extra bombs (but disables saving of high scores)
+   left += settings.extra_lives;
+
    stage = 0;
 }
 
@@ -214,11 +218,17 @@ void addLeftBonus() {
 }
 
 void setHiScore(int cleard) {
-   if ( score > hiScore.score[mode][stage] ) {
-      hiScore.score[mode][stage] = score;
-   }
    if ( cleard ) {
       hiScore.cleard[mode][stage] = 1;
+   }
+
+   //senquack - added optional cheats that disable saving of high scores
+   if (settings.extra_lives > 0 || settings.extra_lives > 0) {
+      return;
+   }
+
+   if ( score > hiScore.score[mode][stage] ) {
+      hiScore.score[mode][stage] = score;
    }
 }
 
@@ -725,6 +735,16 @@ void drawTitle_rotated() {
     }
   }
   drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
+
+  // senquack - visual indicator for added cheats (they disable saving of high-scores however)
+  if (settings.extra_lives > 0 || settings.extra_lives > 0) {
+     char *cheat_str = "CHEAT";
+     drawString(cheat_str, 285, 230, 12, 0, 255, 100, 100);
+     cheat_str = "MODE";
+     drawString(cheat_str, 295, 270, 12, 0, 255, 100, 100);
+  }
+//drawString (char *str, int lx, int ly, int ltSize, int d, int r, int g, int b)
+
 }
 
 static int goCnt;

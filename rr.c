@@ -84,6 +84,7 @@ portcfg_settings settings = {
                                                           //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
    .music                  = 1,                           // Is music enabled?
    .analog_deadzone        = 8000,                        // Analog joystick deadzone
+   .draw_outlines          = DRAW_OUTLINES_IKA,           // Which mode of bullet-outline drawing to use
    .map                    = {
       .move     = MAP_DPAD,
       .btn1     = MAP_R,      //Laser mapping
@@ -94,7 +95,6 @@ portcfg_settings settings = {
       .exit     = MAP_SELECT  //Exit to menu mapping 
    }
 };     
-
 
 //senquack - TODO: clean up crufty old Wiz port settings code, adapt it to new portcfg code:
 //#if defined(GP2X) || defined(WIZ)
@@ -214,11 +214,13 @@ int read_portcfg_settings (const char *filename)
       if (strcasecmp (str, "laser_on_by_default") == 0) {
          settings.laser_on_by_default = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "rotated") == 0) {
-         settings.rotated = clamp (atoi (param), SCREEN_HORIZ, SCREEN_ROTATED_RIGHT);
+         settings.rotated = clamp (atoi (param), 0, NUM_SCREEN-1);
       } else if (strcasecmp (str, "music") == 0) {
          settings.music = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "analog_deadzone") == 0) {
          settings.analog_deadzone = clamp (atoi (param), 1000, 30000);
+      } else if (strcasecmp (str, "draw_outlines") == 0) {
+         settings.draw_outlines = clamp (atoi (param), 0, NUM_DRAW_OUTLINES-1);
       } else if (strcasecmp (str, "map_move") == 0) {
          settings.map.move = clamp(atoi (param), 0, NUM_MAPS-1);
       } else if (strcasecmp (str, "map_btn1") == 0) {
@@ -738,7 +740,7 @@ static void
 parseArgs (int argc, char *argv[])
 {
    //senquack DEBUG
-//   nowait = 1;
+   nowait = 1;
 
 //   int i;
 //   for (i = 1; i < argc; i++) {

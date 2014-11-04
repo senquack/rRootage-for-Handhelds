@@ -72,11 +72,18 @@ extern int lowres;
 extern int windowMode;
 extern int brightness;
 
-//senquack - we now allow a rotated screen for Wiz
-extern int screenRotated;
-
-//senquack - added to allow the laser to always be firing *except* when the fire button is pressed:
-extern int laserOnByDefault;
+/* senquack - added this struct to aid vertice/color interleaving for batch-drawing: */
+typedef struct {
+#ifdef FIXEDMATH
+   GLfixed x,y;
+#else
+   GLfloat x,y;
+#endif //FIXEDMATH
+   union {
+      uint32_t color_rgba;
+      GLubyte r,g,b,a;
+   };
+} gl_vertex;
 
 int getPadState ();
 int getButtonState ();

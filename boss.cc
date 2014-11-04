@@ -1046,7 +1046,6 @@ addBossTreeFrag (BossTree * bt)
     oy = -(int)((bt->y[i+1]-bt->y[i])*256);
     dst = getDistance(ox, oy);
     deg = getDeg(ox, oy);
-    //senquack TODO: can probably optimize the dst/512 here:
     addBossFrag((bt->x[i+1]+bt->x[i])/2 + x,
        -(bt->y[i+1]+bt->y[i])/2 + y,
        (bt->z[i+1]+bt->z[i])/2, 
@@ -1057,7 +1056,6 @@ addBossTreeFrag (BossTree * bt)
     oy = -(int)((bt->ey[i]-bt->y[bpn])*256);
     dst = getDistance(ox, oy);
     deg = getDeg(ox, oy);
-    //senquack TODO: can probably optimize the dst/512 here:
     addBossFrag((bt->ex[i]+bt->x[bpn])/2 + x,
        -(bt->ey[i]+bt->y[bpn])/2 + y,
        (bt->ez[i]+bt->z[bpn])/2, 

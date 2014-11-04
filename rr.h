@@ -47,7 +47,15 @@ extern const char *prefs_filename;    // This is where we store the standard set
 
 enum {   SCREEN_HORIZ,
          SCREEN_ROTATED_LEFT,
-         SCREEN_ROTATED_RIGHT
+         SCREEN_ROTATED_RIGHT,
+         NUM_SCREEN
+};
+
+enum {
+   DRAW_OUTLINES_NONE,
+   DRAW_OUTLINES_IKA,
+   DRAW_OUTLINES_ALL,
+   NUM_DRAW_OUTLINES
 };
 
 /***************** WIZ / GP2X SETTINGS ***************/
@@ -77,6 +85,7 @@ typedef struct portcfg_settings
                               //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
    int music;                 // Is music enabled?
    int analog_deadzone;       // Analog joystick deadzone
+   int draw_outlines;         // Which bullet outlines to draw, if any
 
    struct {
       int move;      //Movement mapping
@@ -141,6 +150,7 @@ enum {   // For mapping internal to  externally-configurable controls (order of 
    MAP_ANALOG = C_ANY_ANALOG,
    NUM_MAPS
 };
+
 
 #endif //GCW
 extern int control_state[CNUMCONTROLS];    // Tracks state of each individual button/control on physical device

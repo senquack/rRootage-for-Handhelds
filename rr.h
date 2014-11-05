@@ -45,19 +45,6 @@ extern const char *portcfg_filename;    // This is where we store settings for t
 
 extern const char *prefs_filename;    // This is where we store the standard settings like Hi-score,
 
-enum {   SCREEN_HORIZ,
-         SCREEN_ROTATED_LEFT,
-         SCREEN_ROTATED_RIGHT,
-         NUM_SCREEN
-};
-
-enum {
-   DRAW_OUTLINES_NONE,
-   DRAW_OUTLINES_IKA,
-   DRAW_OUTLINES_ALL,
-   NUM_DRAW_OUTLINES
-};
-
 /***************** WIZ / GP2X SETTINGS ***************/
 //TODO: clean these up and get them working with new portcfg code
 #if defined(WIZ) || defined(GP2X)
@@ -78,6 +65,22 @@ enum {
 #endif //WIZ/GP2X
 
 /**************** CUSTOM PORT SETTINGS *****************/
+enum {   SCREEN_HORIZ,
+         SCREEN_ROTATED_LEFT,
+         SCREEN_ROTATED_RIGHT,
+         NUM_SCREEN
+};
+
+enum {
+   DRAW_OUTLINES_NONE,
+   DRAW_OUTLINES_IKA,
+   DRAW_OUTLINES_ALL,
+   NUM_DRAW_OUTLINES
+};
+
+#define MAX_EXTRA_LIVES 6
+#define MAX_EXTRA_BOMBS 6
+
 typedef struct portcfg_settings
 {
    int laser_on_by_default;   

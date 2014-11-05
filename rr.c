@@ -226,9 +226,9 @@ int read_portcfg_settings (const char *filename)
       } else if (strcasecmp (str, "draw_outlines") == 0) {
          settings.draw_outlines = clamp (atoi (param), 0, NUM_DRAW_OUTLINES-1);
       } else if (strcasecmp (str, "extra_lives") == 0) {
-         settings.extra_lives = clamp (atoi (param), 0, 6);
+         settings.extra_lives = clamp (atoi (param), 0, MAX_EXTRA_LIVES);
       } else if (strcasecmp (str, "extra_bombs") == 0) {
-         settings.extra_bombs = clamp (atoi (param), 0, 6);
+         settings.extra_bombs = clamp (atoi (param), 0, MAX_EXTRA_BOMBS);
       } else if (strcasecmp (str, "map_move") == 0) {
          settings.map.move = clamp(atoi (param), 0, NUM_MAPS-1);
       } else if (strcasecmp (str, "map_btn1") == 0) {
@@ -642,16 +642,16 @@ static void draw ()
    case TITLE:
       //printf("draw(): Drawing TITLE\n");
       //printf("draw(): Drawing TITLE - drawBackground\n");
+      prepareDrawBatch();
       drawBackground ();
 //      //printf("draw(): Drawing TITLE - drawBoss\n");
-      prepareDrawLines();
       drawBoss ();
 ////      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
       drawBulletsWake ();
 ////      //printf("draw(): Drawing TITLE - drawBullets\n");
-      finishDrawLines();
       drawBullets ();
 ////      //printf("draw(): Drawing TITLE - startDrawBoards\n");
+      finishDrawBatch();
       startDrawBoards ();
 //      //printf("draw(): Drawing TITLE - drawSideBoards\n");
       drawSideBoards ();
@@ -670,16 +670,16 @@ static void draw ()
    case STAGE_CLEAR:
       //senquack
 //    printf("draw(): Drawing STAGE_CLEAR\n");
+      prepareDrawBatch();
       drawBackground ();
-      prepareDrawLines();
       drawBoss ();
       drawLasers ();
       drawShots ();
       drawBulletsWake ();
-      finishDrawLines();
       drawFrags ();
       drawShip ();
       drawBullets ();
+      finishDrawBatch();
       startDrawBoards ();
       drawSideBoards ();
 ////senquack - support rotated screen:
@@ -694,13 +694,13 @@ static void draw ()
    case GAMEOVER:
       //senquack
 //    printf("draw(): Drawing GAMEOVER\n");
+      prepareDrawBatch();
       drawBackground ();
-      prepareDrawLines();
       drawBoss ();
       drawBulletsWake ();
-      finishDrawLines();
       drawFrags ();
       drawBullets ();
+      finishDrawBatch();
       startDrawBoards ();
       drawSideBoards ();
       drawGameover ();
@@ -709,16 +709,16 @@ static void draw ()
    case PAUSE:
       //senquack
 //    printf("draw(): Drawing PAUSE\n");
+      prepareDrawBatch();
       drawBackground ();
-      prepareDrawLines();
       drawBoss ();
       drawLasers ();
       drawShots ();
       drawBulletsWake ();
-      finishDrawLines();
       drawFrags ();
       drawShip ();
       drawBullets ();
+      finishDrawBatch();
       startDrawBoards ();
       drawSideBoards ();
 //senquack - support rotated screen:

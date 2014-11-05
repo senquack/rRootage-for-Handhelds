@@ -75,8 +75,26 @@ unsigned fpsqrt (unsigned n);
 int fastSqrt (int n);
 #endif //FIXEDMATH
 
-//senquack - the famous Quake square root, for speed in our gluLookat implementation
-float magic_sqrt (float number);
+// Convenience macros for using game's original sin lookup table:
+// Note: range is -256..256   
+//       domain is 0..(1024+256), where 1024 represents 2 * pi
+#define COS_LOOKUP(degree) ((float)(sctbl[(degree) + 256]) * (1.0f/256.0f))
+#define SIN_LOOKUP(degree) ((float)(-sctbl[(degree)]) * (1.0f/256.0f))      /* Need this to return negative, as
+                                                                               rrootage uses opposite of OpenGL */
+
+// libm version of above (for testing & verification):
+//#define COS_LOOKUP(degree) cosf(((float)-(degree) / 1024.0f * 2 * M_PI ))
+//#define SIN_LOOKUP(degree) sinf(((float)-(degree) / 1024.0f * 2 * M_PI ))
+
+// Convenience macros for 2D polygon rotation:
+#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) + y * SIN_LOOKUP(degree))
+#define Y_ROT(x,y,degree) (-x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
+
+//COUNTERCLOCKWISE: (not what we're looking for)
+//#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) - y * SIN_LOOKUP(degree))
+//#define Y_ROT(x,y,degree) (x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
+////senquack - the famous Quake square root, for speed in our gluLookat implementation
+//float magic_sqrt (float number);
 
 void initDegutil ();
 int getDeg (int x, int y);

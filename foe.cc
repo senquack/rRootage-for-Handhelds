@@ -884,9 +884,6 @@ static int bulletColor[BULLET_COLOR_NUM][3] = {
 void
 drawBullets ()
 {
-   //senquack - new function called once before a series of calls to drawShape (for openglES speedup)
-   prepareDrawShapes ();
-
    int i;
    Foe *fe;
 #ifdef FIXEDMATH
@@ -932,5 +929,4 @@ drawBullets ()
          }
       }
    }
-   finishDrawShapes ();
 }

@@ -1300,7 +1300,6 @@ void drawGLSceneStart()
 
 }
 
-//senquack DEBUG
 //void drawGLSceneEnd ()
 //{
 //   glPopMatrix ();
@@ -1314,6 +1313,16 @@ void drawGLSceneEnd ()
 //   glPopMatrix();
 }
 
+//senquack - Converted everything I could to one huge triangle and line batch that gets dispatched through
+//             these large arrays:
+// Most complicated shape (circle) requires 18 vertexes, and each point inside the shapes needs 6 vertexes:
+#define FOE_MAX 1024  // pulled from foe.cc
+//static gl_vertex triangles[FOE_MAX * 18 + FOE_MAX * 6]; 
+static gl_vertex triangles[50000];     // TODO: start with a huge number and we'll work down from here later
+static gl_vertex *triangles_ptr = NULL;
+//static gl_vertex lines[FOE_MAX * 18];
+static gl_vertex lines[50000];
+static gl_vertex *lines_ptr = NULL;
 
 // NOTE
 //senquack - disabling these next 3-4 functions allowed program to run longer before hang:
@@ -1945,37 +1954,37 @@ void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, 
 // glDrawArrays(GL_LINES, 0, 2);
 //}
 
-typedef struct {
-#ifdef FIXEDMATH
-   GLfixed x,y;
-#else
-   GLfloat x,y;
-#endif //FIXEDMATH
-   GLubyte r,g,b,a;
-} linevertice;
+//typedef struct {
+//#ifdef FIXEDMATH
+//   GLfixed x,y;
+//#else
+//   GLfloat x,y;
+//#endif //FIXEDMATH
+//   GLubyte r,g,b,a;
+//} linevertice;
    
-static linevertice lineverticedata[2600];       //never seem to need more than 2100 or so, but be safe
-static linevertice *lineverticeptr;
+//static linevertice lineverticedata[2600];       //never seem to need more than 2100 or so, but be safe
+//static linevertice *lineverticeptr;
 
 //senquack - new function called once before a series of calls to drawShape (for openglES speedup)
-void prepareDrawLines (void)
-{
-   lineverticeptr = &lineverticedata[0];
-}
-
-void finishDrawLines (void)
-{
-   glEnable (GL_BLEND);
-#ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, sizeof(linevertice), &lineverticedata[0].x);
-#else
-   glVertexPointer (2, GL_FLOAT, sizeof(linevertice), &lineverticedata[0].x);
-#endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(linevertice), &lineverticedata[0].r);
-   int numlinevertices = ((unsigned int) lineverticeptr - (unsigned int) (&lineverticedata[0])) / sizeof(linevertice);
-   glDrawArrays (GL_LINES, 0, numlinevertices);
-//    printf("printing lines with %d vertices\n", numlinevertices);
-}
+//void prepareDrawLines (void)
+//{
+//   lineverticeptr = &lineverticedata[0];
+//}
+//
+//void finishDrawLines (void)
+//{
+//   glEnable (GL_BLEND);
+//#ifdef FIXEDMATH
+//   glVertexPointer (2, GL_FIXED, sizeof(linevertice), &lineverticedata[0].x);
+//#else
+//   glVertexPointer (2, GL_FLOAT, sizeof(linevertice), &lineverticedata[0].x);
+//#endif //FIXEDMATH
+//   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(linevertice), &lineverticedata[0].r);
+//   int numlinevertices = ((unsigned int) lineverticeptr - (unsigned int) (&lineverticedata[0])) / sizeof(linevertice);
+//   glDrawArrays (GL_LINES, 0, numlinevertices);
+////    printf("printing lines with %d vertices\n", numlinevertices);
+//}
 
 //senquack - converted to GLES and now lines are drawn in one huge batch
 //void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
@@ -1991,12 +2000,19 @@ void drawLine(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, int r, int g, int 
 #else
 inline void drawLine(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, int b, int a)
 {
-   lineverticeptr->x = x1; lineverticeptr->y = y1;
-   lineverticeptr->r = r; lineverticeptr->g = g; lineverticeptr->b = b; lineverticeptr->a = a;
-   lineverticeptr++;
-   lineverticeptr->x = x2; lineverticeptr->y = y2;
-   lineverticeptr->r = r; lineverticeptr->g = g; lineverticeptr->b = b; lineverticeptr->a = a;
-   lineverticeptr++;
+//   lineverticeptr->x = x1; lineverticeptr->y = y1;
+//   lineverticeptr->r = r; lineverticeptr->g = g; lineverticeptr->b = b; lineverticeptr->a = a;
+//   lineverticeptr++;
+//   lineverticeptr->x = x2; lineverticeptr->y = y2;
+//   lineverticeptr->r = r; lineverticeptr->g = g; lineverticeptr->b = b; lineverticeptr->a = a;
+//   lineverticeptr++;
+   uint32_t color = (a << 24) | (b << 16) | (g << 8) | r;
+   lines_ptr->x = x1; lines_ptr->y = y1;
+   lines_ptr->color_rgba = color;
+   lines_ptr++;
+   lines_ptr->x = x2; lines_ptr->y = y2;
+   lines_ptr->color_rgba = color;
+   lines_ptr++;
 }
 #endif //FIXEDMATH
 
@@ -2101,19 +2117,19 @@ void drawLinePart(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, int r, int g, 
 #else
 void drawLinePart(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, int b, int a, int len)
 {
-   GLfloat line[4];
-   line[0] = x1;
-   line[1] = y1;
-   line[2] = x1 + (((x2 - x1) * len) / 256.0f);
-   line[3] = y1 + (((y2 - y1) * len) / 256.0f);
-
-   GLubyte colors[8] = { r, g, b, a, r, g, b, a };
-
-   glVertexPointer (2, GL_FLOAT, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-// glEnableClientState(GL_COLOR_ARRAY);
-   glDrawArrays (GL_LINES, 0, 2);
+//   GLfloat line[4];
+//   line[0] = x1;
+//   line[1] = y1;
+//   line[2] = x1 + (((x2 - x1) * len) / 256.0f);
+//   line[3] = y1 + (((y2 - y1) * len) / 256.0f);
+//
+//   GLubyte colors[8] = { r, g, b, a, r, g, b, a };
+//
+//   glVertexPointer (2, GL_FLOAT, 0, line);
+//// glEnableClientState(GL_VERTEX_ARRAY);
+//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
+//// glEnableClientState(GL_COLOR_ARRAY);
+//   glDrawArrays (GL_LINES, 0, 2);
 }
 #endif //FIXEDMATH
 
@@ -2203,188 +2219,80 @@ void drawLinePart(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, 
 //}
 
 
-//senquack - new - changing all TRIANGLE_FANs with only three vertices to TRIANGLES
-  //senquack - tried tweaking this to fix hang:
-//void drawTestPoly()
-//{
-//  static float x = 0.0f;
-//  if (x > 32)
-//     x = 0.0f;
-//  x++;
-//     
-//  //printf("drawing poly\n"); fflush(stdout);
-//  glBegin(GL_TRIANGLE_FAN);
-//  glColor4i(255, 0, 0, 255);
-//  glVertex3f(x, 5.0f, 0.0f);
-//  glColor4i(0, 255, 0, 255);
-//  glVertex3f(0.0f, -5.0f, 0.0f);
-//  glColor4i(0, 0, 255, 255);
-//  glVertex3f(-2.0f, 5.0f, 0.0f);
-//  glEnd();
-//  //printf("done drawing poly\n"); fflush(stdout);
-//
-//}
-//void drawTestPoly()
-//{
-//  static float x = 0.0f;
-////  if (x > 32)
-////     x = 0.0f;
-////  x++;
-//     
-//  //printf("drawing poly\n"); fflush(stdout);
-//  //senquack:
-////  glBegin(GL_TRIANGLE_FAN);
-//  glBegin(GL_TRIANGLES);
-//  glColor4i(255, 0, 0, 255);
-//  glVertex3f(x, 5.0f, 0.0f);
-//  glColor4i(0, 255, 0, 255);
-//  glVertex3f(0.0f, -5.0f, 0.0f);
-//  glColor4i(0, 0, 255, 255);
-//  glVertex3f(-2.0f, 5.0f, 0.0f);
-//  glEnd();
-//  //printf("done drawing poly\n"); fflush(stdout);
-//
-//}
 
-  //senquack - tried tweaking this to fix hang:
+// Original GL1.2 code:
 //void drawRollLine(GLfloat x, GLfloat y, GLfloat z, GLfloat width,
-//      int r, int g, int b, int a, int d1, int d2) {
+//		  int r, int g, int b, int a, int d1, int d2) {
 //  glPushMatrix();
 //  glTranslatef(x, y, z);
 //  glRotatef((float)d1*360/1024, 0, 0, 1);
 //  glRotatef((float)d2*360/1024, 1, 0, 0);
-//  glColor4i(r, g, b, a);
+//  glColor4ub(r, g, b, a);
 //  glBegin(GL_LINES);
 //  glVertex3f(0, -width, 0);
 //  glVertex3f(0,  width, 0);
 //  glEnd();
 //  glPopMatrix();
 //}
-//void drawRollLine(GLfloat x, GLfloat y, GLfloat z, GLfloat width,
-//      int r, int g, int b, int a, int d1, int d2) {
-////  glPushMatrix();
-////  glTranslatef(x, y, z);
-////  glRotatef((float)d1*360/1024, 0, 0, 1);
-////  glRotatef((float)d2*360/1024, 1, 0, 0);
-////  glColor4i(r, g, b, a);
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(0, -width, 0);
-////  glVertex3f(0,  width, 0);
-////  glEnd();
-////  glPopMatrix();
-//}
-//senquack TODO - merge drawRollLine into one function just like drawRollLinex below (mandatory since you changed code elsewhere)
-//senquack TODO - also verify that dropping the alpha parameter was the correct choice for Wiz version (looks like
-//                I tested it and found it never was anything but 255, but make sure)
-//void
-//drawRollLine (GLfloat x, GLfloat y, GLfloat z, GLfloat width,
-//              int r, int g, int b, int a, int d1, int d2)
-//{
-//   glPushMatrix ();
-//   glTranslatef (x, y, z);
-//   glRotatef ((float) d1 * 360 / 1024, 0, 0, 1);
-//   glRotatef ((float) d2 * 360 / 1024, 1, 0, 0);
-//
-//   GLfloat line[6];
-//   line[0] = 0;
-//   line[1] = -width;
-//   line[2] = 0;
-//   line[3] = 0;
-//   line[4] = width;
-//   line[5] = 0;
-//
-//   GLubyte colors[8] = { r, g, b, a, r, g, b, a };
-//
-//   glVertexPointer (3, GL_FLOAT, 0, line);
-//   glEnableClientState (GL_VERTEX_ARRAY);
-//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-//   glEnableClientState (GL_COLOR_ARRAY);
-//
-//   glDrawArrays (GL_LINES, 0, 2);
-//   glPopMatrix ();
-//}
 
 //senquack - fixed point version (only called from frag.c)
 // note: we dropped the a parameter (always 255 it turns out)
-#ifdef FIXEDMATH
-GLfixed rolllinevertices[4];
-#else
-GLfloat rolllinevertices[4];
-#endif //FIXEDMATH
-GLubyte rolllinecolors[8];
-
-//senquack - this allows us to avoid a few hundred unnecessary calls to these two functions:
-void
-prepareDrawRollLine (void)
-{
-#ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, 0, rolllinevertices);
-#else
-   glVertexPointer (2, GL_FLOAT, 0, rolllinevertices);
-#endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, rolllinecolors);
-}
+//TODO - convert fixed point stuff to the new batch drawn mode.
 
 #ifdef FIXEDMATH
 void drawRollLine (GLfixed x, GLfixed y, GLfixed z, GLfixed width, int r, int g, int b, int d1, int d2)
 {
-   glPushMatrix ();
-//  glTranslatef(x, y, z);
-   glTranslatex (x, y, z);
-//  glRotatef((float)d1*360/1024, 0, 0, 1);
-//  glRotatef((float)d2*360/1024, 1, 0, 0);
-//    glRotatex((d1*360)<<6, 0, 0, INT2FNUM(1));
-//    glRotatex((d2*360)<<6, INT2FNUM(1), 0, 0);
-   glRotatef ((float) ((d1 * 360) >> 10), 0, 0, 1);
-   glRotatef ((float) ((d2 * 360) >> 10), 1, 0, 0);
-
-// GLfixed line[4];
-   rolllinevertices[0] = 0;
-   rolllinevertices[1] = -width;
-   rolllinevertices[2] = 0;
-   rolllinevertices[3] = width;
-
-// GLubyte colors[8];
-   rolllinecolors[0] = rolllinecolors[4] = r;
-   rolllinecolors[1] = rolllinecolors[5] = g;
-   rolllinecolors[2] = rolllinecolors[6] = b;
-   rolllinecolors[3] = rolllinecolors[7] = 255;
-
-// glVertexPointer(2, GL_FIXED, 0, line);
-////  glEnableClientState(GL_VERTEX_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-////  glEnableClientState(GL_COLOR_ARRAY);
-
-   glDrawArrays (GL_LINES, 0, 2);
-   glPopMatrix ();
+   printf("ERROR: call to broken drawRollLine, please update its code to match the new float version below it.\n");
+//   glPushMatrix ();
+////  glTranslatef(x, y, z);
+//   glTranslatex (x, y, z);
+////  glRotatef((float)d1*360/1024, 0, 0, 1);
+////  glRotatef((float)d2*360/1024, 1, 0, 0);
+////    glRotatex((d1*360)<<6, 0, 0, INT2FNUM(1));
+////    glRotatex((d2*360)<<6, INT2FNUM(1), 0, 0);
+//   glRotatef ((float) ((d1 * 360) >> 10), 0, 0, 1);
+//   glRotatef ((float) ((d2 * 360) >> 10), 1, 0, 0);
+//
+//// GLfixed line[4];
+//   rolllinevertices[0] = 0;
+//   rolllinevertices[1] = -width;
+//   rolllinevertices[2] = 0;
+//   rolllinevertices[3] = width;
+//
+//// GLubyte colors[8];
+//   rolllinecolors[0] = rolllinecolors[4] = r;
+//   rolllinecolors[1] = rolllinecolors[5] = g;
+//   rolllinecolors[2] = rolllinecolors[6] = b;
+//   rolllinecolors[3] = rolllinecolors[7] = 255;
+//
+//// glVertexPointer(2, GL_FIXED, 0, line);
+//////  glEnableClientState(GL_VERTEX_ARRAY);
+//// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+//////  glEnableClientState(GL_COLOR_ARRAY);
+//
+//   glDrawArrays (GL_LINES, 0, 2);
+//   glPopMatrix ();
 }
 #else
 void drawRollLine (GLfloat x, GLfloat y, GLfloat z, GLfloat width, int r, int g, int b, int d1, int d2)
 {
-   glPushMatrix ();
-   glTranslatef(x, y, z);
+   // TODO: do the trig rotation manually here:
 //  glRotatef((float)d1*360/1024, 0, 0, 1);
 //  glRotatef((float)d2*360/1024, 1, 0, 0);
-   glRotatef ((float) ((d1 * 360) >> 10), 0, 0, 1);
-   glRotatef ((float) ((d2 * 360) >> 10), 1, 0, 0);
 
-   rolllinevertices[0] = 0; rolllinevertices[1] = -width;
-   rolllinevertices[2] = 0; rolllinevertices[3] = width;
 
-   rolllinecolors[0] = rolllinecolors[4] = r;
-   rolllinecolors[1] = rolllinecolors[5] = g;
-   rolllinecolors[2] = rolllinecolors[6] = b;
-   rolllinecolors[3] = rolllinecolors[7] = 255;
+   uint32_t color = (255 << 24) | (b << 16) | (g << 8) | r;
 
-// glVertexPointer(2, GL_FIXED, 0, line);
-////  glEnableClientState(GL_VERTEX_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-////  glEnableClientState(GL_COLOR_ARRAY);
+   lines_ptr->x = x; lines_ptr->y = y - width;
+   lines_ptr->color_rgba = color;
+   lines_ptr++;
+   lines_ptr->x = x; lines_ptr->y = y + width;
+   lines_ptr->color_rgba = color;
+   lines_ptr++;
 
-   glDrawArrays (GL_LINES, 0, 2);
-   glPopMatrix ();
 }
 #endif //FIXEDMATH
+
 
 ////senquack
 ////drawSquare really is just for drawing the wings and it will be handled with VBOs now:
@@ -4719,73 +4627,88 @@ void drawShape (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, in
 
 /* senquack - HIGHLY OPTIMIZED POST-WIZ-PORT BATCH-DRAWN SHAPE CODE BEGINS HERE: */
 
-// Most complicated shape (circle) requires 18 vertexes, and each point inside the shapes needs 6 vertexes:
-#define FOE_MAX 1024  // pulled from foe.cc
-static gl_vertex shape_triangles[FOE_MAX * 18 + FOE_MAX * 6]; 
-static gl_vertex *shape_triangles_ptr = NULL;
-static gl_vertex shape_lines[FOE_MAX * 18];
-static gl_vertex *shape_lines_ptr = NULL;
 
-void prepareDrawShapes (void)
+void prepareDrawBatch (void)
 {
-   shape_triangles_ptr = &shape_triangles[0];
-   shape_lines_ptr = &shape_lines[0];
+   triangles_ptr = &triangles[0];
+   lines_ptr = &lines[0];
 }
 
-void finishDrawShapes (void)
+void finishDrawBatch (void)
 {
    int num_vertices;
 
-   //First, draw the shapes:
-   num_vertices = ((unsigned int)shape_triangles_ptr - (unsigned int)(&shape_triangles[0])) / sizeof(gl_vertex);
-   if (num_vertices < 3) return;  // Are there any shapes to draw?
-   glEnable (GL_BLEND);
+//   glEnable (GL_BLEND);
+   //First, draw the lines:
+   num_vertices = ((unsigned int)lines_ptr - (unsigned int)(&lines[0])) / sizeof(gl_vertex);
+   if (num_vertices >= 2) {
 #ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &shape_triangles[0].x);
+      glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &lines[0].x);
 #else
-   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &shape_triangles[0].x);
+      glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &lines[0].x);
 #endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &shape_triangles[0].r);
-   glDrawArrays (GL_TRIANGLES, 0, num_vertices);
-//    printf("drawing shapes with %d vertices, %d allocated\n", num_vertices, sizeof(shape_triangles) / sizeof(gl_vertex));
-  
-   glDisable (GL_BLEND);
+      glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &lines[0].r);
+      glDrawArrays (GL_LINES, 0, num_vertices);
+      printf("drawing lines with %d vertices, %d allocated\n", num_vertices, sizeof(triangles) / sizeof(gl_vertex));
+   }
 
-   //Second, draw the lines:
-   num_vertices = ((unsigned int)shape_lines_ptr - (unsigned int)(&shape_lines[0])) / sizeof(gl_vertex);
-   if (num_vertices < 2) return;  // Are there any lines to draw?
+   //Second, draw the triangles:
+   num_vertices = ((unsigned int)triangles_ptr - (unsigned int)(&triangles[0])) / sizeof(gl_vertex);
+   if (num_vertices >= 3) {
 #ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &shape_lines[0].x);
+      glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &triangles[0].x);
 #else
-   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &shape_lines[0].x);
+      glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &triangles[0].x);
 #endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &shape_lines[0].r);
-   glDrawArrays (GL_LINES, 0, num_vertices);
-//    printf("drawing shape lines with %d vertices, %d allocated\n", num_vertices, sizeof(shape_triangles) / sizeof(gl_vertex));
+      glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &triangles[0].r);
+      glDrawArrays (GL_TRIANGLES, 0, num_vertices);
+      printf("drawing triangles with %d vertices, %d allocated\n", num_vertices, sizeof(triangles) / sizeof(gl_vertex));
+   }
 }
+
+//void prepareDrawShapes (void)
+//{
+//   shape_triangles_ptr = &shape_triangles[0];
+//   shape_lines_ptr = &shape_lines[0];
+//}
+//
+//void finishDrawShapes (void)
+//{
+//   int num_vertices;
+//
+//   //First, draw the shapes:
+//   num_vertices = ((unsigned int)shape_triangles_ptr - (unsigned int)(&shape_triangles[0])) / sizeof(gl_vertex);
+//   if (num_vertices < 3) return;  // Are there any shapes to draw?
+//   glEnable (GL_BLEND);
+//#ifdef FIXEDMATH
+//   glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &shape_triangles[0].x);
+//#else
+//   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &shape_triangles[0].x);
+//#endif //FIXEDMATH
+//   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &shape_triangles[0].r);
+//   glDrawArrays (GL_TRIANGLES, 0, num_vertices);
+////    printf("drawing shapes with %d vertices, %d allocated\n", num_vertices, sizeof(shape_triangles) / sizeof(gl_vertex));
+//  
+//   glDisable (GL_BLEND);
+//
+//   //Second, draw the lines:
+//   num_vertices = ((unsigned int)shape_lines_ptr - (unsigned int)(&shape_lines[0])) / sizeof(gl_vertex);
+//   if (num_vertices < 2) return;  // Are there any lines to draw?
+//#ifdef FIXEDMATH
+//   glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &shape_lines[0].x);
+//#else
+//   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &shape_lines[0].x);
+//#endif //FIXEDMATH
+//   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &shape_lines[0].r);
+//   glDrawArrays (GL_LINES, 0, num_vertices);
+////    printf("drawing shape lines with %d vertices, %d allocated\n", num_vertices, sizeof(shape_triangles) / sizeof(gl_vertex));
+//}
 
 /* senquack - For OpenGLES conversion, all bullet drawing is now done in one huge batch.
    In order to accomplish high speeds, all vertex rotation is now done on the CPU through the
    game's orginal sin/cos lookup table.  This saves thousands of calls into OpenGLES.
    I achieved a 6-fold increase in framerate on the GCW (at minimum). */
 
-// Convenience macros for using game's original sin lookup table:
-// Note: range is -256..256   
-//       domain is 0..(1024+256), where 1024 represents 2 * pi
-#define COS_LOOKUP(degree) ((float)(sctbl[(degree) + 256]) * (1.0f/256.0f))
-#define SIN_LOOKUP(degree) ((float)(-sctbl[(degree)]) * (1.0f/256.0f))      /* Need this to return negative, as
-                                                                               rrootage uses opposite of OpenGL */
-
-// libm version of above (for testing & verification):
-//#define COS_LOOKUP(degree) cosf(((float)-(degree) / 1024.0f * 2 * M_PI ))
-//#define SIN_LOOKUP(degree) sinf(((float)-(degree) / 1024.0f * 2 * M_PI ))
-
-// Convenience macros for 2D polygon rotation:
-#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) + y * SIN_LOOKUP(degree))
-#define Y_ROT(x,y,degree) (-x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
-//COUNTERCLOCKWISE: (not what we're looking for)
-//#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) - y * SIN_LOOKUP(degree))
-//#define Y_ROT(x,y,degree) (x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
 
 // senquack - original OpenGL 1.2 code, converted to optimized GLES below
 //void drawShape(GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type,
@@ -4973,21 +4896,21 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
          color = (150 << 24) | (SHAPE_BASE_COLOR_B << 16) | (SHAPE_BASE_COLOR_G << 8) | SHAPE_BASE_COLOR_R;
          vertices[2].x = x + X_ROT(0, sz2, d) + shiftx;  vertices[2].y = y + Y_ROT(0, sz2, d) + shifty;  
          vertices[2].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 1
-         *shape_triangles_ptr++ = vertices[1];
-         *shape_triangles_ptr++ = vertices[2];
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 1
+         *triangles_ptr++ = vertices[1];
+         *triangles_ptr++ = vertices[2];
 
          /* Lines: */
          if (settings.draw_outlines == DRAW_OUTLINES_ALL) {
             vertices[0].color_rgba = core_color;
             vertices[1].color_rgba = core_color;
             vertices[2].color_rgba = core_color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[0];
          }
          break;
       case 1:
@@ -5000,12 +4923,12 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
          color = (150 << 24) | (SHAPE_BASE_COLOR_B << 16) | (SHAPE_BASE_COLOR_G << 8) | SHAPE_BASE_COLOR_R;
          vertices[2].x = x + X_ROT(0, size, d);  vertices[2].y = y + Y_ROT(0, size, d);  vertices[2].color_rgba = color;
          vertices[3].x = x + X_ROT(-sz, 0, d);   vertices[3].y = y + Y_ROT(-sz, 0, d);   vertices[3].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1
-         *shape_triangles_ptr++ = vertices[1];
-         *shape_triangles_ptr++ = vertices[2];
-         *shape_triangles_ptr++ = vertices[2];   //Triangle 2
-         *shape_triangles_ptr++ = vertices[3];
-         *shape_triangles_ptr++ = vertices[0];
+         *triangles_ptr++ = vertices[0];   //Triangle 1
+         *triangles_ptr++ = vertices[1];
+         *triangles_ptr++ = vertices[2];
+         *triangles_ptr++ = vertices[2];   //Triangle 2
+         *triangles_ptr++ = vertices[3];
+         *triangles_ptr++ = vertices[0];
 
          /* Lines: */
          if (settings.draw_outlines == DRAW_OUTLINES_ALL) {
@@ -5013,14 +4936,14 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
             vertices[1].color_rgba = core_color;
             vertices[2].color_rgba = core_color;
             vertices[3].color_rgba = core_color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[0];
          }
          break;
       case 2: /* CASE 2 - RECTANGULAR SHAPE */
@@ -5032,12 +4955,12 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
          color = (150 << 24) | (SHAPE_BASE_COLOR_B << 16) | (SHAPE_BASE_COLOR_G << 8) | SHAPE_BASE_COLOR_R;
          vertices[2].x = x + X_ROT(sz,sz2,d);   vertices[2].y = y + Y_ROT(sz,sz2,d);   vertices[2].color_rgba = color;
          vertices[3].x = x + X_ROT(-sz,sz2,d);   vertices[3].y = y + Y_ROT(-sz,sz2,d); vertices[3].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[1];   
-         *shape_triangles_ptr++ = vertices[2];   
-         *shape_triangles_ptr++ = vertices[2];   //Triangle 2 / 2
-         *shape_triangles_ptr++ = vertices[3];  
-         *shape_triangles_ptr++ = vertices[0];  
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[1];   
+         *triangles_ptr++ = vertices[2];   
+         *triangles_ptr++ = vertices[2];   //Triangle 2 / 2
+         *triangles_ptr++ = vertices[3];  
+         *triangles_ptr++ = vertices[0];  
 
          /* Lines: */
          if (settings.draw_outlines == DRAW_OUTLINES_ALL) {
@@ -5045,14 +4968,14 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
             vertices[1].color_rgba = core_color;
             vertices[2].color_rgba = core_color;
             vertices[3].color_rgba = core_color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[0];
          }
          break;
       case 3:
@@ -5065,12 +4988,12 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
          color = (150 << 24) | (SHAPE_BASE_COLOR_B << 16) | (SHAPE_BASE_COLOR_G << 8) | SHAPE_BASE_COLOR_R;
          vertices[2].x = x + X_ROT(sz,sz,d);   vertices[2].y = y + Y_ROT(sz,sz,d);   vertices[2].color_rgba = color;
          vertices[3].x = x + X_ROT(-sz,sz,d);  vertices[3].y = y + Y_ROT(-sz,sz,d);  vertices[3].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[1];   
-         *shape_triangles_ptr++ = vertices[2];   
-         *shape_triangles_ptr++ = vertices[2];   //Triangle 2 / 2
-         *shape_triangles_ptr++ = vertices[3];   
-         *shape_triangles_ptr++ = vertices[0];   
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[1];   
+         *triangles_ptr++ = vertices[2];   
+         *triangles_ptr++ = vertices[2];   //Triangle 2 / 2
+         *triangles_ptr++ = vertices[3];   
+         *triangles_ptr++ = vertices[0];   
 
          /* Lines: */
          if (settings.draw_outlines == DRAW_OUTLINES_ALL) {
@@ -5078,14 +5001,14 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
             vertices[1].color_rgba = core_color;
             vertices[2].color_rgba = core_color;
             vertices[3].color_rgba = core_color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[0];
          }
          break;
       case 4: //      /* CASE 4 - CIRCULAR SHAPE */
@@ -5103,24 +5026,24 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
          vertices[5].x = x + X_ROT(-sz2,sz, d);  vertices[5].y = y + Y_ROT(-sz2,sz, d);  vertices[5].color_rgba = color;
          vertices[6].x = x + X_ROT(-sz,sz2,d);   vertices[6].y = y + Y_ROT(-sz,sz2,d);   vertices[6].color_rgba = color;
          vertices[7].x = x + X_ROT(-sz,-sz2,d);  vertices[7].y = y + Y_ROT(-sz,-sz2,d);  vertices[7].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 6
-         *shape_triangles_ptr++ = vertices[1];  
-         *shape_triangles_ptr++ = vertices[2];  
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 2 / 6
-         *shape_triangles_ptr++ = vertices[2];  
-         *shape_triangles_ptr++ = vertices[3];  
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 3 / 6
-         *shape_triangles_ptr++ = vertices[3];  
-         *shape_triangles_ptr++ = vertices[4];  
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 4 / 6
-         *shape_triangles_ptr++ = vertices[4];  
-         *shape_triangles_ptr++ = vertices[5];  
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 5 / 6
-         *shape_triangles_ptr++ = vertices[5];  
-         *shape_triangles_ptr++ = vertices[6];  
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 6 / 6
-         *shape_triangles_ptr++ = vertices[6];  
-         *shape_triangles_ptr++ = vertices[7];  
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 6
+         *triangles_ptr++ = vertices[1];  
+         *triangles_ptr++ = vertices[2];  
+         *triangles_ptr++ = vertices[0];   //Triangle 2 / 6
+         *triangles_ptr++ = vertices[2];  
+         *triangles_ptr++ = vertices[3];  
+         *triangles_ptr++ = vertices[0];   //Triangle 3 / 6
+         *triangles_ptr++ = vertices[3];  
+         *triangles_ptr++ = vertices[4];  
+         *triangles_ptr++ = vertices[0];   //Triangle 4 / 6
+         *triangles_ptr++ = vertices[4];  
+         *triangles_ptr++ = vertices[5];  
+         *triangles_ptr++ = vertices[0];   //Triangle 5 / 6
+         *triangles_ptr++ = vertices[5];  
+         *triangles_ptr++ = vertices[6];  
+         *triangles_ptr++ = vertices[0];   //Triangle 6 / 6
+         *triangles_ptr++ = vertices[6];  
+         *triangles_ptr++ = vertices[7];  
 
          /* Lines: */
          if (settings.draw_outlines == DRAW_OUTLINES_ALL) {
@@ -5132,22 +5055,22 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
             vertices[5].color_rgba = core_color;
             vertices[6].color_rgba = core_color;
             vertices[7].color_rgba = core_color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[4];
-            *shape_lines_ptr++ = vertices[4];
-            *shape_lines_ptr++ = vertices[5];
-            *shape_lines_ptr++ = vertices[5];
-            *shape_lines_ptr++ = vertices[6];
-            *shape_lines_ptr++ = vertices[6];
-            *shape_lines_ptr++ = vertices[7];
-            *shape_lines_ptr++ = vertices[7];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[4];
+            *lines_ptr++ = vertices[4];
+            *lines_ptr++ = vertices[5];
+            *lines_ptr++ = vertices[5];
+            *lines_ptr++ = vertices[6];
+            *lines_ptr++ = vertices[6];
+            *lines_ptr++ = vertices[7];
+            *lines_ptr++ = vertices[7];
+            *lines_ptr++ = vertices[0];
          }
          break;
       case 5:
@@ -5163,21 +5086,20 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
          color = (150 << 24) | (SHAPE_BASE_COLOR_B << 16) | (SHAPE_BASE_COLOR_G << 8) | SHAPE_BASE_COLOR_R;
          vertices[2].x = x + X_ROT(0, sz, d) + shiftx;  vertices[2].y = y + Y_ROT(0, sz, d) + shifty;  
          vertices[2].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];   // Triangle 1 / 1
-         *shape_triangles_ptr++ = vertices[1];
-         *shape_triangles_ptr++ = vertices[2];
-
+         *triangles_ptr++ = vertices[0];   // Triangle 1 / 1
+         *triangles_ptr++ = vertices[1];
+         *triangles_ptr++ = vertices[2];
          /* Lines: */
          if (settings.draw_outlines == DRAW_OUTLINES_ALL) {
             vertices[0].color_rgba = core_color;
             vertices[1].color_rgba = core_color;
             vertices[2].color_rgba = core_color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[0];
          }
          break;
       case 6:
@@ -5192,18 +5114,18 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
          vertices[3].x = x + X_ROT(sz, sz, d);   vertices[3].y = y + Y_ROT(sz, sz, d);   vertices[3].color_rgba = color;
          vertices[4].x = x + X_ROT(0, sz, d);    vertices[4].y = y + Y_ROT(0, sz, d);    vertices[4].color_rgba = color;
          vertices[5].x = x + X_ROT(-sz, 0, d);   vertices[5].y = y + Y_ROT(-sz, 0, d);   vertices[5].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];  //Triangle 1 / 4
-         *shape_triangles_ptr++ = vertices[1];   
-         *shape_triangles_ptr++ = vertices[2];   
-         *shape_triangles_ptr++ = vertices[0];  //Triangle 2 / 4
-         *shape_triangles_ptr++ = vertices[2];   
-         *shape_triangles_ptr++ = vertices[3];   
-         *shape_triangles_ptr++ = vertices[0];  //Triangle 3 / 4
-         *shape_triangles_ptr++ = vertices[3];   
-         *shape_triangles_ptr++ = vertices[4];   
-         *shape_triangles_ptr++ = vertices[0];  //Triangle 4 / 4 
-         *shape_triangles_ptr++ = vertices[4];   
-         *shape_triangles_ptr++ = vertices[5];   
+         *triangles_ptr++ = vertices[0];  //Triangle 1 / 4
+         *triangles_ptr++ = vertices[1];   
+         *triangles_ptr++ = vertices[2];   
+         *triangles_ptr++ = vertices[0];  //Triangle 2 / 4
+         *triangles_ptr++ = vertices[2];   
+         *triangles_ptr++ = vertices[3];   
+         *triangles_ptr++ = vertices[0];  //Triangle 3 / 4
+         *triangles_ptr++ = vertices[3];   
+         *triangles_ptr++ = vertices[4];   
+         *triangles_ptr++ = vertices[0];  //Triangle 4 / 4 
+         *triangles_ptr++ = vertices[4];   
+         *triangles_ptr++ = vertices[5];   
 
          /* Lines: */
          if (settings.draw_outlines == DRAW_OUTLINES_ALL) {
@@ -5213,18 +5135,18 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
             vertices[3].color_rgba = core_color;
             vertices[4].color_rgba = core_color;
             vertices[5].color_rgba = core_color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[4];
-            *shape_lines_ptr++ = vertices[4];
-            *shape_lines_ptr++ = vertices[5];
-            *shape_lines_ptr++ = vertices[5];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[4];
+            *lines_ptr++ = vertices[4];
+            *lines_ptr++ = vertices[5];
+            *lines_ptr++ = vertices[5];
+            *lines_ptr++ = vertices[0];
          }
       break;
    }
@@ -5234,12 +5156,12 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
    vertices[1].x = x - SHAPE_POINT_SIZE; vertices[1].y = y + SHAPE_POINT_SIZE; vertices[1].color_rgba = core_color;
    vertices[2].x = x + SHAPE_POINT_SIZE; vertices[2].y = y + SHAPE_POINT_SIZE; vertices[2].color_rgba = core_color;
    vertices[3].x = x + SHAPE_POINT_SIZE; vertices[3].y = y - SHAPE_POINT_SIZE; vertices[3].color_rgba = core_color;
-   *shape_triangles_ptr++ = vertices[0];   //Triangle 1
-   *shape_triangles_ptr++ = vertices[1];
-   *shape_triangles_ptr++ = vertices[2];
-   *shape_triangles_ptr++ = vertices[0];   //Triangle 2
-   *shape_triangles_ptr++ = vertices[2];
-   *shape_triangles_ptr++ = vertices[3];
+   *triangles_ptr++ = vertices[0];   //Triangle 1
+   *triangles_ptr++ = vertices[1];
+   *triangles_ptr++ = vertices[2];
+   *triangles_ptr++ = vertices[0];   //Triangle 2
+   *triangles_ptr++ = vertices[2];
+   *triangles_ptr++ = vertices[3];
 }
 #endif //FIXEDMATH
 
@@ -5498,12 +5420,12 @@ void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type,
          color = (250 << 24) | (ikaClr[c][2][2] << 16) | (ikaClr[c][2][1] << 8) | ikaClr[c][2][0];
          vertices[2].x = x + X_ROT(sz2, sz3, d);  vertices[2].y = y + Y_ROT(sz2, sz3, d);  vertices[2].color_rgba = color;
          vertices[3].x = x + X_ROT(-sz2, sz3, d); vertices[3].y = y + Y_ROT(-sz2, sz3, d); vertices[3].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[1];
-         *shape_triangles_ptr++ = vertices[2];
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 2 / 2
-         *shape_triangles_ptr++ = vertices[2];
-         *shape_triangles_ptr++ = vertices[3];
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[1];
+         *triangles_ptr++ = vertices[2];
+         *triangles_ptr++ = vertices[0];   //Triangle 2 / 2
+         *triangles_ptr++ = vertices[2];
+         *triangles_ptr++ = vertices[3];
 
          /* Lines: */
          color = (255 << 24) | (ikaClr[c][0][2] << 16) | (ikaClr[c][0][1] << 8) | ikaClr[c][0][0];
@@ -5512,14 +5434,14 @@ void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type,
             vertices[1].color_rgba = color;
             vertices[2].color_rgba = color;
             vertices[3].color_rgba = color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[0];
          }
          break;
       case 1:  /* CIRCLE SHAPE */
@@ -5544,24 +5466,24 @@ void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type,
          vertices[6].color_rgba = color;
          vertices[7].x = x + X_ROT(-sz, -sz2, d); vertices[7].y = y + Y_ROT(-sz, -sz2, d); 
          vertices[7].color_rgba = color;
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[1];
-         *shape_triangles_ptr++ = vertices[2];
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[2];
-         *shape_triangles_ptr++ = vertices[3];
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[3];
-         *shape_triangles_ptr++ = vertices[4];
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[4];
-         *shape_triangles_ptr++ = vertices[5];
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[5];
-         *shape_triangles_ptr++ = vertices[6];
-         *shape_triangles_ptr++ = vertices[0];   //Triangle 1 / 2
-         *shape_triangles_ptr++ = vertices[6];
-         *shape_triangles_ptr++ = vertices[7];
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[1];
+         *triangles_ptr++ = vertices[2];
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[2];
+         *triangles_ptr++ = vertices[3];
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[3];
+         *triangles_ptr++ = vertices[4];
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[4];
+         *triangles_ptr++ = vertices[5];
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[5];
+         *triangles_ptr++ = vertices[6];
+         *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+         *triangles_ptr++ = vertices[6];
+         *triangles_ptr++ = vertices[7];
 
          /* Lines: */
          color = (255 << 24) | (ikaClr[c][0][2] << 16) | (ikaClr[c][0][1] << 8) | ikaClr[c][0][0];
@@ -5574,22 +5496,22 @@ void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type,
             vertices[5].color_rgba = color;
             vertices[6].color_rgba = color;
             vertices[7].color_rgba = color;
-            *shape_lines_ptr++ = vertices[0];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[1];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[2];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[3];
-            *shape_lines_ptr++ = vertices[4];
-            *shape_lines_ptr++ = vertices[4];
-            *shape_lines_ptr++ = vertices[5];
-            *shape_lines_ptr++ = vertices[5];
-            *shape_lines_ptr++ = vertices[6];
-            *shape_lines_ptr++ = vertices[6];
-            *shape_lines_ptr++ = vertices[7];
-            *shape_lines_ptr++ = vertices[7];
-            *shape_lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[0];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[1];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[2];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[3];
+            *lines_ptr++ = vertices[4];
+            *lines_ptr++ = vertices[4];
+            *lines_ptr++ = vertices[5];
+            *lines_ptr++ = vertices[5];
+            *lines_ptr++ = vertices[6];
+            *lines_ptr++ = vertices[6];
+            *lines_ptr++ = vertices[7];
+            *lines_ptr++ = vertices[7];
+            *lines_ptr++ = vertices[0];
          }
    }
 
@@ -5598,12 +5520,12 @@ void drawShapeIka (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type,
    vertices[1].x = x - SHAPE_POINT_SIZE; vertices[1].y = y + SHAPE_POINT_SIZE; vertices[1].color_rgba = color;
    vertices[2].x = x + SHAPE_POINT_SIZE; vertices[2].y = y + SHAPE_POINT_SIZE; vertices[2].color_rgba = color;
    vertices[3].x = x + SHAPE_POINT_SIZE; vertices[3].y = y - SHAPE_POINT_SIZE; vertices[3].color_rgba = color;
-   *shape_triangles_ptr++ = vertices[0];   //Triangle 1
-   *shape_triangles_ptr++ = vertices[1];
-   *shape_triangles_ptr++ = vertices[2];
-   *shape_triangles_ptr++ = vertices[0];   //Triangle 2
-   *shape_triangles_ptr++ = vertices[2];
-   *shape_triangles_ptr++ = vertices[3];
+   *triangles_ptr++ = vertices[0];   //Triangle 1
+   *triangles_ptr++ = vertices[1];
+   *triangles_ptr++ = vertices[2];
+   *triangles_ptr++ = vertices[0];   //Triangle 2
+   *triangles_ptr++ = vertices[2];
+   *triangles_ptr++ = vertices[3];
 }
 #endif //FIXEDMATH
 

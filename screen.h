@@ -124,9 +124,10 @@ void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, 
 void prepareDrawBoxes (void);
 void finishDrawBoxes (void);
 
-//senquack - added these to support batch drawing of boxes:
-void prepareDrawLines();
-void finishDrawLines();
+////senquack - added these to support batch drawing of boxes:
+//void prepareDrawLines();
+//void finishDrawLines();
+
 //senquack - converted to 2D (no need for z coordinate)
 //void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
 //       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a);
@@ -172,8 +173,9 @@ void drawRollLine (GLfloat x, GLfloat y, GLfloat z, GLfloat width,
                     int r, int g, int b, int d1, int d2);
 #endif //FIXEDMATH
 
-//senquack - this allows us to avoid a few hundred unnecessary calls to two functions:
-void prepareDrawRollLine (void);
+////senquack - this allows us to avoid a few hundred unnecessary calls to two functions:
+//void prepareDrawRollLines (void);
+//void finishDrawRollLines (void);
 
 #ifdef FIXEDMATH
 void drawSquare (GLfixed x1, GLfixed y1, GLfixed z1,
@@ -246,9 +248,12 @@ void drawShape(GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int
 void drawShapeIka(GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int c);
 #endif //FIXEDMATH
 
-//senquack - new functions called once before and after a series of calls to drawShape (for openglES speedup)
-void prepareDrawShapes (void);
-void finishDrawShapes (void);
+//senquack - new functions called before and after massive batch drawing
+void prepareDrawBatch (void);
+void finishDrawBatch (void);
+
+//void prepareDrawShapes (void);
+//void finishDrawShapes (void);
 
 // senquack - moved drawing shots back to 100% float
 //#ifdef FIXEDMATH

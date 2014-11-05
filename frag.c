@@ -632,8 +632,6 @@ moveFrags ()
 void
 drawFrags ()
 {
-   //senquack - this allows us to avoid a few hundred unnecessary calls to two functions:
-   prepareDrawRollLine();
    int c;
    int i;
    Frag *fr;

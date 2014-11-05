@@ -1313,6 +1313,54 @@ void drawGLSceneEnd ()
 //   glPopMatrix();
 }
 
+//senquack - for my custom 3d transform routines:
+typedef struct { GLfloat x; GLfloat y; GLfloat z; } gl_point_3d;
+
+////senquack - for my custom 3D transform routines:
+//inline gl_point_3d rotate3d_x(gl_point_3d input, int d);    // Rotates coordinates about x-axis by d degrees
+//inline gl_point_3d rotate3d_y(gl_point_3d input, int d);    // Rotates coordinates about y-axis by d degrees
+//inline gl_point_3d rotate3d_z(gl_point_3d input, int d);    // Rotates coordinates about z-axis by d degrees
+
+//senquack - wrote these custom 3d transform routines, mainly to allow drawRollLine to use batch-mode
+inline gl_point_3d rotate3d_x(gl_point_3d input, int d)
+{
+   GLfloat b2 = COS_LOOKUP(d);  GLfloat b3 = -SIN_LOOKUP(d);
+   GLfloat c2 = -b2;            GLfloat c3 = b2;
+
+   gl_point_3d output;
+   output.x = input.x;
+   output.y = b2 * input.y + b3 * input.z;
+   output.z = c2 * input.y + c3 * input.z;
+
+   return output;
+}
+
+inline gl_point_3d rotate3d_y(gl_point_3d input, int d)
+{
+   GLfloat a1 = COS_LOOKUP(d);                          GLfloat a3 = SIN_LOOKUP(d);
+   GLfloat c1 = -a3;                                    GLfloat c3 = a1;
+
+   gl_point_3d output;
+   output.x = a1 * input.x + a3 * input.z;
+   output.y = input.y;
+   output.z = c1 * input.x + c3 * input.z;
+
+   return output;
+}
+
+inline gl_point_3d rotate3d_z(gl_point_3d input, int d)
+{
+   GLfloat a1 = COS_LOOKUP(d); GLfloat a2 = -SIN_LOOKUP(d);
+   GLfloat b1 = -a2;           GLfloat b2 = a1;
+
+   gl_point_3d output;
+   output.x = a1 * input.x + a2 * input.y;
+   output.y = b1 * input.x + b2 * input.y;
+   output.z = input.z;
+
+   return output;
+}
+
 //senquack - Converted everything I could to one huge triangle and line batch that gets dispatched through
 //             these large arrays:
 // Most complicated shape (circle) requires 18 vertexes, and each point inside the shapes needs 6 vertexes:
@@ -2239,7 +2287,32 @@ void drawLinePart(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, 
 // note: we dropped the a parameter (always 255 it turns out)
 //TODO - convert fixed point stuff to the new batch drawn mode.
 
+#define FRAG_MAX 512 // Pulled from frag.h - senquack
+static gl_vertex_3d roll_lines[2 * FRAG_MAX + 12];       // Shouldn't need more than 1024 total, but be a bit safe
+static gl_vertex_3d *roll_lines_ptr = NULL;
+
+inline void prepareDrawRollLines()
+{
+   roll_lines_ptr = &roll_lines[0];
+}
+
+void finishDrawRollLines()
+{
+   int numvertices = ((unsigned int) roll_lines_ptr - (unsigned int) (&roll_lines[0])) / sizeof(gl_vertex_3d);
+   if (numvertices < 2) return;     // Is there anything to draw?
+   //   glEnable (GL_BLEND);
 #ifdef FIXEDMATH
+   glVertexPointer (3, GL_FIXED, sizeof(gl_vertex_3d), &roll_lines[0].x);
+#else
+   glVertexPointer (3, GL_FLOAT, sizeof(gl_vertex_3d), &roll_lines[0].x);
+#endif //FIXEDMATH
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex_3d), &roll_lines[0].r);
+   glDrawArrays (GL_LINES, 0, numvertices);
+//   printf("printing roll_lines with %d vertices\n", numvertices);
+}
+
+#ifdef FIXEDMATH
+//senquack - TODO: update my old fixed-point code to match the newer float code
 void drawRollLine (GLfixed x, GLfixed y, GLfixed z, GLfixed width, int r, int g, int b, int d1, int d2)
 {
    printf("ERROR: call to broken drawRollLine, please update its code to match the new float version below it.\n");
@@ -2274,22 +2347,25 @@ void drawRollLine (GLfixed x, GLfixed y, GLfixed z, GLfixed width, int r, int g,
 //   glPopMatrix ();
 }
 #else
+// senquack - Now, we do our own 3D trig rotations so everything's done in a huge batch without needing glRotate():
 void drawRollLine (GLfloat x, GLfloat y, GLfloat z, GLfloat width, int r, int g, int b, int d1, int d2)
 {
-   // TODO: do the trig rotation manually here:
-//  glRotatef((float)d1*360/1024, 0, 0, 1);
-//  glRotatef((float)d2*360/1024, 1, 0, 0);
+   gl_point_3d vert1 = { .x = 0, .y = -width, .z = 0 };
+   vert1 = rotate3d_z(vert1, d1);
+   vert1 = rotate3d_x(vert1, d2);
 
+   gl_point_3d vert2 = { .x = 0, .y = width, .z = 0 };
+   vert2 = rotate3d_z(vert2, d1);
+   vert2 = rotate3d_x(vert2, d2);
 
    uint32_t color = (255 << 24) | (b << 16) | (g << 8) | r;
 
-   lines_ptr->x = x; lines_ptr->y = y - width;
-   lines_ptr->color_rgba = color;
-   lines_ptr++;
-   lines_ptr->x = x; lines_ptr->y = y + width;
-   lines_ptr->color_rgba = color;
-   lines_ptr++;
-
+   roll_lines_ptr->x = x + vert1.x;   roll_lines_ptr->y = y + vert1.y;   roll_lines_ptr->z = z + vert1.z;
+   roll_lines_ptr->color_rgba = color;
+   roll_lines_ptr++;
+   roll_lines_ptr->x = x + vert2.x;   roll_lines_ptr->y = y + vert2.y;   roll_lines_ptr->z = z + vert2.z;
+   roll_lines_ptr->color_rgba = color;
+   roll_lines_ptr++;
 }
 #endif //FIXEDMATH
 
@@ -4639,20 +4715,8 @@ void finishDrawBatch (void)
    int num_vertices;
 
 //   glEnable (GL_BLEND);
-   //First, draw the lines:
-   num_vertices = ((unsigned int)lines_ptr - (unsigned int)(&lines[0])) / sizeof(gl_vertex);
-   if (num_vertices >= 2) {
-#ifdef FIXEDMATH
-      glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &lines[0].x);
-#else
-      glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &lines[0].x);
-#endif //FIXEDMATH
-      glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &lines[0].r);
-      glDrawArrays (GL_LINES, 0, num_vertices);
-      printf("drawing lines with %d vertices, %d allocated\n", num_vertices, sizeof(triangles) / sizeof(gl_vertex));
-   }
 
-   //Second, draw the triangles:
+   //First, draw the triangles:
    num_vertices = ((unsigned int)triangles_ptr - (unsigned int)(&triangles[0])) / sizeof(gl_vertex);
    if (num_vertices >= 3) {
 #ifdef FIXEDMATH
@@ -4662,7 +4726,20 @@ void finishDrawBatch (void)
 #endif //FIXEDMATH
       glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &triangles[0].r);
       glDrawArrays (GL_TRIANGLES, 0, num_vertices);
-      printf("drawing triangles with %d vertices, %d allocated\n", num_vertices, sizeof(triangles) / sizeof(gl_vertex));
+//      printf("drawing triangles with %d vertices, %d allocated\n", num_vertices, sizeof(triangles) / sizeof(gl_vertex));
+   }
+
+   //Second, draw the lines:
+   num_vertices = ((unsigned int)lines_ptr - (unsigned int)(&lines[0])) / sizeof(gl_vertex);
+   if (num_vertices >= 2) {
+#ifdef FIXEDMATH
+      glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &lines[0].x);
+#else
+      glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &lines[0].x);
+#endif //FIXEDMATH
+      glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &lines[0].r);
+      glDrawArrays (GL_LINES, 0, num_vertices);
+//      printf("drawing lines with %d vertices, %d allocated\n", num_vertices, sizeof(triangles) / sizeof(gl_vertex));
    }
 }
 

@@ -223,7 +223,7 @@ void setHiScore(int cleard) {
    }
 
    //senquack - added optional cheats that disable saving of high scores
-   if (settings.extra_lives > 0 || settings.extra_lives > 0) {
+   if (settings.extra_lives > 0 || settings.extra_bombs > 0) {
       return;
    }
 
@@ -737,7 +737,7 @@ void drawTitle_rotated() {
   drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
 
   // senquack - visual indicator for added cheats (they disable saving of high-scores however)
-  if (settings.extra_lives > 0 || settings.extra_lives > 0) {
+  if (settings.extra_lives > 0 || settings.extra_bombs > 0) {
      char *cheat_str = "CHEAT";
      drawString(cheat_str, 285, 230, 12, 0, 255, 100, 100);
      cheat_str = "MODE";

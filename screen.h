@@ -81,9 +81,23 @@ typedef struct {
 #endif //FIXEDMATH
    union {
       uint32_t color_rgba;
-      GLubyte r,g,b,a;
+      struct { GLubyte r, g, b, a; };
+//      GLubyte r,g,b,a;
    };
 } gl_vertex;
+
+typedef struct {
+#ifdef FIXEDMATH
+   GLfixed x,y,z;
+#else
+   GLfloat x,y,z;
+#endif //FIXEDMATH
+   union {
+      uint32_t color_rgba;
+      struct { GLubyte r, g, b, a; };
+//      GLubyte r,g,b,a;
+   };
+} gl_vertex_3d;
 
 int getPadState ();
 int getButtonState ();
@@ -108,7 +122,6 @@ void gluPerspective (GLfixed fovy, GLfixed ratio, GLfixed near, GLfixed far);
 #else
 void gluPerspective (GLfloat fovy, GLfloat ratio, GLfloat near, GLfloat far);
 #endif //FIXEDMATH
-
 
 
 void setScreenShake (int type, int cnt);
@@ -163,6 +176,9 @@ void drawLinePart (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r,
 //void drawRollLine (GLfloat x, GLfloat y, GLfloat z, GLfloat width, int r,
 //                   int g, int b, int a, int d1, int d2);
 
+//senquack - these are now batch-drawn through these two functions:
+void prepareDrawRollLines();
+void finishDrawRollLines();
 //senquack - (only called from frag.c)
 // note: we dropped the a parameter (always 255 it turns out)
 #ifdef FIXEDMATH

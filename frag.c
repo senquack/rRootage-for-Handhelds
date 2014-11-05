@@ -612,7 +612,7 @@ moveFrags ()
    }
 }
 
-//senquack - converted to fixed point:
+//senquack - converted to fixed point / float batch-drawn GLES:
 //void drawFrags() {
 //  int c;
 //  int i;
@@ -632,6 +632,7 @@ moveFrags ()
 void
 drawFrags ()
 {
+   prepareDrawRollLines();
    int c;
    int i;
    Frag *fr;
@@ -654,4 +655,5 @@ drawFrags ()
             fr->r[c], fr->g[c], fr->b[c], fr->d1, fr->d2);
 #endif //FIXEDMATH
    }
+   finishDrawRollLines();
 }

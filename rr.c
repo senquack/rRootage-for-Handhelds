@@ -68,6 +68,12 @@ char *full_prefs_filename = NULL;               // Fully-qualified prefs filenam
 //                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
 //   .music                  = 1,                           // Is music enabled?
 //   .analog_deadzone        = 8000,                        // Analog joystick deadzone
+//   .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
+//   .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
+//                                                       //   (but disables ability to save new high scores)
+//   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
+//                                                       //   (but disables ability to save new high scores)
+//   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
 //   .map                    = {
 //      .move     = MAP_DPAD,   //Movement mapping
 //      .btn1     = MAP_X,      //Laser mapping
@@ -79,16 +85,17 @@ char *full_prefs_filename = NULL;               // Fully-qualified prefs filenam
 //   }
 //};     
 portcfg_settings settings = {    
-   .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
-   .rotated                = SCREEN_ROTATED_RIGHT,        // Is screen rotated? Assigned to one of: 
-                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
-   .music                  = 1,                           // Is music enabled?
-   .analog_deadzone        = 8000,                        // Analog joystick deadzone
-   .draw_outlines          = DRAW_OUTLINES_IKA,           // Which mode of bullet-outline drawing to use
-   .extra_lives            = 0,                           // Cheat which adds up to 6 extra lives at start 
-                                                          //   (but disables ability to save new high scores)
-   .extra_bombs            = 0,                           // Cheat which adds up to 6 extra bombs at start 
-                                                          //   (but disables ability to save new high scores)
+   .laser_on_by_default    = 1,                        // Is laser on by default? (more comfortable on handhelds) 
+   .rotated                = SCREEN_ROTATED_RIGHT,     // Is screen rotated? Assigned to one of: 
+                                                       //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
+   .music                  = 1,                        // Is music enabled?
+   .analog_deadzone        = 8000,                     // Analog joystick deadzone
+   .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
+   .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
+                                                       //   (but disables ability to save new high scores)
+   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
+                                                       //   (but disables ability to save new high scores)
+   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
    .map                    = {
       .move     = MAP_DPAD,
       .btn1     = MAP_R,      //Laser mapping
@@ -229,6 +236,9 @@ int read_portcfg_settings (const char *filename)
          settings.extra_lives = clamp (atoi (param), 0, MAX_EXTRA_LIVES);
       } else if (strcasecmp (str, "extra_bombs") == 0) {
          settings.extra_bombs = clamp (atoi (param), 0, MAX_EXTRA_BOMBS);
+      } else if (strcasecmp (str, "no_wait") == 0) {
+         settings.no_wait = clamp (atoi (param), 0, 1);
+         nowait = settings.no_wait;
       } else if (strcasecmp (str, "map_move") == 0) {
          settings.map.move = clamp(atoi (param), 0, NUM_MAPS-1);
       } else if (strcasecmp (str, "map_btn1") == 0) {
@@ -649,6 +659,8 @@ static void draw ()
 ////      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
       drawBulletsWake ();
 ////      //printf("draw(): Drawing TITLE - drawBullets\n");
+      finishDrawBatch();
+      prepareDrawBatch();
       drawBullets ();
 ////      //printf("draw(): Drawing TITLE - startDrawBoards\n");
       finishDrawBatch();
@@ -678,6 +690,8 @@ static void draw ()
       drawBulletsWake ();
       drawFrags ();
       drawShip ();
+      finishDrawBatch();
+      prepareDrawBatch();
       drawBullets ();
       finishDrawBatch();
       startDrawBoards ();
@@ -699,6 +713,8 @@ static void draw ()
       drawBoss ();
       drawBulletsWake ();
       drawFrags ();
+      finishDrawBatch();
+      prepareDrawBatch();
       drawBullets ();
       finishDrawBatch();
       startDrawBoards ();
@@ -717,6 +733,8 @@ static void draw ()
       drawBulletsWake ();
       drawFrags ();
       drawShip ();
+      finishDrawBatch();
+      prepareDrawBatch();
       drawBullets ();
       finishDrawBatch();
       startDrawBoards ();
@@ -747,9 +765,6 @@ usage (char *argv0)
 static void
 parseArgs (int argc, char *argv[])
 {
-   //senquack DEBUG
-   nowait = 1;
-
 //   int i;
 //   for (i = 1; i < argc; i++) {
 ////    if ( strcmp(argv[i], "-lowres") == 0 ) {
@@ -847,6 +862,8 @@ int main (int argc, char *argv[])
       printf("Failed to read settings, using defaults.\n");
    }
    free( full_portcfg_filename );   // Don't need anymore 
+
+   nowait = settings.no_wait;
 
    //senquack TODO: remember to add WIZ define to Makefile
 #ifdef WIZ

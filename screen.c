@@ -4347,16 +4347,45 @@ void drawBomb (GLfixed x, GLfixed y, GLfixed width, int cnt)
    glDrawArrays (GL_LINE_STRIP, 0, 1 + c);
 }
 #else
+//void drawBomb (GLfloat x, GLfloat y, GLfloat width, int cnt)
+//{
+//   int i, d, od, c;
+//   GLfloat x1, y1, x2, y2;
+//   GLfloat vertices[2 * 17];
+//   GLfloat *vertptr = &(vertices[0]);
+//   GLubyte colors[4 * 17];
+//   glVertexPointer (2, GL_FLOAT, 0, vertices);
+//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
+//   memset (&(colors[0]), 255, 4 * 17);
+//
+//   d = cnt * 48;
+//   d &= 1023;
+//   c = 4 + (cnt >> 3);
+//   if (c > 16)
+//      c = 16;
+//   od = 1024 / c;
+//   x1 = (sctbl[d]    *width)/256 + x;
+//   y1 = (sctbl[d+256]*width)/256 + y;
+//   *vertptr++ = x1;
+//   *vertptr++ = y1;
+//   for (i = 0; i < c; i++) {
+//      d += od;
+//      d &= 1023;
+//      x2 = (sctbl[d]    *width)/256 + x;
+//      y2 = (sctbl[d+256]*width)/256 + y;
+//      *vertptr++ = x2;
+//      *vertptr++ = y2;
+//   }
+//   glDrawArrays (GL_LINE_STRIP, 0, 1 + c);
+//}
 void drawBomb (GLfloat x, GLfloat y, GLfloat width, int cnt)
 {
    int i, d, od, c;
-   GLfloat x1, y1, x2, y2;
-   GLfloat vertices[2 * 17];
-   GLfloat *vertptr = &(vertices[0]);
-   GLubyte colors[4 * 17];
-   glVertexPointer (2, GL_FLOAT, 0, vertices);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-   memset (&(colors[0]), 255, 4 * 17);
+   gl_vertex vertices[17];
+   gl_vertex *vertex_ptr = &vertices[0];
+   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &vertices[0].x);
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &vertices[0].r);
+   uint32_t color = 0xFFFFFFFF;  // Pure white color
 
    d = cnt * 48;
    d &= 1023;
@@ -4364,17 +4393,19 @@ void drawBomb (GLfloat x, GLfloat y, GLfloat width, int cnt)
    if (c > 16)
       c = 16;
    od = 1024 / c;
-   x1 = (sctbl[d]    *width)/256 + x;
-   y1 = (sctbl[d+256]*width)/256 + y;
-   *vertptr++ = x1;
-   *vertptr++ = y1;
+
+   vertex_ptr->x = (sctbl[d]    *width) * (1.0f / 256.0f) + x;
+   vertex_ptr->y = (sctbl[d+256]*width) * (1.0f / 256.0f) + y;
+   vertex_ptr->color_rgba = color;
+   vertex_ptr++;
+
    for (i = 0; i < c; i++) {
       d += od;
       d &= 1023;
-      x2 = (sctbl[d]    *width)/256 + x;
-      y2 = (sctbl[d+256]*width)/256 + y;
-      *vertptr++ = x2;
-      *vertptr++ = y2;
+      vertex_ptr->x = (sctbl[d]    *width) * (1.0f / 256.0f) + x;
+      vertex_ptr->y = (sctbl[d+256]*width) * (1.0f / 256.0f) + y;
+      vertex_ptr->color_rgba = color;
+      vertex_ptr++;
    }
    glDrawArrays (GL_LINE_STRIP, 0, 1 + c);
 }
@@ -5615,7 +5646,7 @@ static int shtClr[3][3][3] = {
    {{100, 200, 100}, {50, 100, 50}, {100, 200, 100}},
 };
 
-//senquack - 2/11
+//senquack - converted to batch-drawn GLES by replacing glRotate w/ pre-rotated coordinates
 //void drawShot(GLfloat x, GLfloat y, GLfloat d, int c, float width, float height) {
 //  glPushMatrix();
 //  glTranslatef(x, y, 0);
@@ -5640,217 +5671,52 @@ static int shtClr[3][3][3] = {
 //  glEnd();
 //  glPopMatrix();
 //}
-//void drawShot(GLfloat x, GLfloat y, GLfloat d, int c, float width, float height) {
-//  glPushMatrix();
-//  glTranslatef(x, y, 0);
-//  glRotatef(d, 0, 0, 1);
-//
-//  //senquack - no need for this
-////  glColor4i(shtClr[c][0][0], shtClr[c][0][1], shtClr[c][0][2], 240);
-////  glDisable(GL_BLEND);
-////  glBegin(GL_LINE_LOOP);
-////  glVertex2f(-width, -height);
-////  glVertex2f(-width,  height);
-////  glEnd();
-////  glBegin(GL_LINE_LOOP);
-////  glVertex2f( width, -height);
-////  glVertex2f( width,  height);
-////  glEnd();
-////  glEnable(GL_BLEND);
-//
-//  glColor4i(shtClr[c][1][0], shtClr[c][1][1], shtClr[c][1][2], 240);
-//
-//  //senquack
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(-width, -height, 0);
-////  glVertex3f( width, -height, 0);
-////  glColor4i(shtClr[c][2][0], shtClr[c][2][1], shtClr[c][2][2], 240);
-////  glVertex3f( width,  height, 0);
-////  glVertex3f(-width,  height, 0);
-////  glEnd();
-//  // 2D version (hopefully a tiny bit faster:)
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex2f(-width, -height);
-//  glVertex2f( width, -height);
-//  glColor4i(shtClr[c][2][0], shtClr[c][2][1], shtClr[c][2][2], 240);
-//  glVertex2f( width,  height);
-//  glVertex2f(-width,  height);
-//  glEnd();
-//
-//  //senquack - converted:
-////  glBegin(GL_TRIANGLES);
-////  glVertex3f(-width, -height, 0);
-////  glVertex3f( width, -height, 0);
-////  glColor4i(shtClr[c][2][0], shtClr[c][2][1], shtClr[c][2][2], 240);
-////  glVertex3f( width,  height, 0);
-////  glEnd();
-////  glBegin(GL_TRIANGLES);
-////  glVertex3f(-width, -height, 0);
-////  glVertex3f( width,  height, 0);
-////  glVertex3f(-width,  height, 0);
-////  glEnd();
-//
-//  glPopMatrix();
-//}
-////senquack - moving all shot stuff back to float for all cases:
-//void drawShot (GLfixed x, GLfixed y, GLfixed d, int c, GLfixed width, GLfixed height)
-//{
-//   GLubyte colors[4 * 4];
-//   GLfixed vertices[4 * 2];
-//
-//   glPushMatrix ();
-//   glTranslatex (x, y, 0);
-//   glRotatex (d, 0, 0, INT2FNUM (1));
-//
-//   //senquack - no need for this
-////  glColor4i(shtClr[c][0][0], shtClr[c][0][1], shtClr[c][0][2], 240);
-////  glDisable(GL_BLEND);
-////  glBegin(GL_LINE_LOOP);
-////  glVertex2f(-width, -height);
-////  glVertex2f(-width,  height);
-////  glEnd();
-////  glBegin(GL_LINE_LOOP);
-////  glVertex2f( width, -height);
-////  glVertex2f( width,  height);
-////  glEnd();
-////  glEnable(GL_BLEND);
-//
-//   glVertexPointer (2, GL_FIXED, 0, vertices);
-//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-//
-//   colors[0] = colors[4] = colors[8] = colors[12] = shtClr[c][0][0];
-//   colors[1] = colors[5] = colors[9] = colors[13] = shtClr[c][0][1];
-//   colors[2] = colors[6] = colors[10] = colors[14] = shtClr[c][0][2];
-//   colors[3] = colors[7] = colors[11] = colors[15] = 240;
-//   vertices[0] = -width;
-//   vertices[1] = -height;
-//   vertices[2] = -width;
-//   vertices[3] = height;
-//   vertices[4] = width;
-//   vertices[5] = -height;
-//   vertices[6] = width;
-//   vertices[7] = height;
-//   glDrawArrays (GL_LINE_LOOP, 0, 4);
-//
-////  glColor4i(shtClr[c][1][0], shtClr[c][1][1], shtClr[c][1][2], 240);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex2f(-width, -height);
-////  glVertex2f( width, -height);
-////  glColor4i(shtClr[c][2][0], shtClr[c][2][1], shtClr[c][2][2], 240);
-////  glVertex2f( width,  height);
-////  glVertex2f(-width,  height);
-////  glEnd();
-//
-//   colors[0] = colors[4] = shtClr[c][1][0];
-//   colors[1] = colors[5] = shtClr[c][1][1];
-//   colors[2] = colors[6] = shtClr[c][1][2];
-//
-//   colors[8] = colors[12] = shtClr[c][2][0];
-//   colors[9] = colors[13] = shtClr[c][2][1];
-//   colors[10] = colors[14] = shtClr[c][2][2];
-//   //senquack - redundant
-//// colors[3] = colors[7] = colors[11] = colors[15] = 240;
-//   vertices[0] = -width;
-//   vertices[1] = -height;
-//   vertices[2] = width;
-//   vertices[3] = -height;
-//   vertices[4] = width;
-//   vertices[5] = height;
-//   vertices[6] = -width;
-//   vertices[7] = height;
-//   glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-//   glPopMatrix ();
-//}
 void drawShot (GLfloat x, GLfloat y, GLfloat d, int c, float width, float height)
 {
-   //senquack - changing to LINE_STRIP to work around etnaviv bug:
-//   GLubyte colors[4 * 4];
-//   GLfloat vertices[4 * 2];
-   GLubyte colors[5 * 4];
-   GLfloat vertices[5 * 2];
+   uint32_t color;
+   gl_vertex vertices[4];
+   int deg = d * (1024.0f/ 360.0f); // Convert degrees back to index suitable for game's lookup table
+   
+   // First, the triangles:
+   color = (240 << 24) | (shtClr[c][1][2] << 16) | (shtClr[c][1][1] << 8) | shtClr[c][1][0];
+   vertices[0].x = x + X_ROT(-width,-height,deg); vertices[0].y = y + Y_ROT(-width,-height,deg); 
+   vertices[0].color_rgba = color;
+   vertices[1].x = x + X_ROT(width,-height,deg);  vertices[1].y = y + Y_ROT(width,-height,deg); 
+   vertices[1].color_rgba = color;
+   color = (240 << 24) | (shtClr[c][2][2] << 16) | (shtClr[c][2][1] << 8) | shtClr[c][2][0];
+   vertices[2].x = x + X_ROT(width,height,deg);   vertices[2].y = y + Y_ROT(width,height,deg); 
+   vertices[2].color_rgba = color;
+   vertices[3].x = x + X_ROT(-width,height,deg);  vertices[3].y = y + Y_ROT(-width,height,deg); 
+   vertices[3].color_rgba = color;
+   *triangles_ptr++ = vertices[0];   //Triangle 1 / 2
+   *triangles_ptr++ = vertices[1];   
+   *triangles_ptr++ = vertices[2];   
+   *triangles_ptr++ = vertices[2];   //Triangle 2 / 2
+   *triangles_ptr++ = vertices[3];  
+   *triangles_ptr++ = vertices[0];  
 
-   glPushMatrix ();
-   glTranslatef (x, y, 0);
-//   glRotatex (d, 0, 0, INT2FNUM (1));
-   glRotatef (d, 0, 0, 1);
-
-   //senquack - no need for this
-//  glColor4i(shtClr[c][0][0], shtClr[c][0][1], shtClr[c][0][2], 240);
-//  glDisable(GL_BLEND);
-//  glBegin(GL_LINE_LOOP);
-//  glVertex2f(-width, -height);
-//  glVertex2f(-width,  height);
-//  glEnd();
-//  glBegin(GL_LINE_LOOP);
-//  glVertex2f( width, -height);
-//  glVertex2f( width,  height);
-//  glEnd();
-//  glEnable(GL_BLEND);
-
-   glVertexPointer (2, GL_FLOAT, 0, vertices);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-
-   colors[0] = colors[4] = colors[8] = colors[12] = colors[16] = shtClr[c][0][0];
-   colors[1] = colors[5] = colors[9] = colors[13] = colors[17] = shtClr[c][0][1];
-   colors[2] = colors[6] = colors[10] = colors[14] = colors[18] = shtClr[c][0][2];
-   colors[3] = colors[7] = colors[11] = colors[15] = colors[19] = 240;
-   vertices[0] = -width;
-   vertices[1] = -height;
-   vertices[2] = -width;
-   vertices[3] = height;
-   vertices[4] = width;
-   vertices[5] = -height;
-   vertices[6] = width;
-   vertices[7] = height;
-   vertices[8] = -width;
-   vertices[9] = -height;
-//   glDrawArrays (GL_LINE_LOOP, 0, 4);
-   glDrawArrays (GL_LINE_STRIP, 0, 5);
-
-//  glColor4i(shtClr[c][1][0], shtClr[c][1][1], shtClr[c][1][2], 240);
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex2f(-width, -height);
-//  glVertex2f( width, -height);
-//  glColor4i(shtClr[c][2][0], shtClr[c][2][1], shtClr[c][2][2], 240);
-//  glVertex2f( width,  height);
-//  glVertex2f(-width,  height);
-//  glEnd();
-
-   colors[0] = colors[4] = shtClr[c][1][0];
-   colors[1] = colors[5] = shtClr[c][1][1];
-   colors[2] = colors[6] = shtClr[c][1][2];
-
-   colors[8] = colors[12] = shtClr[c][2][0];
-   colors[9] = colors[13] = shtClr[c][2][1];
-   colors[10] = colors[14] = shtClr[c][2][2];
-   //senquack - redundant
-// colors[3] = colors[7] = colors[11] = colors[15] = 240;
-   vertices[0] = -width;
-   vertices[1] = -height;
-   vertices[2] = width;
-   vertices[3] = -height;
-   vertices[4] = width;
-   vertices[5] = height;
-   vertices[6] = -width;
-   vertices[7] = height;
-   glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-   glPopMatrix ();
+   // Then, the outline:
+   if (settings.draw_outlines != DRAW_OUTLINES_NONE) {
+      color = (240 << 24) | (shtClr[c][0][2] << 16) | (shtClr[c][0][1] << 8) | shtClr[c][0][0];
+      vertices[0].color_rgba = color;
+      vertices[1].color_rgba = color;
+      vertices[2].color_rgba = color;
+      vertices[3].color_rgba = color;
+      *lines_ptr++ = vertices[0];
+      *lines_ptr++ = vertices[1];
+      *lines_ptr++ = vertices[1];
+      *lines_ptr++ = vertices[2];
+      *lines_ptr++ = vertices[2];
+      *lines_ptr++ = vertices[3];
+      *lines_ptr++ = vertices[3];
+      *lines_ptr++ = vertices[0];
+   }
 }
 
 //senquack - why are there two pushmatrixes here but only one popmatrix in the endDrawBoards() function??
 //void startDrawBoards() {
 //  glMatrixMode(GL_PROJECTION);
 //  glPushMatrix();
-//  glLoadIdentity();
-//  glOrtho(0, 640, 480, 0, -1, 1);
-//  glMatrixMode(GL_MODELVIEW);
-//  glPushMatrix();
-//  glLoadIdentity();
-//}
-//void startDrawBoards() {
-//  glMatrixMode(GL_PROJECTION);
-//  //senquack - dunno why we do this
-////  glPushMatrix();
 //  glLoadIdentity();
 //  glOrtho(0, 640, 480, 0, -1, 1);
 //  glMatrixMode(GL_MODELVIEW);
@@ -5864,26 +5730,15 @@ void startDrawBoards ()
    //senquack TODO: do we really need to call all this each time a frame is drawn?
    glMatrixMode (GL_PROJECTION);
    //senquack - dunno why we do this
-  glPushMatrix();
+   glPushMatrix();
    glLoadIdentity ();
    glOrthox (0, INT2FNUM (640), INT2FNUM (480), 0, INT2FNUM (-1),
-             INT2FNUM (1));
+         INT2FNUM (1));
    glMatrixMode (GL_MODELVIEW);
    glPushMatrix ();
    glLoadIdentity ();
 }
 #else
-//senquack DEBUG rotation:
-//void startDrawBoards() {
-//  glMatrixMode(GL_PROJECTION);
-//  //senquack - dunno why we do this -- TODO: double check this
-////  glPushMatrix();
-//  glLoadIdentity();
-//  glOrthof(0, 640, 480, 0, -1, 1);
-//  glMatrixMode(GL_MODELVIEW);
-//  glPushMatrix();
-//  glLoadIdentity();
-//}
 void startDrawBoards() {
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();

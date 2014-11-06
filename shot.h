@@ -14,22 +14,12 @@
 
 #include "vector.h"
 
-//senquack - changed shots back to float for all cases:
 typedef struct {
   float x, y, mx, my;
   float d;
   int cnt, color;
   float width, height;
 } Shot;
-//typedef struct
-//{
-//   float x, y, mx, my;
-////  float d;
-//   GLfixed fd;
-//   int cnt, color;
-////  float width, height;
-//   GLfixed fwidth, fheight;
-//} Shot;
 
 #define SHOT_MAX 64
 

@@ -72,7 +72,7 @@ int fpdiv (register int numerator, register int denominator);
 unsigned fpsqrt (unsigned n);
 #define FSQRT(x) fpsqrt(x)
 //#define FSQRT(x) fastSqrt(x)
-int fastSqrt (int n);
+//int fastSqrt (int n);
 #endif //FIXEDMATH
 
 // Convenience macros for using game's original sin lookup table:
@@ -82,12 +82,16 @@ int fastSqrt (int n);
 #define SIN_LOOKUP(degree) ((float)(-sctbl[(degree)]) * (1.0f/256.0f))      /* Need this to return negative, as
                                                                                rrootage uses opposite of OpenGL */
 // libm version of above (for testing & verification):
-//#define COS_LOOKUP(degree) cosf(((float)-(degree) / 1024.0f * 2 * M_PI ))
-//#define SIN_LOOKUP(degree) sinf(((float)-(degree) / 1024.0f * 2 * M_PI ))
+//#define COS_LOOKUP_LIBM(degree) cosf(((float)-(degree) / 1024.0f * 2.0f * (float)M_PI ))
+//#define SIN_LOOKUP_LIBM(degree) sinf(((float)-(degree) / 1024.0f * 2.0f * (float)M_PI ))
 
 // Convenience macros for 2D polygon rotation:
 #define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) + y * SIN_LOOKUP(degree))
 #define Y_ROT(x,y,degree) (-x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
+
+// libm version of above (for testing & verification):
+//#define X_ROT_LIBM(x,y,degree) (x * COS_LOOKUP_LIBM(degree) + y * SIN_LOOKUP_LIBM(degree))
+//#define Y_ROT_LIBM(x,y,degree) (-x * SIN_LOOKUP_LIBM(degree) + y * COS_LOOKUP_LIBM(degree))
 
 //COUNTERCLOCKWISE: (not what we're looking for)
 //#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) - y * SIN_LOOKUP(degree))

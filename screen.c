@@ -1621,419 +1621,6 @@ void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, 
    boxverticeptr++;
 }
 
-//void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
-//       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
-//  glColor4i(r, g, b, a);
-//  glBegin(GL_LINES);
-//  glVertex3f(x1, y1, z1);
-//  glVertex3f(x2, y2, z2);
-//  glEnd();
-//}
-//senquack - tried tweaking this to fix hang:
-//senquack - changing this back to 3D coordinates resulted in same screwing up of triangles elsewhere:
-//void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
-//       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
-//  glColor4i(r, g, b,a);
-//
-// //senquack- forcing this did not help:
-////  glColor4i(255, 255, 255, 255);
-//
-//  //glColor4i(r, g, b, a);
-////  glBegin(GL_LINES);
-////  glVertex2f(x1, y1);
-////  glVertex2f(x2, y2);
-////  glEnd();
-//  glBegin(GL_LINE_LOOP);
-//  glVertex3f(x1, y1, z1);
-//  glVertex3f(x2, y2, z2);
-//  glEnd();
-//}
-//senquack - nanoGL does not support line drawing, must call OpenGLES directly:
-//void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
-//       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
-////  glColor4i(r, g, b,a);
-////
-////  //senquack- forcing this did not help:
-//////  glColor4i(255, 255, 255, 255);
-////
-////  //glColor4i(r, g, b, a);
-//////  glBegin(GL_LINES);
-//////  glVertex2f(x1, y1);
-//////  glVertex2f(x2, y2);
-//////  glEnd();
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(x1, y1, z1);
-////  glVertex3f(x2, y2, z2);
-////  glEnd();
-//
-////code from net (2d:)
-////const GLfloat line[] = {
-////-0.5f, -0.5f, //point A
-////0.5f, -0.5f, //point B
-////};
-////
-////glColor4f(0.0f,1.0f,0.0f,1.0f); //line color
-////glVertexPointer(2, GL_FLOAT, 0, line);
-////glEnableClientState(GL_VERTEX_ARRAY);
-////
-////glDrawArrays(GL_LINES, 0, 2);
-// GLfloat line[6];
-// line[0] = x1; line[1] = y1; line[2] = z1;
-// line[3] = x2; line[4] = y2; line[5] = z2;
-// 
-// glDisable(GL_TEXTURE_2D);
-////  glColor4f((float)r / 255.0, (float)g / 255.0, (float)b / 255.0, (float)a / 255.0);
-//// temporary experiment:
-// glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-// glVertexPointer(3, GL_FLOAT, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-// 
-// glDrawArrays(GL_LINES, 0, 2);
-// glDisableClientState(GL_VERTEX_ARRAY);
-//}
-//void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
-//       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
-////  glColor4i(r, g, b,a);
-////
-////  //senquack- forcing this did not help:
-//////  glColor4i(255, 255, 255, 255);
-////
-////  //glColor4i(r, g, b, a);
-//////  glBegin(GL_LINES);
-//////  glVertex2f(x1, y1);
-//////  glVertex2f(x2, y2);
-//////  glEnd();
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(x1, y1, z1);
-////  glVertex3f(x2, y2, z2);
-////  glEnd();
-//
-////code from net (2d:)
-////const GLfloat line[] = {
-////-0.5f, -0.5f, //point A
-////0.5f, -0.5f, //point B
-////};
-////
-////glColor4f(0.0f,1.0f,0.0f,1.0f); //line color
-////glVertexPointer(2, GL_FLOAT, 0, line);
-////glEnableClientState(GL_VERTEX_ARRAY);
-////
-////glDrawArrays(GL_LINES, 0, 2);
-// GLfloat line[6];
-// line[0] = x1; line[1] = y1; line[2] = z1;
-// line[3] = x2; line[4] = y2; line[5] = z2;
-// 
-// glEnable(GL_BLEND);
-// glEnable(GL_LINE_SMOOTH);
-//
-// glLineWidth(2.0f);
-//
-// glDisable(GL_TEXTURE_2D);
-////  glColor4f((float)r / 255.0, (float)g / 255.0, (float)b / 255.0, (float)a / 255.0);
-//// temporary experiment:
-// glColor4f_direct(1.0f, 1.0f, 1.0f, 1.0f);
-// glVertexPointer(3, GL_FLOAT, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-// 
-// glDrawArrays(GL_LINES, 0, 2);
-//
-// glDisableClientState(GL_VERTEX_ARRAY);
-//}
-//void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
-//       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
-////  glColor4i(r, g, b,a);
-////
-////  //senquack- forcing this did not help:
-//////  glColor4i(255, 255, 255, 255);
-////
-////  //glColor4i(r, g, b, a);
-//////  glBegin(GL_LINES);
-//////  glVertex2f(x1, y1);
-//////  glVertex2f(x2, y2);
-//////  glEnd();
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(x1, y1, z1);
-////  glVertex3f(x2, y2, z2);
-////  glEnd();
-//
-////code from net (2d:)
-////const GLfloat line[] = {
-////-0.5f, -0.5f, //point A
-////0.5f, -0.5f, //point B
-////};
-////
-////glColor4f(0.0f,1.0f,0.0f,1.0f); //line color
-////glVertexPointer(2, GL_FLOAT, 0, line);
-////glEnableClientState(GL_VERTEX_ARRAY);
-////
-////glDrawArrays(GL_LINES, 0, 2);
-// GLfloat line[12];
-// line[0] = x1; line[1] = y1; line[2] = z1;
-// line[3] = x1+10.0; line[4] = y1+10.0; line[5] = z1+10.0;
-// line[6] = x2; line[7] = y2; line[8] = z2;
-// line[9] = x2+10.0; line[10] = y2+10.0; line[11] = z2+10.0;
-// 
-//
-////  GLfloat colors[16] = {1.0};
-//
-// GLubyte colors[16] = {255, 255, 255, 255,
-//                         255,255,255,255,
-//                         255,255,255,255,
-//                         255,255,255,255};
-////senquack - note: this doesn't work, you must specify all 16 manually
-////  GLubyte colors[16] = {255};
-//
-////  colors[0] = colors[3] = (float)r / 255.0; 
-////  colors[1] = colors[4] = (float)g / 255.0; 
-////  colors[2] = colors[5] = (float)b / 255.0;
-////  colors[0] = colors[4] = 1.0;
-////  colors[1] = colors[5] = 1.0;
-////  colors[2] = colors[6] = 1.0;
-////  colors[3] = colors[7] = 1.0;
-// 
-// glEnable(GL_BLEND);
-// glEnable(GL_LINE_SMOOTH);
-// glLineWidth(2.0f);
-////  glLineWidth(1.0f);
-//
-// glDisable(GL_TEXTURE_2D);
-////  glColor4f((float)r / 255.0, (float)g / 255.0, (float)b / 255.0, (float)a / 255.0);
-//// temporary experiment:
-////  glColor4f_direct(1.0f, 1.0f, 1.0f, 1.0f);
-// glVertexPointer(3, GL_FLOAT, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-// glEnableClientState(GL_COLOR_ARRAY);
-// 
-// glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-//
-////  glDisableClientState(GL_COLOR_ARRAY);
-////  glDisableClientState(GL_VERTEX_ARRAY);
-//}
-//void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
-//       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
-////  glColor4i(r, g, b,a);
-////
-////  //senquack- forcing this did not help:
-//////  glColor4i(255, 255, 255, 255);
-////
-////  //glColor4i(r, g, b, a);
-//////  glBegin(GL_LINES);
-//////  glVertex2f(x1, y1);
-//////  glVertex2f(x2, y2);
-//////  glEnd();
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(x1, y1, z1);
-////  glVertex3f(x2, y2, z2);
-////  glEnd();
-//
-////code from net (2d:)
-////const GLfloat line[] = {
-////-0.5f, -0.5f, //point A
-////0.5f, -0.5f, //point B
-////};
-////
-////glColor4f(0.0f,1.0f,0.0f,1.0f); //line color
-////glVertexPointer(2, GL_FLOAT, 0, line);
-////glEnableClientState(GL_VERTEX_ARRAY);
-////
-////glDrawArrays(GL_LINES, 0, 2);
-// GLfloat line[6];
-// line[0] = x1; line[1] = y1; line[2] = z1;
-// line[3] = x2; line[4] = y2; line[5] = z2;
-//
-////  GLfloat colors[8];
-//////   colors[0] = colors[3] = (float)r / 255.0; 
-//////   colors[1] = colors[4] = (float)g / 255.0; 
-//////   colors[2] = colors[5] = (float)b / 255.0;
-////  colors[0] = colors[4] = 1.0;
-////  colors[1] = colors[5] = 1.0;
-////  colors[2] = colors[6] = 1.0;
-////  colors[3] = colors[7] = 1.0;
-// GLuint colors[8];
-////  colors[0] = colors[3] = (float)r / 255.0; 
-////  colors[1] = colors[4] = (float)g / 255.0; 
-////  colors[2] = colors[5] = (float)b / 255.0;
-// colors[0] = colors[4] = 255;
-// colors[1] = colors[5] = 255;
-// colors[2] = colors[6] = 255;
-// colors[3] = colors[7] = 255;
-// 
-////  glDisable(GL_BLEND);
-////  glDisable(GL_LINE_SMOOTH);
-////  glLineWidth(2.0f);
-// glLineWidth(1.0f);
-//
-// glDisable(GL_TEXTURE_2D);
-////  glColor4f((float)r / 255.0, (float)g / 255.0, (float)b / 255.0, (float)a / 255.0);
-//// temporary experiment:
-////  glColor4f_direct(1.0f, 1.0f, 1.0f, 1.0f);
-// glEnableClientState(GL_VERTEX_ARRAY);
-// glEnableClientState(GL_COLOR_ARRAY);
-////  glVertexPointer(3, GL_FLOAT, 0, line);
-// glVertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), line);
-////  glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 4 * sizeof(GLuint), colors);
-// 
-// glDrawArrays(GL_LINES, 0, 2);
-//
-////  glDisableClientState(GL_COLOR_ARRAY);
-////  glDisableClientState(GL_VERTEX_ARRAY);
-//}
-//void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
-//       GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
-////  glColor4i(r, g, b,a);
-////
-////  //senquack- forcing this did not help:
-//////  glColor4i(255, 255, 255, 255);
-////
-////  //glColor4i(r, g, b, a);
-//////  glBegin(GL_LINES);
-//////  glVertex2f(x1, y1);
-//////  glVertex2f(x2, y2);
-//////  glEnd();
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(x1, y1, z1);
-////  glVertex3f(x2, y2, z2);
-////  glEnd();
-//
-////code from net (2d:)
-////const GLfloat line[] = {
-////-0.5f, -0.5f, //point A
-////0.5f, -0.5f, //point B
-////};
-////
-////glColor4f(0.0f,1.0f,0.0f,1.0f); //line color
-////glVertexPointer(2, GL_FLOAT, 0, line);
-////glEnableClientState(GL_VERTEX_ARRAY);
-////
-////glDrawArrays(GL_LINES, 0, 2);
-////  GLfloat line[6];
-////  line[0] = x1; line[1] = y1; line[2] = z1;
-////  line[3] = x2; line[4] = y2; line[5] = z2;
-// GLfixed line[6];
-// line[0] = f2x(x1); line[1] = f2x(y1); line[2] = f2x(z1);
-// line[3] = f2x(x2); line[4] = f2x(y2); line[5] = f2x(z2);
-// 
-//
-////  GLfloat colors[16] = {1.0};
-//
-// GLubyte colors[8] = {255, 255, 255, 255,
-//                         255,255,255,255};
-////senquack - note: this doesn't work, you must specify all 16 manually
-////  GLubyte colors[16] = {255};
-//
-////  colors[0] = colors[3] = (float)r / 255.0; 
-////  colors[1] = colors[4] = (float)g / 255.0; 
-////  colors[2] = colors[5] = (float)b / 255.0;
-////  colors[0] = colors[4] = 1.0;
-////  colors[1] = colors[5] = 1.0;
-////  colors[2] = colors[6] = 1.0;
-////  colors[3] = colors[7] = 1.0;
-// 
-////  glEnable(GL_BLEND);
-// glDisable(GL_LINE_SMOOTH);
-////  glLineWidth(2.0f);
-////  glLineWidth(1.0f);
-//
-// glDisable(GL_TEXTURE_2D);
-////  glColor4f((float)r / 255.0, (float)g / 255.0, (float)b / 255.0, (float)a / 255.0);
-//// temporary experiment:
-////  glColor4f_direct(1.0f, 1.0f, 1.0f, 1.0f);
-//
-//  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-//
-// glVertexPointer(3, GL_FIXED, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-// glEnableClientState(GL_COLOR_ARRAY);
-// 
-// glDrawArrays(GL_LINES, 0, 2);
-//
-////  glDisableClientState(GL_COLOR_ARRAY);
-////  glDisableClientState(GL_VERTEX_ARRAY);
-//}
-//senquack TODO: remember to convert this to 2D like below fixedpoint version:
-//void
-//drawLine (GLfloat x1, GLfloat y1, GLfloat z1,
-//          GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a)
-//{
-////senquack - note: it appears Wiz's opengl supports line drawing with either fixed or float vertices, your choice:
-//   GLfloat line[6];
-//   line[0] = x1;
-//   line[1] = y1;
-//   line[2] = z1;
-//   line[3] = x2;
-//   line[4] = y2;
-//   line[5] = z2;
-//// GLfixed line[6];
-//// line[0] = f2x(x1); line[1] = f2x(y1); line[2] = f2x(z1);
-//// line[3] = f2x(x2); line[4] = f2x(y2); line[5] = f2x(z2);
-//
-//   GLubyte colors[8] = { r, g, b, a, r, g, b, a };
-//
-//// glVertexPointer(3, GL_FIXED, 0, line);
-//   glVertexPointer (3, GL_FLOAT, 0, line);
-//   glEnableClientState (GL_VERTEX_ARRAY);
-//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-//   glEnableClientState (GL_COLOR_ARRAY);
-//
-//   glDrawArrays (GL_LINES, 0, 2);
-//
-//// senquack - note - not necessary to turn these off here it seems:
-//// glDisableClientState(GL_COLOR_ARRAY);
-//// glDisableClientState(GL_VERTEX_ARRAY);
-//}
-//senquack - complete fixed point conversion:
-//void drawLinex(GLfixed x1, GLfixed y1, GLfixed z1,
-//       GLfixed x2, GLfixed y2, GLfixed z2, int r, int g, int b, int a) {
-////senquack - note: it appears Wiz's opengl supports line drawing with either fixed or float vertices, your choice:
-// GLfixed line[6];
-// line[0] = x1; line[1] = y1; line[2] = z1;
-// line[3] = x2; line[4] = y2; line[5] = z2;
-// 
-// GLubyte colors[8] = {r, g, b, a, r, g, b, a};
-//
-// glVertexPointer(3, GL_FIXED, 0, line);
-////  glEnableClientState(GL_VERTEX_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-////  glEnableClientState(GL_COLOR_ARRAY);
-// 
-// glDrawArrays(GL_LINES, 0, 2);
-//}
-
-//typedef struct {
-//#ifdef FIXEDMATH
-//   GLfixed x,y;
-//#else
-//   GLfloat x,y;
-//#endif //FIXEDMATH
-//   GLubyte r,g,b,a;
-//} linevertice;
-   
-//static linevertice lineverticedata[2600];       //never seem to need more than 2100 or so, but be safe
-//static linevertice *lineverticeptr;
-
-//senquack - new function called once before a series of calls to drawShape (for openglES speedup)
-//void prepareDrawLines (void)
-//{
-//   lineverticeptr = &lineverticedata[0];
-//}
-//
-//void finishDrawLines (void)
-//{
-//   glEnable (GL_BLEND);
-//#ifdef FIXEDMATH
-//   glVertexPointer (2, GL_FIXED, sizeof(linevertice), &lineverticedata[0].x);
-//#else
-//   glVertexPointer (2, GL_FLOAT, sizeof(linevertice), &lineverticedata[0].x);
-//#endif //FIXEDMATH
-//   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(linevertice), &lineverticedata[0].r);
-//   int numlinevertices = ((unsigned int) lineverticeptr - (unsigned int) (&lineverticedata[0])) / sizeof(linevertice);
-//   glDrawArrays (GL_LINES, 0, numlinevertices);
-////    printf("printing lines with %d vertices\n", numlinevertices);
-//}
-
 //senquack - converted to GLES and now lines are drawn in one huge batch
 //void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,
 //	      GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a) {
@@ -2048,12 +1635,6 @@ void drawLine(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, int r, int g, int 
 #else
 inline void drawLine(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, int b, int a)
 {
-//   lineverticeptr->x = x1; lineverticeptr->y = y1;
-//   lineverticeptr->r = r; lineverticeptr->g = g; lineverticeptr->b = b; lineverticeptr->a = a;
-//   lineverticeptr++;
-//   lineverticeptr->x = x2; lineverticeptr->y = y2;
-//   lineverticeptr->r = r; lineverticeptr->g = g; lineverticeptr->b = b; lineverticeptr->a = a;
-//   lineverticeptr++;
    uint32_t color = (a << 24) | (b << 16) | (g << 8) | r;
    lines_ptr->x = x1; lines_ptr->y = y1;
    lines_ptr->color_rgba = color;
@@ -2072,80 +1653,8 @@ inline void drawLine(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int 
 //  glVertex3f(x1+(x2-x1)*len/256, y1+(y2-y1)*len/256, z1+(z2-z1)*len/256);
 //  glEnd();
 //}
-//senquack - tried tweaking this to fix hang:
-//void drawLinePart(GLfloat x1, GLfloat y1, GLfloat z1,
-//      GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a, int len) {
-//  glColor4i(r, g, b, a);
-////  glColor4i(255, 255, 255, 255);
-////  glBegin(GL_LINES);
-////  glVertex2f(x1, y1);
-////  glVertex2f(x1+(x2-x1)*len/256, y1+(y2-y1)*len/256);
-////  glEnd();
-//  glBegin(GL_LINE_LOOP);
-//  glVertex3f(x1, y1, z1);
-//  glVertex3f(x1+(x2-x1)*len/256, y1+(y2-y1)*len/256, z1+(z2-z1)*len/256);
-//  glEnd();
-//}
-////senquack - nanoGL does not support line drawing, must call OpenGLES directly:
-//void drawLinePart(GLfloat x1, GLfloat y1, GLfloat z1,
-//      GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a, int len) {
-//////  glColor4i(r, g, b, a);
-////////  glColor4i(255, 255, 255, 255);
-////////  glBegin(GL_LINES);
-////////  glVertex2f(x1, y1);
-////////  glVertex2f(x1+(x2-x1)*len/256, y1+(y2-y1)*len/256);
-////////  glEnd();
-//////  glBegin(GL_LINE_LOOP);
-//////  glVertex3f(x1, y1, z1);
-//////  glVertex3f(x1+(x2-x1)*len/256, y1+(y2-y1)*len/256, z1+(z2-z1)*len/256);
-//////  glEnd();
-////
-////  GLfloat line[6];
-////  line[0] = x1; line[1] = y1; line[2] = z1;
-////  line[3] = x1+(x2-x1)*len/256; line[4] = y1+(y2-y1)*len/256; line[5] = z1+(z2-z1)*len/256;
-////  
-////  glDisable(GL_TEXTURE_2D);
-////  glColor4f((float)r / 255.0, (float)g / 255.0, (float)b / 255.0, (float)a / 255.0);
-////  glVertexPointer(3, GL_FLOAT, 0, line);
-////  glEnableClientState(GL_VERTEX_ARRAY);
-////  glDrawArrays(GL_LINES, 0, 2);
-////  glDisableClientState(GL_VERTEX_ARRAY);
-//}
-//senquack - nanoGL does not support line drawing, must call OpenGLES directly:
-//void drawLinePart(GLfloat x1, GLfloat y1, GLfloat z1,
-//      GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a, int len) {
-//
-// GLfloat line[6];
-// line[0] = x1; line[1] = y1; line[2] = z1;
-// line[3] = x1+(x2-x1)*len/256; line[4] = y1+(y2-y1)*len/256; line[5] = z1+(z2-z1)*len/256;
-// 
-// GLubyte colors[8] = {r, g, b, a, r, g, b, a};
-//
-////  glVertexPointer(3, GL_FIXED, 0, line);
-// glVertexPointer(3, GL_FLOAT, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-// glEnableClientState(GL_COLOR_ARRAY);
-// glDrawArrays(GL_LINES, 0, 2);
-//}
-//void drawLinePart(GLfloat x1, GLfloat y1, GLfloat z1,
-//      GLfloat x2, GLfloat y2, GLfloat z2, int r, int g, int b, int a, int len) {
-//
-// GLfloat line[6];
-// line[0] = x1; line[1] = y1; line[2] = z1;
-// line[3] = x1+(x2-x1)*len/256; line[4] = y1+(y2-y1)*len/256; line[5] = z1+(z2-z1)*len/256;
-// 
-// GLubyte colors[8] = {r, g, b, a, r, g, b, a};
-//
-// glVertexPointer(3, GL_FIXED, 0, line);
-////  glVertexPointer(3, GL_FLOAT, 0, line);
-// glEnableClientState(GL_VERTEX_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-// glEnableClientState(GL_COLOR_ARRAY);
-// glDrawArrays(GL_LINES, 0, 2);
-//}
-//senquack BIG TODO - should this be optimized to draw lines in large batches?
 #ifdef FIXEDMATH
+//senquack - TODO: convert my old fixed-point version to the faster batch-drawn one below it:
 void drawLinePart(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, int r, int g, int b, int a, int len)
 {
    GLfixed line[4];
@@ -2165,19 +1674,15 @@ void drawLinePart(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2, int r, int g, 
 #else
 void drawLinePart(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, int b, int a, int len)
 {
-//   GLfloat line[4];
-//   line[0] = x1;
-//   line[1] = y1;
-//   line[2] = x1 + (((x2 - x1) * len) / 256.0f);
-//   line[3] = y1 + (((y2 - y1) * len) / 256.0f);
-//
-//   GLubyte colors[8] = { r, g, b, a, r, g, b, a };
-//
-//   glVertexPointer (2, GL_FLOAT, 0, line);
-//// glEnableClientState(GL_VERTEX_ARRAY);
-//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-//// glEnableClientState(GL_COLOR_ARRAY);
-//   glDrawArrays (GL_LINES, 0, 2);
+   uint32_t color = (a << 24) | (b << 16) | (g << 8) | r;
+   lines_ptr->x = x1; lines_ptr->y = y1;
+   printf("drawlinepart: x1 = %f   y1 = %f ", x1, y1);
+   lines_ptr->color_rgba = color;
+   lines_ptr++;
+   lines_ptr->x = x1 + (((x2 - x1) * len) * (1.0f/256.0f)); lines_ptr->y = y1 + (((y2 - y1) * len) * (1.0f/256.0f)); 
+   printf("  x2 = %f   y2 = %f\n", x1, y1);
+   lines_ptr->color_rgba = color;
+   lines_ptr++;
 }
 #endif //FIXEDMATH
 
@@ -2268,6 +1773,9 @@ void drawLinePart(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, 
 
 
 
+//senquack - converted to batch-drawn OpenGLES with rotation done using custom trig routines, to allow
+//             for batch drawing and elimination of many calls into GLES. Note that z paramter passed
+//             was always 0, so I eliminated that parameter. Lines are still drawn 3D, however.
 // Original GL1.2 code:
 //void drawRollLine(GLfloat x, GLfloat y, GLfloat z, GLfloat width,
 //		  int r, int g, int b, int a, int d1, int d2) {
@@ -2282,11 +1790,6 @@ void drawLinePart(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, 
 //  glEnd();
 //  glPopMatrix();
 //}
-
-//senquack - fixed point version (only called from frag.c)
-// note: we dropped the a parameter (always 255 it turns out)
-//TODO - convert fixed point stuff to the new batch drawn mode.
-
 #define FRAG_MAX 512 // Pulled from frag.h - senquack
 static gl_vertex_3d roll_lines[2 * FRAG_MAX + 12];       // Shouldn't need more than 1024 total, but be a bit safe
 static gl_vertex_3d *roll_lines_ptr = NULL;
@@ -2316,35 +1819,6 @@ void finishDrawRollLines()
 void drawRollLine (GLfixed x, GLfixed y, GLfixed z, GLfixed width, int r, int g, int b, int d1, int d2)
 {
    printf("ERROR: call to broken drawRollLine, please update its code to match the new float version below it.\n");
-//   glPushMatrix ();
-////  glTranslatef(x, y, z);
-//   glTranslatex (x, y, z);
-////  glRotatef((float)d1*360/1024, 0, 0, 1);
-////  glRotatef((float)d2*360/1024, 1, 0, 0);
-////    glRotatex((d1*360)<<6, 0, 0, INT2FNUM(1));
-////    glRotatex((d2*360)<<6, INT2FNUM(1), 0, 0);
-//   glRotatef ((float) ((d1 * 360) >> 10), 0, 0, 1);
-//   glRotatef ((float) ((d2 * 360) >> 10), 1, 0, 0);
-//
-//// GLfixed line[4];
-//   rolllinevertices[0] = 0;
-//   rolllinevertices[1] = -width;
-//   rolllinevertices[2] = 0;
-//   rolllinevertices[3] = width;
-//
-//// GLubyte colors[8];
-//   rolllinecolors[0] = rolllinecolors[4] = r;
-//   rolllinecolors[1] = rolllinecolors[5] = g;
-//   rolllinecolors[2] = rolllinecolors[6] = b;
-//   rolllinecolors[3] = rolllinecolors[7] = 255;
-//
-//// glVertexPointer(2, GL_FIXED, 0, line);
-//////  glEnableClientState(GL_VERTEX_ARRAY);
-//// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-//////  glEnableClientState(GL_COLOR_ARRAY);
-//
-//   glDrawArrays (GL_LINES, 0, 2);
-//   glPopMatrix ();
 }
 #else
 // senquack - Now, we do our own 3D trig rotations so everything's done in a huge batch without needing glRotate():

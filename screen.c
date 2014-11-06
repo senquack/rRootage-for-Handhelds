@@ -1676,11 +1676,9 @@ void drawLinePart(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, int r, int g, 
 {
    uint32_t color = (a << 24) | (b << 16) | (g << 8) | r;
    lines_ptr->x = x1; lines_ptr->y = y1;
-   printf("drawlinepart: x1 = %f   y1 = %f ", x1, y1);
    lines_ptr->color_rgba = color;
    lines_ptr++;
    lines_ptr->x = x1 + (((x2 - x1) * len) * (1.0f/256.0f)); lines_ptr->y = y1 + (((y2 - y1) * len) * (1.0f/256.0f)); 
-   printf("  x2 = %f   y2 = %f\n", x1, y1);
    lines_ptr->color_rgba = color;
    lines_ptr++;
 }
@@ -2671,40 +2669,28 @@ void drawStar (int f, GLfloat x, GLfloat y, int r, int g, int b, float size)
 //static GLubyte lasercolors[4*380];      
 
 //senquack TODO: interleave
-#ifdef FIXEDMATH
-static GLfixed laservertices[2 * 75];   // only 61 max seem to be used but to be safe we will reserve 75
-static GLubyte lasercolors[4 * 75];
-GLfixed *laservertptr;
-GLubyte *lasercolptr;
-#else
-static GLfloat laservertices[2 * 75];   // only 61 max seem to be used but to be safe we will reserve 75
-static GLubyte lasercolors[4 * 75];
-GLfloat *laservertptr;
-GLubyte *lasercolptr;
-#endif //FIXEDMATH
+static gl_vertex laser_vertices[71];   // Only seem to need 61, this is just to be safe.
+static gl_vertex *laser_vertex_ptr = NULL;
 
 //senquack - new function called once before a series of calls to drawlaser (for openglES speedup)
-void prepareDrawLaser (void)
+inline void prepareDrawLaser (void)
 {
-   laservertptr = &(laservertices[0]);
-   lasercolptr = &(lasercolors[0]);
+   laser_vertex_ptr = &laser_vertices[0];
 }
 
-void finishDrawLaser (void)
+//senquack - with new triangle strip code, only 61 vertices total max (down from 300+)
+inline void finishDrawLaser (void)
 {
-   int numlaservertices =
-      ((unsigned int) lasercolptr - (unsigned int) &(lasercolors[0])) >> 2;
-   //debugging - with new triangle strip code, only 61 vertices total max (down from 300+)
-// printf("Drawing laser with %d vertices\n", numlaservertices);
+   int numvertices =
+      ((unsigned int) laser_vertex_ptr - (unsigned int) &laser_vertices[0]) / sizeof(gl_vertex);
 #ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, 0, laservertices);
+   glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &laser_vertices[0].x);
 #else
-   glVertexPointer (2, GL_FLOAT, 0, laservertices);
+   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &laser_vertices[0].x);
 #endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, lasercolors);
-   glDrawArrays (GL_TRIANGLE_STRIP, 0, numlaservertices);
-   laservertptr = &(laservertices[0]);
-   lasercolptr = &(lasercolors[0]);
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &laser_vertices[0].r);
+   glDrawArrays (GL_TRIANGLE_STRIP, 0, numvertices);
+   laser_vertex_ptr = &(laser_vertices[0]);
 }
 
 ////senquack - (fixed point openglES) (only using one color to draw the laser)
@@ -2929,47 +2915,20 @@ void drawLaser (GLfloat x, GLfloat y, GLfloat width, GLfloat height,
             int cc1, int cnt, int type)
 #endif //FIXEDMATH
 {
+   uint32_t color = (LASER_ALPHA << 24) | (cc1 << 8);
    if (type != 0) {
-      *lasercolptr++ = 0;
-      *lasercolptr++ = cc1;
-      *lasercolptr++ = 0;
-      *lasercolptr++ = LASER_ALPHA;
-      *laservertptr++ = x - width;
-      *laservertptr++ = y + height;
-
-      *lasercolptr++ = 0;
-      *lasercolptr++ = cc1;
-      *lasercolptr++ = 0;
-      *lasercolptr++ = LASER_ALPHA;
-      *laservertptr++ = x + width;
-      *laservertptr++ = y + height;
-
+      laser_vertex_ptr->x = x - width;    laser_vertex_ptr->y = y+height;  laser_vertex_ptr->color_rgba = color;
+      laser_vertex_ptr++;
+      laser_vertex_ptr->x = x + width;    laser_vertex_ptr->y = y+height;  laser_vertex_ptr->color_rgba = color;
+      laser_vertex_ptr++;
    } else {
-      //senquack - fix for getting triangle strip working properly:
-//    laservertptr = &(laservertices[0]);
-//    lasercolptr = &(lasercolors[0]);
       finishDrawLaser ();
-
-      *lasercolptr++ = 0;
-      *lasercolptr++ = cc1;
-      *lasercolptr++ = 0;
-      *lasercolptr++ = LASER_ALPHA;
-      *laservertptr++ = x;
-      *laservertptr++ = y;
-
-      *lasercolptr++ = 0;
-      *lasercolptr++ = cc1;
-      *lasercolptr++ = 0;
-      *lasercolptr++ = LASER_ALPHA;
-      *laservertptr++ = x - width;
-      *laservertptr++ = y + height;
-
-      *lasercolptr++ = 0;
-      *lasercolptr++ = cc1;
-      *lasercolptr++ = 0;
-      *lasercolptr++ = LASER_ALPHA;
-      *laservertptr++ = x + width;
-      *laservertptr++ = y + height;
+      laser_vertex_ptr->x = x;    laser_vertex_ptr->y = y;  laser_vertex_ptr->color_rgba = color;
+      laser_vertex_ptr++;
+      laser_vertex_ptr->x = x - width;    laser_vertex_ptr->y = y+height;  laser_vertex_ptr->color_rgba = color;
+      laser_vertex_ptr++;
+      laser_vertex_ptr->x = x + width;    laser_vertex_ptr->y = y+height;  laser_vertex_ptr->color_rgba = color;
+      laser_vertex_ptr++;
    }
 }
 

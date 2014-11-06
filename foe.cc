@@ -638,7 +638,8 @@ moveFoes ()
                   inab * inab / inaa / inaa;
                //if ( hd >= 0 && hd < SHIP_HIT_WIDTH && vctSize(&bmv) < 1280 ) {
                if (hd >= 0 && hd < SHIP_HIT_WIDTH) {
-                  destroyShip ();
+                  //debug
+//                  destroyShip ();
                   removeFoe (fe);
                   continue;
                }
@@ -798,18 +799,22 @@ drawBulletsWake ()
       //(I know it sounds like gibberish, but it's true...)
       if (foe[i].spc != NOT_EXIST && foe[i].spc != BATTERY && foe[i].cnt < 64) {
          fe = &(foe[i]);
-//senquack TODO: poss. optimization w/ inverse:
 #ifdef FIXEDMATH
+//senquack TODO: poss. optimization w/ inverse:
          x = f2x ((float) fe->pos.x / FIELD_SCREEN_RATIO);
          y = f2x (-(float) fe->pos.y / FIELD_SCREEN_RATIO);
          sx = f2x ((float) fe->spos.x / FIELD_SCREEN_RATIO);
          sy = f2x (-(float) fe->spos.y / FIELD_SCREEN_RATIO);
          drawLine(x, y, sx, sy, 150, 180, 90, (63 - fe->cnt) * 3);
 #else
-         x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
-         y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
-         sx =  (float)fe->spos.x / FIELD_SCREEN_RATIO;
-         sy = -(float)fe->spos.y / FIELD_SCREEN_RATIO;
+//         x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
+//         y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+//         sx =  (float)fe->spos.x / FIELD_SCREEN_RATIO;
+//         sy = -(float)fe->spos.y / FIELD_SCREEN_RATIO;
+         x =  (float)fe->pos.x * (1.0f / FIELD_SCREEN_RATIO);
+         y = -(float)fe->pos.y * (1.0f / FIELD_SCREEN_RATIO);
+         sx =  (float)fe->spos.x * (1.0f / FIELD_SCREEN_RATIO);
+         sy = -(float)fe->spos.y * (1.0f / FIELD_SCREEN_RATIO);
          drawLine(x, y, sx, sy, 150, 180, 90, (63-fe->cnt)*3);        
 #endif //FIXEDMATH
       }
@@ -903,8 +908,10 @@ drawBullets ()
          fy = (int) (-(float) fe->pos.y * 6.5536f);
 #else
 //senquack TODO: poss. optimization w/ inverse:
-         x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
-         y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+//         x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
+//         y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+         x =  (float)fe->pos.x * (1.0f / FIELD_SCREEN_RATIO);
+         y = -(float)fe->pos.y * (1.0f / FIELD_SCREEN_RATIO);
 #endif //FIXEDMATH
 
          d = 1023 - getDeg (fe->pos.x - fe->ppos.x, fe->pos.y - fe->ppos.y);

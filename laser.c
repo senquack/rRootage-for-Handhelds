@@ -438,7 +438,8 @@ void drawLasers ()
    int t;
 
    //moved this out of the loop
-   x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
+//   x =  (float)ship.pos.x / FIELD_SCREEN_RATIO;
+   x =  (float)ship.pos.x * (1.0f / FIELD_SCREEN_RATIO);
 
    for ( i=0 ; i<LASER_MAX ; i++ ) {
       if ( laser[i].cnt == NOT_EXIST ) continue;
@@ -456,7 +457,9 @@ void drawLasers ()
 //               (ls->color+LASER_COLOR_SPEED*2)&255,  
 //               (ls->color+LASER_COLOR_SPEED*3)&255,
 //               laserCnt, t);
-         drawLaser(x, y, (float)laserWidth/FIELD_SCREEN_RATIO, LASER_SCREEN_HEIGHT,
+//         drawLaser(x, y, (float)laserWidth/FIELD_SCREEN_RATIO, LASER_SCREEN_HEIGHT,
+//               ls->color, laserCnt, t);
+         drawLaser(x, y, (float)laserWidth * (1.0f / FIELD_SCREEN_RATIO), LASER_SCREEN_HEIGHT,
                ls->color, laserCnt, t);
       }
    }

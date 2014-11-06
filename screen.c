@@ -4461,39 +4461,34 @@ void drawCircle (GLfloat x, GLfloat y, GLfloat width, int cnt,
 {
    int i, d;
    GLfloat x1, y1, x2, y2;
+   uint32_t color;
+   gl_vertex vertices[33];
+   gl_vertex *vertex_ptr = &vertices[0];
 
-   GLubyte colors[33 * 4];
-   GLfloat vertices[33 * 2];
-
-   if ((cnt & 1) == 0) {
-      colors[0] = r1; colors[1] = g1; colors[2] = b1;
+   if ( (cnt&1) == 0 ) {
+      color = (64 << 24) | (b1 << 16) | (g1 << 8) | r1;
    } else {
-      colors[0] = colors[1] = colors[2] = 64;
+      color = (64 << 24) | 0xFFFFFF;
    }
-   colors[3] = 64;
+  
+   vertex_ptr->x = x;   vertex_ptr->y = y;   vertex_ptr->color_rgba = color;  vertex_ptr++;
 
-   vertices[0] = x; vertices[1] = y;
-   d = cnt * 48;
-   d &= 1023;
-   x1 = (sctbl[d]    *width)/256 + x;
-   y1 = (sctbl[d+256]*width)/256 + y;
-   for (i = 0; i < 16; i++) {
-      colors[4 + (i << 3)] = colors[4 + (i << 3) + 4] = r2;
-      colors[4 + (i << 3) + 1] = colors[4 + (i << 3) + 5] = g2;
-      colors[4 + (i << 3) + 2] = colors[4 + (i << 3) + 6] = b2;
-      colors[4 + (i << 3) + 3] = colors[4 + (i << 3) + 7] = 150;
+   d = cnt*48; d &= 1023;
+   x1 = ((sctbl[d]    *width) * (1.0f/256.0f)) + x;
+   y1 = ((sctbl[d+256]*width) * (1.0f/256.0f)) + y;
+   color = (150 << 24) | (b2 << 16) | (g2 << 8) | r2;
 
-      d += 64;
-      d &= 1023;
-      x2 = (sctbl[d]    *width)/256 + x;
-      y2 = (sctbl[d+256]*width)/256 + y;
-      vertices[2 + (i << 2)] = x1;     vertices[2 + (i << 2) + 1] = y1;
-      vertices[2 + (i << 2) + 2] = x2; vertices[2 + (i << 2) + 3] = y2;
-      x1 = x2;
-      y1 = y2;
+   for ( i=0 ; i<16 ; i++ ) {
+      d += 64; d &= 1023;
+      x2 = ((sctbl[d]    *width) * (1.0f/256.0f)) + x;
+      y2 = ((sctbl[d+256]*width) * (1.0f/256.0f)) + y;
+      vertex_ptr->x = x1;   vertex_ptr->y = y1;   vertex_ptr->color_rgba = color;  vertex_ptr++;
+      vertex_ptr->x = x2;   vertex_ptr->y = y2;   vertex_ptr->color_rgba = color;  vertex_ptr++;
+      x1 = x2; y1 = y2;
    }
-   glVertexPointer (2, GL_FLOAT, 0, vertices);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
+
+   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &vertices[0].x);
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &vertices[0].r);
    glDrawArrays (GL_TRIANGLE_FAN, 0, 33);
 }
 #endif //FIXEDMATH

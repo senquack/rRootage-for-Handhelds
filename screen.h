@@ -72,7 +72,7 @@ extern int lowres;
 extern int windowMode;
 extern int brightness;
 
-/* senquack - added this struct to aid vertice/color interleaving for batch-drawing: */
+/* senquack - added these structs to aid vertice/color interleaving for batch-drawing: */
 typedef struct {
 #ifdef FIXEDMATH
    GLfixed x,y;
@@ -85,6 +85,19 @@ typedef struct {
 //      GLubyte r,g,b,a;
    };
 } gl_vertex;
+
+typedef struct {
+#ifdef FIXEDMATH
+   GLfixed x,y;
+#else
+   GLfloat x,y,tx,ty;   // tx & ty hold the texture coordinates
+#endif //FIXEDMATH
+   union {
+      uint32_t color_rgba;
+      struct { GLubyte r, g, b, a; };
+//      GLubyte r,g,b,a;
+   };
+} gl_textured_vertex;
 
 typedef struct {
 #ifdef FIXEDMATH
@@ -204,6 +217,10 @@ void drawSquare (GLfloat x1, GLfloat y1, GLfloat z1,
                  GLfloat x3, GLfloat y3, GLfloat z3,
                  GLfloat x4, GLfloat y4, GLfloat z4, int r, int g, int b);
 #endif //FIXEDMATH
+
+//senquack - stars/smoke are now batch-drawn, and I got rid of the unused z parameter
+void prepareDrawStars();
+void finishDrawStars();
 
 //void drawStar(int f, GLfloat x, GLfloat y, GLfloat z, int r, int g, int b, float size);
 #ifdef FIXEDMATH

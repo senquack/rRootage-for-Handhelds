@@ -296,10 +296,7 @@ addFoeNormalBullet (Foe * foe, int d, int spd, int color)
 #else
       fe->morphRank *= 0.77;
 #endif //FIXEDMATH
-      fe->cmd =
-         new
-         FoeCommand (foe->morphParser[fe->morphCnt & (MORPH_PATTERN_MAX - 1)],
-                     fe);
+      fe->cmd = new FoeCommand (foe->morphParser[fe->morphCnt & (MORPH_PATTERN_MAX - 1)], fe);
 
       fe->spc = ACTIVE_BULLET;
       if (fe->morphCnt > 0)
@@ -640,8 +637,7 @@ moveFoes ()
                   inab * inab / inaa / inaa;
                //if ( hd >= 0 && hd < SHIP_HIT_WIDTH && vctSize(&bmv) < 1280 ) {
                if (hd >= 0 && hd < SHIP_HIT_WIDTH) {
-                  //debug
-//                  destroyShip ();
+                  destroyShip ();
                   removeFoe (fe);
                   continue;
                }

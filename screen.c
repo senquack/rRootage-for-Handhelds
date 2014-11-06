@@ -320,9 +320,9 @@ int initGLES()
    glLineWidth(1);
    glEnable(GL_LINE_SMOOTH);
    glEnable (GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE);   // original rr code had this
+//   glBlendFunc(GL_SRC_ALPHA, GL_ONE);   // original rr code had this
 // senquack - for some reason I changed it to this for Wiz/GP2X (opengl docs say it is better for transparency)
-//   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
    glDisable (GL_LIGHTING);
    glDisable (GL_CULL_FACE);
    glDisable (GL_DEPTH_TEST);
@@ -2081,54 +2081,190 @@ void drawStar (int f, GLfixed x, GLfixed y, int r, int g, int b, GLfixed size)
    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 #else
+//senquack TODO - reduce the size later maybe
+static gl_textured_vertex star_vertices[512];   // 512 to be safe, never saw much above 200 or so
+static gl_textured_vertex *star_vertex_ptr = NULL;
+static gl_textured_vertex smoke_vertices[512];   // 512 to be safe, have seen as high as 264 (rarely)
+static gl_textured_vertex *smoke_vertex_ptr = NULL;
+
+void prepareDrawStars()
+{
+   star_vertex_ptr = &star_vertices[0];
+   smoke_vertex_ptr = &smoke_vertices[0];
+}
+
+void finishDrawStars()
+{
+//   glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+   glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+   glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+   glEnable (GL_TEXTURE_2D);
+
+   int numvertices;
+   // Draw stars:
+   numvertices = ((unsigned int) star_vertex_ptr - (unsigned int) &star_vertices[0]) / sizeof(gl_textured_vertex);
+
+   if (numvertices > 6) {     // Are there any stars to draw?
+
+#ifdef FIXEDMATH
+      glVertexPointer (2, GL_FIXED, sizeof(gl_textured_vertex), &star_vertices[0].x);
+      glTexCoordPointer (2, GL_FIXED, sizeof(gl_textured_vertex), &star_vertices[0].tx);
+#else
+      glVertexPointer (2, GL_FLOAT, sizeof(gl_textured_vertex), &star_vertices[0].x);
+      glTexCoordPointer (2, GL_FLOAT, sizeof(gl_textured_vertex), &star_vertices[0].tx);
+#endif
+      glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_textured_vertex), &star_vertices[0].r);
+      glBindTexture (GL_TEXTURE_2D, starTexture);
+      glDrawArrays (GL_TRIANGLES, 0, numvertices);
+   }
+
+// Debug info:
+//   static int max_star_verts = 0;
+//   if (numvertices > max_star_verts) max_star_verts = numvertices;
+//   printf("star vertices: %d  (max: %d)  ", numvertices, max_star_verts);
+
+   // Draw smoke:
+   numvertices = ((unsigned int) smoke_vertex_ptr - (unsigned int) &smoke_vertices[0]) / sizeof(gl_textured_vertex);
+
+   if (numvertices > 6) {     // Is there any smoke to draw?
+
+#ifdef FIXEDMATH
+      glVertexPointer (2, GL_FIXED, sizeof(gl_textured_vertex), &smoke_vertices[0].x);
+      glTexCoordPointer (2, GL_FIXED, sizeof(gl_textured_vertex), &smoke_vertices[0].tx);
+#else
+      glVertexPointer (2, GL_FLOAT, sizeof(gl_textured_vertex), &smoke_vertices[0].x);
+      glTexCoordPointer (2, GL_FLOAT, sizeof(gl_textured_vertex), &smoke_vertices[0].tx);
+#endif
+      glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_textured_vertex), &smoke_vertices[0].r);
+      glBindTexture (GL_TEXTURE_2D, smokeTexture);
+      glDrawArrays (GL_TRIANGLES, 0, numvertices);
+   }
+
+// Debug info:
+//   static int max_smoke_verts = 0;
+//   if (numvertices > max_smoke_verts) max_smoke_verts = numvertices;
+//   printf("smoke vertices: %d  (max: %d)  ", numvertices, max_smoke_verts);
+
+   glDisable (GL_TEXTURE_2D);
+   glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+}
+
 //senquack TODO - check I got the coordinates right in this conversion, no idea:
 void drawStar (int f, GLfloat x, GLfloat y, int r, int g, int b, float size)
 {
-   GLfloat vertices[4 * 2];
-   GLubyte colors[4 * 4];
-   GLfloat texvertices[4 * 2];
-   colors[0] = colors[4] = colors[8] = colors[12] = r;
-   colors[1] = colors[5] = colors[9] = colors[13] = g;
-   colors[2] = colors[6] = colors[10] = colors[14] = b;
-   colors[3] = colors[7] = colors[11] = colors[15] = 255;
-   vertices[0] = size; vertices[1] = -size;
-   vertices[2] = size; vertices[3] = size;
-   vertices[4] = -size; vertices[5] = -size;
-   vertices[6] = -size; vertices[7] = size;
-   texvertices[0] = 1.0;
-   texvertices[1] = 0;
-   texvertices[2] = 1.0;
-   texvertices[3] = 1.0;
-   texvertices[4] = 0;
-   texvertices[5] = 0;
-   texvertices[6] = 0;
-   texvertices[7] = 1.0;
 
-   glBlendFunc (GL_ONE, GL_SRC_ALPHA);
-//  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-// glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); 
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-   glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-
-   glEnable (GL_BLEND);
-   glEnable (GL_TEXTURE_2D);
+   uint32_t color = (255 << 24) | (b << 16) | (g << 8) | r;
+//   glRotatef((float)(rand()%360), 0.0f, 0.0f, 1.0f);
+   int deg = rand() & 0x3FF;  // Random number between 0-1023
+   
+   float v1x, v1y, v2x, v2y, v3x, v3y, v4x, v4y;
+   v1x = x + X_ROT(size, -size, deg);    v1y = y + Y_ROT(size,-size, deg);
+   v2x = x + X_ROT(size,size, deg);      v2y = y + Y_ROT(size,size, deg);
+   v3x = x + X_ROT(-size,-size, deg);    v3y = y + Y_ROT(-size,-size, deg);
+   v4x = x + X_ROT(-size,size, deg);     v4y = y + Y_ROT(-size,size, deg);
+   
+   // Draw a textured quad using two triangles:
    if (f) {
-      glBindTexture (GL_TEXTURE_2D, starTexture);
+      star_vertex_ptr->x = v1x;             star_vertex_ptr->y = v1y;
+      star_vertex_ptr->tx = 1.0f;           star_vertex_ptr->ty = 0;
+      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+
+      star_vertex_ptr->x = v2x;             star_vertex_ptr->y = v2y;
+      star_vertex_ptr->tx = 1.0f;           star_vertex_ptr->ty = 1.0f;
+      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+
+      star_vertex_ptr->x = v3x;             star_vertex_ptr->y = v3y;
+      star_vertex_ptr->tx = 0;              star_vertex_ptr->ty = 0;
+      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+
+      star_vertex_ptr->x = v2x;             star_vertex_ptr->y = v2y;
+      star_vertex_ptr->tx = 1.0f;           star_vertex_ptr->ty = 1.0f;
+      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+
+      star_vertex_ptr->x = v3x;             star_vertex_ptr->y = v3y;
+      star_vertex_ptr->tx = 0;              star_vertex_ptr->ty = 0;
+      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+
+      star_vertex_ptr->x = v4x;             star_vertex_ptr->y = v4y;
+      star_vertex_ptr->tx = 0;              star_vertex_ptr->ty = 1.0f;
+      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
    } else {
-      glBindTexture (GL_TEXTURE_2D, smokeTexture);
+      smoke_vertex_ptr->x = v1x;             smoke_vertex_ptr->y = v1y;
+      smoke_vertex_ptr->tx = 1.0f;           smoke_vertex_ptr->ty = 0;
+      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+
+      smoke_vertex_ptr->x = v2x;             smoke_vertex_ptr->y = v2y;
+      smoke_vertex_ptr->tx = 1.0f;           smoke_vertex_ptr->ty = 1.0f;
+      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+
+      smoke_vertex_ptr->x = v3x;             smoke_vertex_ptr->y = v3y;
+      smoke_vertex_ptr->tx = 0;              smoke_vertex_ptr->ty = 0;
+      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+
+      smoke_vertex_ptr->x = v2x;             smoke_vertex_ptr->y = v2y;
+      smoke_vertex_ptr->tx = 1.0f;           smoke_vertex_ptr->ty = 1.0f;
+      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+
+      smoke_vertex_ptr->x = v3x;             smoke_vertex_ptr->y = v3y;
+      smoke_vertex_ptr->tx = 0;              smoke_vertex_ptr->ty = 0;
+      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+
+      smoke_vertex_ptr->x = v4x;             smoke_vertex_ptr->y = v4y;
+      smoke_vertex_ptr->tx = 0;              smoke_vertex_ptr->ty = 1.0f;
+      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
    }
-   glPushMatrix ();
-   glTranslatef (x, y, 0);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-   glVertexPointer (2, GL_FLOAT, 0, vertices);
-   glTexCoordPointer (2, GL_FLOAT, 0, texvertices);
-   glRotatef((float)(rand()%360), 0.0f, 0.0f, 1.0f);
-   glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
-   glPopMatrix ();
-   glDisable (GL_TEXTURE_2D);
-   glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   
+//   // Draw a textured quad using two triangles:
+//   if (f) {
+//      star_vertex_ptr->x = x + size;        star_vertex_ptr->y = y - size;
+//      star_vertex_ptr->tx = 1.0f;           star_vertex_ptr->ty = 0;
+//      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+//
+//      star_vertex_ptr->x = x + size;        star_vertex_ptr->y = y + size;
+//      star_vertex_ptr->tx = 1.0f;           star_vertex_ptr->ty = 1.0f;
+//      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+//
+//      star_vertex_ptr->x = x - size;        star_vertex_ptr->y = y - size;
+//      star_vertex_ptr->tx = 0;              star_vertex_ptr->ty = 0;
+//      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+//
+//      star_vertex_ptr->x = x + size;        star_vertex_ptr->y = y + size;
+//      star_vertex_ptr->tx = 1.0f;           star_vertex_ptr->ty = 1.0f;
+//      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+//
+//      star_vertex_ptr->x = x - size;        star_vertex_ptr->y = y - size;
+//      star_vertex_ptr->tx = 0;              star_vertex_ptr->ty = 0;
+//      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+//
+//      star_vertex_ptr->x = x - size;        star_vertex_ptr->y = y + size;
+//      star_vertex_ptr->tx = 0;              star_vertex_ptr->ty = 1.0f;
+//      star_vertex_ptr->color_rgba = color;  star_vertex_ptr++;
+//   } else {
+//      smoke_vertex_ptr->x = x + size;        smoke_vertex_ptr->y = y - size;
+//      smoke_vertex_ptr->tx = 1.0f;           smoke_vertex_ptr->ty = 0;
+//      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+//
+//      smoke_vertex_ptr->x = x + size;        smoke_vertex_ptr->y = y + size;
+//      smoke_vertex_ptr->tx = 1.0f;           smoke_vertex_ptr->ty = 1.0f;
+//      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+//
+//      smoke_vertex_ptr->x = x - size;        smoke_vertex_ptr->y = y - size;
+//      smoke_vertex_ptr->tx = 0;              smoke_vertex_ptr->ty = 0;
+//      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+//
+//      smoke_vertex_ptr->x = x + size;        smoke_vertex_ptr->y = y + size;
+//      smoke_vertex_ptr->tx = 1.0f;           smoke_vertex_ptr->ty = 1.0f;
+//      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+//
+//      smoke_vertex_ptr->x = x - size;        smoke_vertex_ptr->y = y - size;
+//      smoke_vertex_ptr->tx = 0;              smoke_vertex_ptr->ty = 0;
+//      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+//
+//      smoke_vertex_ptr->x = x - size;        smoke_vertex_ptr->y = y + size;
+//      smoke_vertex_ptr->tx = 0;              smoke_vertex_ptr->ty = 1.0f;
+//      smoke_vertex_ptr->color_rgba = color;  smoke_vertex_ptr++;
+//   }
 }
 #endif //FIXEDMATH
 
@@ -2137,6 +2273,7 @@ void drawStar (int f, GLfloat x, GLfloat y, int r, int g, int b, float size)
 #define LASER_LINE_ROLL_SPEED 17
 #define LASER_LINE_UP_SPEED 16
 
+// Original GL 1.2 code:
 //void drawLaser(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
 //        int cc1, int cc2, int cc3, int cc4, int cnt, int type) {
 //  int i, d;
@@ -2191,479 +2328,6 @@ void drawStar (int f, GLfloat x, GLfloat y, int r, int g, int b, float size)
 ////  }
 ////  glEnd();
 //}
-//senquack - experimenting with speed improvements
-//void drawLaser(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
-//        int cc1, int cc2, int cc3, int cc4, int cnt, int type) {
-//  int i, d;
-//  float gx, gy;
-//  glBegin(GL_TRIANGLE_FAN);
-//  if ( type != 0 ) {
-//    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-//    glVertex3f(x-width, y, 0);
-//  }
-//  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-//  glVertex3f(x, y, 0);
-//  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-//  glVertex3f(x, y+height, 0);
-//  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-//  glVertex3f(x-width, y+height, 0);
-//  glEnd();
-//  glBegin(GL_TRIANGLE_FAN);
-//  if ( type != 0 ) {
-//    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-//    glVertex3f(x+width, y, 0);
-//  }
-//  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-//  glVertex3f(x, y, 0);
-//  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-//  glVertex3f(x, y+height, 0);
-//  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-//  glVertex3f(x+width, y+height, 0);
-//  glEnd();
-//  if ( type == 2 ) return;
-//  glColor4i(80, 240, 80, LASER_LINE_ALPHA);
-//  glBegin(GL_LINES);
-//  d = (cnt*LASER_LINE_ROLL_SPEED)&(512/4-1);
-//  for ( i=0 ; i<4 ; i++, d+=(512/4) ) {
-//    d &= 1023;
-//    gx = x + width*sctbl[d+256]/256.0f;
-//    if ( type == 1 ) {
-//      glVertex3f(gx, y, 0);
-//    } else {
-//      glVertex3f(x, y, 0);
-//    }
-//    glVertex3f(gx, y+height, 0);
-//  }
-//  if ( type == 0 ) {
-//    glEnd();
-//    return;
-//  }
-//  gy = y + (height/4/LASER_LINE_UP_SPEED) * (cnt&(LASER_LINE_UP_SPEED-1));
-//  for ( i=0 ; i<4 ; i++, gy+=height/4 ) {
-//    glVertex3f(x-width, gy, 0);
-//    glVertex3f(x+width, gy, 0);
-//  }
-//  glEnd();
-//}
-////senquack - stripped-down triangle version:
-//void drawLaser(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
-//        int cc1, int cc2, int cc3, int cc4, int cnt, int type) {
-//  int i, d;
-//  float gx, gy;
-//
-//  //senquack - original left-side code, modifying to match right-side code that had to be changed below:
-////  glBegin(GL_TRIANGLE_FAN);
-////  if ( type != 0 ) {
-////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-////    glVertex3f(x-width, y, 0);
-////  }
-////  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-////  glVertex3f(x, y, 0);
-////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x-width, y+height, 0);
-////  glEnd();
-////senquack - new - changing all TRIANGLE_FANs with only three vertices to TRIANGLES
-////  glBegin(GL_TRIANGLE_FAN);
-////  glBegin(GL_TRIANGLES);
-//////  if ( type != 0 ) {
-//////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-//////    glVertex3f(x-width, y, 0);
-//////  }
-////  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-////  glVertex3f(x, y, 0);
-////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x-width, y+height, 0);
-////  glEnd();
-////  glEnd(); // senquack - merging this triangle and the one below
-//
-//  //senquack - this is the code for the right side that has the jerky bottom-right corner:
-////  glBegin(GL_TRIANGLE_FAN);
-////  if ( type != 0 ) {
-////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-////    glVertex3f(x+width, y, 0);
-////  }
-////  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-////  glVertex3f(x, y, 0);
-////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x+width, y+height, 0);
-////  glEnd();
-////senquack - new - changing all TRIANGLE_FANs with only three vertices to TRIANGLES
-////  glBegin(GL_TRIANGLE_FAN);
-////  glBegin(GL_TRIANGLES); // senquack - merging this triangle and the one above
-//
-////  if ( type != 0 ) {
-////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-////    glVertex3f(x+width, y, 0);
-////  }
-//  glBegin(GL_TRIANGLE_FAN);
-//  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-//  glVertex2f(x, y);
-//  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-//  glVertex2f(x, y+height);
-//  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-//  glVertex2f(x-width, y+height);
-//  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-//  glVertex2f(x, y);
-//  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-//  glVertex2f(x, y+height);
-//  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-//  glVertex2f(x+width, y+height);
-//  glEnd();
-//
-//
-//
-////  glVertex3f(x, y, 0);
-//////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-//////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x+width, y+height, 0);
-//
-//  //senquack - simply disabling this code reduces a lot of the weird assymetric line drawing
-//  //         and also still darned cool and clean.  Should provide a much-needed speedup too!
-////  if ( type == 2 ) return;
-////  glColor4i(80, 240, 80, LASER_LINE_ALPHA);
-////  glBegin(GL_LINES);
-////  d = (cnt*LASER_LINE_ROLL_SPEED)&(512/4-1);
-////  for ( i=0 ; i<4 ; i++, d+=(512/4) ) {
-////    d &= 1023;
-////    gx = x + width*sctbl[d+256]/256.0f;
-////    if ( type == 1 ) {
-////      glVertex3f(gx, y, 0);
-////    } else {
-////      glVertex3f(x, y, 0);
-////    }
-////    glVertex3f(gx, y+height, 0);
-////  }
-////  if ( type == 0 ) {
-////    glEnd();
-////    return;
-////  }
-////  gy = y + (height/4/LASER_LINE_UP_SPEED) * (cnt&(LASER_LINE_UP_SPEED-1));
-////  for ( i=0 ; i<4 ; i++, gy+=height/4 ) {
-////    glVertex3f(x-width, gy, 0);
-////    glVertex3f(x+width, gy, 0);
-////  }
-////  glEnd();
-//}
-//senquack - nicer, fuller, slower version:
-//void drawLaser(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
-//        int cc1, int cc2, int cc3, int cc4, int cnt, int type) {
-//  int i, d;
-//  float gx, gy;
-//
-//  glBegin(GL_TRIANGLE_FAN);
-//  if ( type != 0 ) {
-//    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-//    glVertex2f(x-width, y);
-//  }
-//  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-//  glVertex2f(x, y);
-//  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-//  glVertex2f(x, y+height);
-//  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-//  glVertex2f(x-width, y+height);
-//  glEnd();
-//
-//
-//  glBegin(GL_TRIANGLE_FAN);
-//  if ( type != 0 ) {
-//    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-//    glVertex2f(x+width, y);
-//  }
-//  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-//  glVertex2f(x, y);
-//  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-//  glVertex2f(x, y+height);
-//  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-//  glVertex2f(x+width, y+height);
-//  glEnd();
-//  //senquack - no need for these:
-////  if ( type == 2 ) return;
-////  glColor4i(80, 240, 80, LASER_LINE_ALPHA);
-////  glBegin(GL_LINES);
-////  d = (cnt*LASER_LINE_ROLL_SPEED)&(512/4-1);
-////  for ( i=0 ; i<4 ; i++, d+=(512/4) ) {
-////    d &= 1023;
-////    gx = x + width*sctbl[d+256]/256.0f;
-////    if ( type == 1 ) {
-////      glVertex3f(gx, y, 0);
-////    } else {
-////      glVertex3f(x, y, 0);
-////    }
-////    glVertex3f(gx, y+height, 0);
-////  }
-////  if ( type == 0 ) {
-////    glEnd();
-////    return;
-////  }
-////  gy = y + (height/4/LASER_LINE_UP_SPEED) * (cnt&(LASER_LINE_UP_SPEED-1));
-////  for ( i=0 ; i<4 ; i++, gy+=height/4 ) {
-////    glVertex3f(x-width, gy, 0);
-////    glVertex3f(x+width, gy, 0);
-////  }
-////  glEnd();
-//}
-//void drawLaser(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
-//        int cc1, int cc2, int cc3, int cc4, int cnt, int type) {
-//  int i, d;
-//  float gx, gy;
-//
-//  //senquack - original left-side code, modifying to match right-side code that had to be changed below:
-////  glBegin(GL_TRIANGLE_FAN);
-////  if ( type != 0 ) {
-////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-////    glVertex3f(x-width, y, 0);
-////  }
-////  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-////  glVertex3f(x, y, 0);
-////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x-width, y+height, 0);
-////  glEnd();
-////senquack - new - changing all TRIANGLE_FANs with only three vertices to TRIANGLES
-////  glBegin(GL_TRIANGLE_FAN);
-////  glBegin(GL_TRIANGLES);
-//////  if ( type != 0 ) {
-//////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-//////    glVertex3f(x-width, y, 0);
-//////  }
-////  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-////  glVertex3f(x, y, 0);
-////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x-width, y+height, 0);
-////  glEnd();
-////  glEnd(); // senquack - merging this triangle and the one below
-//
-//  //senquack - this is the code for the right side that has the jerky bottom-right corner:
-////  glBegin(GL_TRIANGLE_FAN);
-////  if ( type != 0 ) {
-////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-////    glVertex3f(x+width, y, 0);
-////  }
-////  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-////  glVertex3f(x, y, 0);
-////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x+width, y+height, 0);
-////  glEnd();
-////senquack - new - changing all TRIANGLE_FANs with only three vertices to TRIANGLES
-////  glBegin(GL_TRIANGLE_FAN);
-////  glBegin(GL_TRIANGLES); // senquack - merging this triangle and the one above
-//
-////  if ( type != 0 ) {
-////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-////    glVertex3f(x+width, y, 0);
-////  }
-//  glBegin(GL_TRIANGLE_FAN);
-//  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-//  glVertex2f(x, y);
-//  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-//  glVertex2f(x, y+height);
-//  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-//  glVertex2f(x-width, y+height);
-//  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-//  glVertex2f(x, y);
-//  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-//  glVertex2f(x, y+height);
-//  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-//  glVertex2f(x+width, y+height);
-//  glEnd();
-//
-//
-//
-////  glVertex3f(x, y, 0);
-//////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-//////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x+width, y+height, 0);
-//
-//  //senquack - simply disabling this code reduces a lot of the weird assymetric line drawing
-//  //         and also still darned cool and clean.  Should provide a much-needed speedup too!
-////  if ( type == 2 ) return;
-////  glColor4i(80, 240, 80, LASER_LINE_ALPHA);
-////  glBegin(GL_LINES);
-////  d = (cnt*LASER_LINE_ROLL_SPEED)&(512/4-1);
-////  for ( i=0 ; i<4 ; i++, d+=(512/4) ) {
-////    d &= 1023;
-////    gx = x + width*sctbl[d+256]/256.0f;
-////    if ( type == 1 ) {
-////      glVertex3f(gx, y, 0);
-////    } else {
-////      glVertex3f(x, y, 0);
-////    }
-////    glVertex3f(gx, y+height, 0);
-////  }
-////  if ( type == 0 ) {
-////    glEnd();
-////    return;
-////  }
-////  gy = y + (height/4/LASER_LINE_UP_SPEED) * (cnt&(LASER_LINE_UP_SPEED-1));
-////  for ( i=0 ; i<4 ; i++, gy+=height/4 ) {
-////    glVertex3f(x-width, gy, 0);
-////    glVertex3f(x+width, gy, 0);
-////  }
-////  glEnd();
-//}
-////senquack - (fixed point openglES)
-//void drawLaserx(GLfixed fx, GLfixed fy, GLfixed fwidth, GLfixed fheight,
-//        int cc1, int cc2, int cc3, int cc4, int cnt, int type) {
-//  int i, d;
-////  float gx, gy;
-////  GLfixed fgx, fgy; // only needed if we're drawing ugly, useless lines
-//
-////  glBegin(GL_TRIANGLE_FAN);
-////  if ( type != 0 ) {
-////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-////    glVertex3f(x-width, y, 0);
-////  }
-//
-// //optimized openglES version requires an external array with separate init and finish functions:
-// GLfixed lasertrivertices[4 * 2];
-// GLubyte lasertricolors[4 * 4];
-// int curidxlaser = 0;
-//
-// glEnableClientState(GL_VERTEX_ARRAY);
-// glVertexPointer(2, GL_FIXED, 0, lasertrivertices);
-// glEnableClientState(GL_COLOR_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, lasertricolors);
-//
-//
-// if (type != 0)
-// {
-//    lasertricolors[(curidxlaser<<2)] = 
-//       lasertricolors[(curidxlaser<<2)+1] = 
-//       lasertricolors[(curidxlaser<<2)+2] = cc1;
-//    lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-//    lasertrivertices[(curidxlaser<<1)] = fx-fwidth;
-//    lasertrivertices[(curidxlaser<<1)+1] = fy;
-//    curidxlaser++;
-// }
-//
-////  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-////  glVertex3f(x, y, 0);
-////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x-width, y+height, 0);
-////  glEnd();
-//    lasertricolors[(curidxlaser<<2)] = 
-//       lasertricolors[(curidxlaser<<2)+2] = cc2;
-//       lasertricolors[(curidxlaser<<2)+1] = 255;
-//    lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-//    lasertrivertices[(curidxlaser<<1)] = fx;
-//    lasertrivertices[(curidxlaser<<1)+1] = fy;
-//    curidxlaser++;
-//    lasertricolors[(curidxlaser<<2)] = 
-//       lasertricolors[(curidxlaser<<2)+2] = cc4;
-//       lasertricolors[(curidxlaser<<2)+1] = 255;
-//    lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-//    lasertrivertices[(curidxlaser<<1)] = fx;
-//    lasertrivertices[(curidxlaser<<1)+1] = fy + fheight;
-//    curidxlaser++;
-//    lasertricolors[(curidxlaser<<2)] = 
-//       lasertricolors[(curidxlaser<<2)+1] = 
-//       lasertricolors[(curidxlaser<<2)+2] = cc3;
-//    lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-//    lasertrivertices[(curidxlaser<<1)] = fx-fwidth;
-//    lasertrivertices[(curidxlaser<<1)+1] = fy + fheight;
-//    if (curidxlaser == 2) 
-//    {
-//       glDrawArrays(GL_TRIANGLES, 0, 3);
-//    } else {
-//       glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//    }
-//    curidxlaser = 0;
-// 
-//
-////  glBegin(GL_TRIANGLE_FAN);
-////  if ( type != 0 ) {
-////    glColor4i(cc1, cc1, cc1, LASER_ALPHA);
-////    glVertex3f(x+width, y, 0);
-////  }
-//
-// if (type != 0)
-// {
-//    lasertricolors[(curidxlaser<<2)] = 
-//       lasertricolors[(curidxlaser<<2)+1] = 
-//       lasertricolors[(curidxlaser<<2)+2] = cc1;
-//    lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-//    lasertrivertices[(curidxlaser<<1)] = fx+fwidth;
-//    lasertrivertices[(curidxlaser<<1)+1] = fy;
-//    curidxlaser++;
-// }
-//
-////  glColor4i(cc2, 255, cc2, LASER_ALPHA);
-////  glVertex3f(x, y, 0);
-////  glColor4i(cc4, 255, cc4, LASER_ALPHA);
-////  glVertex3f(x, y+height, 0);
-////  glColor4i(cc3, cc3, cc3, LASER_ALPHA);
-////  glVertex3f(x+width, y+height, 0);
-////  glEnd();
-//
-//    lasertricolors[(curidxlaser<<2)] = 
-//       lasertricolors[(curidxlaser<<2)+2] = cc2;
-//       lasertricolors[(curidxlaser<<2)+1] = 255;
-//    lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-//    lasertrivertices[(curidxlaser<<1)] = fx;
-//    lasertrivertices[(curidxlaser<<1)+1] = fy;
-//    curidxlaser++;
-//    lasertricolors[(curidxlaser<<2)] = 
-//       lasertricolors[(curidxlaser<<2)+2] = cc4;
-//       lasertricolors[(curidxlaser<<2)+1] = 255;
-//    lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-//    lasertrivertices[(curidxlaser<<1)] = fx;
-//    lasertrivertices[(curidxlaser<<1)+1] = fy+fheight;
-//    curidxlaser++;
-//    lasertricolors[(curidxlaser<<2)] = 
-//       lasertricolors[(curidxlaser<<2)+1] = 
-//       lasertricolors[(curidxlaser<<2)+2] = cc3;
-//    lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-//    lasertrivertices[(curidxlaser<<1)] = fx+fwidth;
-//    lasertrivertices[(curidxlaser<<1)+1] = fy+fheight;
-////     glDrawArrays(GL_TRIANGLE_FAN, 0, curidxlaser);
-//    if (curidxlaser == 2) 
-//    {
-//       glDrawArrays(GL_TRIANGLES, 0, 3);
-//    } else {
-//       glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//    }
-//
-////  if ( type == 2 ) return;
-////  glColor4i(80, 240, 80, LASER_LINE_ALPHA);
-////  glBegin(GL_LINES);
-////  d = (cnt*LASER_LINE_ROLL_SPEED)&(512/4-1);
-////  for ( i=0 ; i<4 ; i++, d+=(512/4) ) {
-////    d &= 1023;
-////    gx = x + width*sctbl[d+256]/256.0f;
-////    if ( type == 1 ) {
-////      glVertex3f(gx, y, 0);
-////    } else {
-////      glVertex3f(x, y, 0);
-////    }
-////    glVertex3f(gx, y+height, 0);
-////  }
-////  if ( type == 0 ) {
-////    glEnd();
-////    return;
-////  }
-////  gy = y + (height/4/LASER_LINE_UP_SPEED) * (cnt&(LASER_LINE_UP_SPEED-1));
-////  for ( i=0 ; i<4 ; i++, gy+=height/4 ) {
-////    glVertex3f(x-width, gy, 0);
-////    glVertex3f(x+width, gy, 0);
-////  }
-////  glEnd();
-//
-//}
 
 //static GLfixed laservertices[2*380];    // only 354 max seem to be used but to be safe we will reserve 380
 //static GLubyte lasercolors[4*380];      
@@ -2683,6 +2347,7 @@ inline void finishDrawLaser (void)
 {
    int numvertices =
       ((unsigned int) laser_vertex_ptr - (unsigned int) &laser_vertices[0]) / sizeof(gl_vertex);
+   if (numvertices == 0) return;    // Is there anything to draw?
 #ifdef FIXEDMATH
    glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &laser_vertices[0].x);
 #else
@@ -2693,219 +2358,6 @@ inline void finishDrawLaser (void)
    laser_vertex_ptr = &(laser_vertices[0]);
 }
 
-////senquack - (fixed point openglES) (only using one color to draw the laser)
-//inline void drawLaserx(GLfixed fx, GLfixed fy, GLfixed fwidth, GLfixed fheight,
-//        int cc1, int cnt, int type) {
-//  int i, d;
-////  float gx, gy;
-////  GLfixed fgx, fgy; // only needed if we're drawing ugly, useless lines
-//  
-// if (type != 0)
-// {
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx-fwidth;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx-fwidth; *laservertptr++ = fy;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy;
-//    
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy + fheight;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy+fheight;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy + fheight;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy+fheight;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx-fwidth;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy + fheight;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx-fwidth; *laservertptr++ = fy+fheight;
-// } else {
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy + fheight;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy+fheight;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx-fwidth;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy + fheight;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx-fwidth; *laservertptr++ = fy+fheight;
-// }
-//    
-////     if (curidxlaser == 2) 
-////     {
-////        glDrawArrays(GL_TRIANGLES, 0, 3);
-////     } else {
-////        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-////     }
-////     curidxlaser = 0;
-//
-// if (type != 0)
-// {
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx+fwidth;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx+fwidth; *laservertptr++ = fy;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy+fheight;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy+fheight;
-//
-// } else {
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy+fheight;
-////     curidxlaser++;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy+fheight;
-//
-////     lasertricolors[(curidxlaser<<2)] = 
-////        lasertricolors[(curidxlaser<<2)+2] = 0;
-////        lasertricolors[(curidxlaser<<2)+1] = cc1;
-////     lasertricolors[(curidxlaser<<2)+3] = LASER_ALPHA;
-////     lasertrivertices[(curidxlaser<<1)] = fx+fwidth;
-////     lasertrivertices[(curidxlaser<<1)+1] = fy+fheight;
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx+fwidth; *laservertptr++ = fy+fheight;
-//
-////     if (curidxlaser == 2) 
-////     {
-////        glDrawArrays(GL_TRIANGLES, 0, 3);
-////     } else {
-////        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-////     }
-// }
-//}
-//inline void drawLaserx(GLfixed fx, GLfixed fy, GLfixed fwidth, GLfixed fheight,
-//        int cc1, int cnt, int type) {
-//  int i, d;
-//  
-// if (type != 0)
-// {
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx-fwidth; *laservertptr++ = fy;
-//
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx-fwidth; *laservertptr++ = fy+fheight;
-//    
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx+fwidth; *laservertptr++ = fy;
-//
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx-fwidth; *laservertptr++ = fy+fheight;
-//
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx+fwidth; *laservertptr++ = fy+fheight;
-//
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx+fwidth; *laservertptr++ = fy;
-// } else {
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx; *laservertptr++ = fy;
-//
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx-fwidth; *laservertptr++ = fy+fheight;
-//
-//    *lasercolptr++ = 0; *lasercolptr++ = cc1; *lasercolptr++ = 0; *lasercolptr++ = LASER_ALPHA;
-//    *laservertptr++ = fx+fwidth; *laservertptr++ = fy+fheight;
-// }
-//}
-//senquack TODO: interleave
 //senquack - heavily optimized triangle strip version:
 #ifdef FIXEDMATH
 void drawLaser (GLfixed x, GLfixed y, GLfixed width, GLfixed height,
@@ -2946,7 +2398,7 @@ void drawLaser (GLfloat x, GLfloat y, GLfloat width, GLfloat height,
 #define SHAPE_POINT_SIZE_L 0.07f
 #define SHAPE_POINT_SIZE_L_X 4588   // fixed point version of above number for openGLES
 
-//senquack - fixed point optimization
+// Original GL 1.2 code:
 //static void drawRing(GLfloat x, GLfloat y, int d1, int d2, int r, int g, int b) {
 //  int i, d;
 //  float x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
@@ -2969,223 +2421,114 @@ void drawLaser (GLfloat x, GLfloat y, GLfloat width, GLfloat height,
 //  }
 //  glPopMatrix();
 //}
-//senquack - optimizing more:
-//static void drawRingx(GLfixed x, GLfixed y, int d1, int d2, int r, int g, int b) {
-//  int i, d;
-////  float x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
-//  GLfixed x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
-//  glPushMatrix();
-//  glTranslatex(x, y, 0);
-////  glRotatef((float)d1*360/1024, 0, 0, 1);
-////  glRotatef((float)d2*360/1024, 1, 0, 0);
-//    glRotatex((d1*360)<<6, 0, 0, INT2FNUM(1));
-//    glRotatex((d2*360)<<6, INT2FNUM(1), 0, 0);
-//
-////  glColor4i(r, g, b, 255);
-//  x1 = x2 = 0;
-////  y1 = y4 =  CORE_HEIGHT/2;
-//  y1 = y4 =  CORE_HEIGHT_X>>1;
-////  y2 = y3 = -CORE_HEIGHT/2;
-//  y2 = y3 = -(CORE_HEIGHT_X>>1);
-////  z1 = z2 = CORE_RING_SIZE;
-//  z1 = z2 = CORE_RING_SIZE_X;
-//  for ( i=0,d=0 ; i<8 ; i++ ) {
-//    d+=(1024/8); d &= 1023;
-////    x3 = x4 = sctbl[d+256]*CORE_RING_SIZE/256;
-////    z3 = z4 = sctbl[d]    *CORE_RING_SIZE/256;
-//    x3 = x4 = FMUL(INT2FNUM(sctbl[d+256]),CORE_RING_SIZE_X)>>8;
-//    z3 = z4 = FMUL(INT2FNUM(sctbl[d]),CORE_RING_SIZE_X)>>8;
-////    drawSquare(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b);
-//    drawSquarex(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b);
-//    x1 = x3; y1 = y3; z1 = z3;
-//    x2 = x4; y2 = y4; z2 = z4;
-//  }
-//  glPopMatrix();
-//}
+static gl_vertex_3d ring_vertices[48];
+static gl_vertex_3d *ring_vertex_ptr = NULL;
+static inline void prepareDrawRings (void)
+{
+#ifdef FIXEDMATH
+   glVertexPointer (3, GL_FIXED, sizeof(gl_vertex_3d), &ring_vertices[0].x);
+#else
+   glVertexPointer (3, GL_FLOAT, sizeof(gl_vertex_3d), &ring_vertices[0].x);
+#endif //FIXEDMATH
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex_3d), &ring_vertices[0].r);
+}
 
-//static GLfixed ringvertices[18 * 3];
-//static GLubyte ringcolors[18 * 4];
-//static GLfixed *ringvertptr;
-//static GLubyte *ringcolptr;
+#ifdef FIXEDMATH
+static void drawRing (GLfixed x, GLfixed y, int d1, int d2, uint32_t color);
+{
+   printf("ERROR: Call to stub for fixed-point drawRing, please adapt drawRing to the new code\n");
+   return;
 //
-////senquack - added this
-//static void prepareDrawRingx(void)
-//{
-// ringvertptr = &(ringvertices[0]);
-// ringcolptr = &(ringcolors[0]);
-//}
-//
-////senquack - added this
-//static void finishDrawRingx(void)
-//{
-// int numringvertices = ((unsigned int)ringcolptr - (unsigned int)&(ringcolors[0])) >> 2;
-////  printf("Drawing ring with %d vertices\n", numringvertices);
-// glVertexPointer(3, GL_FIXED, 0, ringvertices);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, ringcolors);
-////  glDrawArrays(GL_TRIANGLE_FAN, 0, numringvertices);
-// glDrawArrays(GL_TRIANGLE_STRIP, 0, numringvertices);
-//}
-//
-//static void drawRingx(GLfixed x, GLfixed y, int d1, int d2, int r, int g, int b) {
-// prepareDrawRingx();
-//
-//  int i, d;
-////  float x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
-//  GLfixed x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
-//  glPushMatrix();
-//  glTranslatex(x, y, 0);
+//   int i, d;
+////   float x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
+//   GLfixed x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
+//   glPushMatrix ();
+//   glTranslatex (x, y, 0);
 ////  glRotatef((float)d1*360/1024, 0, 0, 1);
 ////  glRotatef((float)d2*360/1024, 1, 0, 0);
-////    glRotatex((d1*360)<<6, 0, 0, INT2FNUM(1));
-////    glRotatex((d2*360)<<6, INT2FNUM(1), 0, 0);
-//  glRotatef((float)((d1*360)>>10), 0, 0, 1);
-//  glRotatef((float)((d2*360)>>10), 1, 0, 0);
+//   glRotatef ((float) ((d1 * 360) >> 10), 0, 0, 1);
+//   glRotatef ((float) ((d2 * 360) >> 10), 1, 0, 0);
 //
 ////  glColor4i(r, g, b, 255);
-//  x1 = x2 = 0;
+//   x1 = x2 = 0;
 ////  y1 = y4 =  CORE_HEIGHT/2;
-//  y1 = y4 =  CORE_HEIGHT_X>>1;
+//   y1 = y4 = CORE_HEIGHT_X >> 1;
 ////  y2 = y3 = -CORE_HEIGHT/2;
-//  y2 = y3 = -(CORE_HEIGHT_X>>1);
+//   y2 = y3 = -(CORE_HEIGHT_X >> 1);
 ////  z1 = z2 = CORE_RING_SIZE;
-//  z1 = z2 = CORE_RING_SIZE_X;
-//
-// *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-// *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-// *ringvertptr++ = x1; *ringvertptr++ = y1; *ringvertptr++ = z1;
-// *ringvertptr++ = x2; *ringvertptr++ = y2; *ringvertptr++ = z2;
-//  for ( i=0,d=0 ; i<8 ; i++ ) {
-//    d+=(1024/8); d &= 1023;
+//   z1 = z2 = CORE_RING_SIZE_X;
+//   for (i = 0, d = 0; i < 8; i++) {
+//      ringcolptr = &(ringcolors[0]);
+//      ringvertptr = &(ringvertices[0]);
+//      d += (1024 / 8);
+//      d &= 1023;
 ////    x3 = x4 = sctbl[d+256]*CORE_RING_SIZE/256;
 ////    z3 = z4 = sctbl[d]    *CORE_RING_SIZE/256;
-//    x3 = x4 = FMUL(INT2FNUM(sctbl[d+256]),CORE_RING_SIZE_X)>>8;
-//    z3 = z4 = FMUL(INT2FNUM(sctbl[d]),CORE_RING_SIZE_X)>>8;
+//      x3 = x4 = FMUL (INT2FNUM (sctbl[d + 256]), CORE_RING_SIZE_X) >> 8;
+//      z3 = z4 = FMUL (INT2FNUM (sctbl[d]), CORE_RING_SIZE_X) >> 8;
 ////    drawSquare(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b);
 ////    drawSquarex(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b);
-//    *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-//    *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-//    *ringvertptr++ = x3; *ringvertptr++ = y3; *ringvertptr++ = z3;
-//    *ringvertptr++ = x4; *ringvertptr++ = y4; *ringvertptr++ = z4;
-////    x1 = x3; y1 = y3; z1 = z3;
-////    x2 = x4; y2 = y4; z2 = z4;
-//  }
-//
-// finishDrawRingx();
-//  glPopMatrix();
-//}
-static GLubyte ringcolors[4 * 4];
-static GLubyte *ringcolptr;
-#ifdef FIXEDMATH
-static GLfixed ringvertices[4 * 3];
-static GLfixed *ringvertptr;
-#else
-static GLfloat ringvertices[4 * 3];
-static GLfloat *ringvertptr;
-#endif //FIXEDMATH
-
-static void
-prepareDrawRing (void)
-{
-#ifdef FIXEDMATH
-   glVertexPointer (3, GL_FIXED, 0, ringvertices);
-#else
-   glVertexPointer (3, GL_FLOAT, 0, ringvertices);
-#endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, ringcolors);
-}
-
-#ifdef FIXEDMATH
-static void drawRing (GLfixed x, GLfixed y, int d1, int d2, int r, int g, int b)
-{
-   int i, d;
-//   float x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
-   GLfixed x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
-   glPushMatrix ();
-   glTranslatex (x, y, 0);
-//  glRotatef((float)d1*360/1024, 0, 0, 1);
-//  glRotatef((float)d2*360/1024, 1, 0, 0);
-//    glRotatex((d1*360)<<6, 0, 0, INT2FNUM(1));
-//    glRotatex((d2*360)<<6, INT2FNUM(1), 0, 0);
-   glRotatef ((float) ((d1 * 360) >> 10), 0, 0, 1);
-   glRotatef ((float) ((d2 * 360) >> 10), 1, 0, 0);
-
-//  glColor4i(r, g, b, 255);
-   x1 = x2 = 0;
-//  y1 = y4 =  CORE_HEIGHT/2;
-   y1 = y4 = CORE_HEIGHT_X >> 1;
-//  y2 = y3 = -CORE_HEIGHT/2;
-   y2 = y3 = -(CORE_HEIGHT_X >> 1);
-//  z1 = z2 = CORE_RING_SIZE;
-   z1 = z2 = CORE_RING_SIZE_X;
-   for (i = 0, d = 0; i < 8; i++) {
-      ringcolptr = &(ringcolors[0]);
-      ringvertptr = &(ringvertices[0]);
-      d += (1024 / 8);
-      d &= 1023;
-//    x3 = x4 = sctbl[d+256]*CORE_RING_SIZE/256;
-//    z3 = z4 = sctbl[d]    *CORE_RING_SIZE/256;
-      x3 = x4 = FMUL (INT2FNUM (sctbl[d + 256]), CORE_RING_SIZE_X) >> 8;
-      z3 = z4 = FMUL (INT2FNUM (sctbl[d]), CORE_RING_SIZE_X) >> 8;
-//    drawSquare(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b);
-//    drawSquarex(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b);
-      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-      *ringvertptr++ = x1; *ringvertptr++ = y1; *ringvertptr++ = z1;
-      *ringvertptr++ = x2; *ringvertptr++ = y2; *ringvertptr++ = z2;
-      *ringvertptr++ = x3; *ringvertptr++ = y3; *ringvertptr++ = z3;
-      *ringvertptr++ = x4; *ringvertptr++ = y4; *ringvertptr++ = z4;
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-      x1 = x3; y1 = y3; z1 = z3;
-      x2 = x4; y2 = y4; z2 = z4;
-   }
-   glPopMatrix ();
+//      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
+//      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
+//      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
+//      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
+//      *ringvertptr++ = x1; *ringvertptr++ = y1; *ringvertptr++ = z1;
+//      *ringvertptr++ = x2; *ringvertptr++ = y2; *ringvertptr++ = z2;
+//      *ringvertptr++ = x3; *ringvertptr++ = y3; *ringvertptr++ = z3;
+//      *ringvertptr++ = x4; *ringvertptr++ = y4; *ringvertptr++ = z4;
+//      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
+//      x1 = x3; y1 = y3; z1 = z3;
+//      x2 = x4; y2 = y4; z2 = z4;
+//   }
+//   glPopMatrix ();
 }
 #else
-static void drawRing (GLfloat x, GLfloat y, int d1, int d2, int r, int g, int b)
+//senquack - optimized GLES version:
+static inline void drawRing (GLfloat x, GLfloat y, int d1, int d2, uint32_t color)
 {
    int i, d;
    float x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
    glPushMatrix ();
    glTranslatef(x, y, 0);
-//  glRotatef((float)d1*360/1024, 0, 0, 1);
-//  glRotatef((float)d2*360/1024, 1, 0, 0);
    glRotatef ((float) ((d1 * 360) >> 10), 0, 0, 1);
    glRotatef ((float) ((d2 * 360) >> 10), 1, 0, 0);
 
-//  glColor4i(r, g, b, 255);
    x1 = x2 = 0;
    y1 = y4 =  CORE_HEIGHT/2;
    y2 = y3 = -CORE_HEIGHT/2;
    z1 = z2 = CORE_RING_SIZE;
 
+   ring_vertex_ptr = &ring_vertices[0];
+
    for (i = 0, d = 0; i < 8; i++) {
-      ringcolptr = &(ringcolors[0]);
-      ringvertptr = &(ringvertices[0]);
       d += (1024 / 8);
       d &= 1023;
       x3 = x4 = sctbl[d+256]*CORE_RING_SIZE/256;
       z3 = z4 = sctbl[d]    *CORE_RING_SIZE/256;
-//    drawSquare(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b);
-//    drawSquarex(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b);
-      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-      *ringcolptr++ = r; *ringcolptr++ = g; *ringcolptr++ = b; *ringcolptr++ = 64;
-      *ringvertptr++ = x1; *ringvertptr++ = y1; *ringvertptr++ = z1;
-      *ringvertptr++ = x2; *ringvertptr++ = y2; *ringvertptr++ = z2;
-      *ringvertptr++ = x3; *ringvertptr++ = y3; *ringvertptr++ = z3;
-      *ringvertptr++ = x4; *ringvertptr++ = y4; *ringvertptr++ = z4;
-      glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
+      ring_vertex_ptr->x = x1;  ring_vertex_ptr->y = y1;  ring_vertex_ptr->z = z1;
+      ring_vertex_ptr->color_rgba = color;  ring_vertex_ptr++;
+      ring_vertex_ptr->x = x2;  ring_vertex_ptr->y = y2;  ring_vertex_ptr->z = z2;
+      ring_vertex_ptr->color_rgba = color;  ring_vertex_ptr++;
+      ring_vertex_ptr->x = x3;  ring_vertex_ptr->y = y3;  ring_vertex_ptr->z = z3;
+      ring_vertex_ptr->color_rgba = color;  ring_vertex_ptr++;
+
+      ring_vertex_ptr->x = x1;  ring_vertex_ptr->y = y1;  ring_vertex_ptr->z = z1;
+      ring_vertex_ptr->color_rgba = color;  ring_vertex_ptr++;
+      ring_vertex_ptr->x = x3;  ring_vertex_ptr->y = y3;  ring_vertex_ptr->z = z3;
+      ring_vertex_ptr->color_rgba = color;  ring_vertex_ptr++;
+      ring_vertex_ptr->x = x4;  ring_vertex_ptr->y = y4;  ring_vertex_ptr->z = z4;
+      ring_vertex_ptr->color_rgba = color;  ring_vertex_ptr++;
+
       x1 = x3; y1 = y3; z1 = z3;
       x2 = x4; y2 = y4; z2 = z4;
    }
+   int num_vertices = ((unsigned int)ring_vertex_ptr - (unsigned int)&ring_vertices[0]) / sizeof(gl_vertex_3d);
+   glDrawArrays (GL_TRIANGLE_STRIP, 0, num_vertices);
    glPopMatrix ();
 }
 #endif //FIXEDMATH
 
-//senquack - 2/11 experiment:
+// Original GL 1.2 code:
 //void drawCore(GLfloat x, GLfloat y, int cnt, int r, int g, int b) {
 //  int i;
 //  float cy;
@@ -3204,116 +2547,80 @@ static void drawRing (GLfloat x, GLfloat y, int d1, int d2, int r, int g, int b)
 //    drawRing(x, cy, (cnt*(4+i))&1023, (sctbl[(cnt*(5+i))&1023]/4)&1023, r, g, b);
 //  }
 //}
-//void drawCore(GLfloat x, GLfloat y, int cnt, int r, int g, int b) {
-//  int i;
-//  float cy;
-//  glPushMatrix();
-//  glTranslatef(x, y, 0);
-//  glColor4i(r, g, b, 255);
-//
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(-SHAPE_POINT_SIZE_L, -SHAPE_POINT_SIZE_L,  0);
-////  glVertex3f( SHAPE_POINT_SIZE_L, -SHAPE_POINT_SIZE_L,  0);
-////  glVertex3f( SHAPE_POINT_SIZE_L,  SHAPE_POINT_SIZE_L,  0);
-////  glVertex3f(-SHAPE_POINT_SIZE_L,  SHAPE_POINT_SIZE_L,  0);
-////  glEnd();
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex2f(-SHAPE_POINT_SIZE_L, -SHAPE_POINT_SIZE_L);
-//  glVertex2f( SHAPE_POINT_SIZE_L, -SHAPE_POINT_SIZE_L);
-//  glVertex2f( SHAPE_POINT_SIZE_L,  SHAPE_POINT_SIZE_L);
-//  glVertex2f(-SHAPE_POINT_SIZE_L,  SHAPE_POINT_SIZE_L);
-//  glEnd();
-//
-//  glPopMatrix();
-//  cy = y - CORE_HEIGHT*2.5f;
-//  for ( i=0 ; i<4 ; i++, cy+=CORE_HEIGHT ) {
-//    drawRing(x, cy, (cnt*(4+i))&1023, (sctbl[(cnt*(5+i))&1023]/4)&1023, r, g, b);
-//  }
-//}
 #ifdef FIXEDMATH
 void drawCore (GLfixed x, GLfixed y, int cnt, int r, int g, int b)
 {
-   int i;
-//  float cy;
-   GLfixed cy;
-   glPushMatrix ();
-   glTranslatex (x, y, 0);
-//  glColor4i(r, g, b, 255);
-
-   GLubyte colors[4 * 4];
-   GLfixed vertices[4 * 2];
-   colors[0] = colors[4] = colors[8] = colors[12] = r;
-   colors[1] = colors[5] = colors[9] = colors[13] = g;
-   colors[2] = colors[6] = colors[10] = colors[14] = b;
-   colors[3] = colors[7] = colors[11] = colors[15] = 255;
-
-   vertices[0] = -SHAPE_POINT_SIZE_L_X;
-   vertices[1] = -SHAPE_POINT_SIZE_L_X;
-   vertices[2] = SHAPE_POINT_SIZE_L_X;
-   vertices[3] = -SHAPE_POINT_SIZE_L_X;
-   vertices[4] = SHAPE_POINT_SIZE_L_X;
-   vertices[5] = SHAPE_POINT_SIZE_L_X;
-   vertices[6] = -SHAPE_POINT_SIZE_L_X;
-   vertices[7] = SHAPE_POINT_SIZE_L_X;
-
-// glEnableClientState(GL_VERTEX_ARRAY);
-   glVertexPointer (2, GL_FIXED, 0, vertices);
-// glEnableClientState(GL_COLOR_ARRAY);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-   glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-
-   glPopMatrix ();
-
-//  cy = y - CORE_HEIGHT*2.5f;
-   cy = y - FMUL (CORE_HEIGHT_X, 163840);
-
-   prepareDrawRing ();
-//  for ( i=0 ; i<4 ; i++, cy+=CORE_HEIGHT ) {
-   for (i = 0; i < 4; i++, cy += CORE_HEIGHT_X) {
-//    drawRing(x, cy, (cnt*(4+i))&1023, (sctbl[(cnt*(5+i))&1023]/4)&1023, r, g, b);
-//    drawRingx(fx, fcy, (cnt*(4+i))&1023, (sctbl[(cnt*(5+i))&1023]/4)&1023, r, g, b);
-      drawRing (x, cy, (cnt * (4 + i)) & 1023,
-                 (sctbl[(cnt * (5 + i)) & 1023] >> 2) & 1023, r, g, b);
-   }
+   printf("ERROR: Call to stub for fixed-point drawCore, please adapt drawRing to the new code\n");
+   return;
+//   int i;
+////  float cy;
+//   GLfixed cy;
+//   glPushMatrix ();
+//   glTranslatex (x, y, 0);
+////  glColor4i(r, g, b, 255);
+//
+//   GLubyte colors[4 * 4];
+//   GLfixed vertices[4 * 2];
+//   colors[0] = colors[4] = colors[8] = colors[12] = r;
+//   colors[1] = colors[5] = colors[9] = colors[13] = g;
+//   colors[2] = colors[6] = colors[10] = colors[14] = b;
+//   colors[3] = colors[7] = colors[11] = colors[15] = 255;
+//
+//   vertices[0] = -SHAPE_POINT_SIZE_L_X;
+//   vertices[1] = -SHAPE_POINT_SIZE_L_X;
+//   vertices[2] = SHAPE_POINT_SIZE_L_X;
+//   vertices[3] = -SHAPE_POINT_SIZE_L_X;
+//   vertices[4] = SHAPE_POINT_SIZE_L_X;
+//   vertices[5] = SHAPE_POINT_SIZE_L_X;
+//   vertices[6] = -SHAPE_POINT_SIZE_L_X;
+//   vertices[7] = SHAPE_POINT_SIZE_L_X;
+//
+//// glEnableClientState(GL_VERTEX_ARRAY);
+//   glVertexPointer (2, GL_FIXED, 0, vertices);
+//// glEnableClientState(GL_COLOR_ARRAY);
+//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
+//   glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
+//
+//   glPopMatrix ();
+//
+////  cy = y - CORE_HEIGHT*2.5f;
+//   cy = y - FMUL (CORE_HEIGHT_X, 163840);
+//
+//   prepareDrawRing ();
+////  for ( i=0 ; i<4 ; i++, cy+=CORE_HEIGHT ) {
+//   for (i = 0; i < 4; i++, cy += CORE_HEIGHT_X) {
+////    drawRing(x, cy, (cnt*(4+i))&1023, (sctbl[(cnt*(5+i))&1023]/4)&1023, r, g, b);
+////    drawRingx(fx, fcy, (cnt*(4+i))&1023, (sctbl[(cnt*(5+i))&1023]/4)&1023, r, g, b);
+//      drawRing (x, cy, (cnt * (4 + i)) & 1023,
+//                 (sctbl[(cnt * (5 + i)) & 1023] >> 2) & 1023, r, g, b);
+//   }
 }
 #else
+//senquack - optimized GLES version:
 void drawCore (GLfloat x, GLfloat y, int cnt, int r, int g, int b)
 {
    int i;
    float cy;
-   glPushMatrix ();
-   glTranslatef (x, y, 0);
-//  glColor4i(r, g, b, 255);
+   uint32_t color = (255 << 24) | (b << 16) | (g << 8) | r;
 
-   GLubyte colors[4 * 4];
-   GLfloat vertices[4 * 2];
-   colors[0] = colors[4] = colors[8] = colors[12] = r;
-   colors[1] = colors[5] = colors[9] = colors[13] = g;
-   colors[2] = colors[6] = colors[10] = colors[14] = b;
-   colors[3] = colors[7] = colors[11] = colors[15] = 255;
+   triangles_ptr->x = x - SHAPE_POINT_SIZE_L;    triangles_ptr->y = y - SHAPE_POINT_SIZE_L;
+   triangles_ptr->color_rgba = color;            triangles_ptr++;
+   triangles_ptr->x = x + SHAPE_POINT_SIZE_L;    triangles_ptr->y = y - SHAPE_POINT_SIZE_L;
+   triangles_ptr->color_rgba = color;            triangles_ptr++;
+   triangles_ptr->x = x + SHAPE_POINT_SIZE_L;    triangles_ptr->y = y + SHAPE_POINT_SIZE_L;
+   triangles_ptr->color_rgba = color;            triangles_ptr++;
+   triangles_ptr->x = x - SHAPE_POINT_SIZE_L;    triangles_ptr->y = y - SHAPE_POINT_SIZE_L;
+   triangles_ptr->color_rgba = color;            triangles_ptr++;
+   triangles_ptr->x = x + SHAPE_POINT_SIZE_L;    triangles_ptr->y = y + SHAPE_POINT_SIZE_L;
+   triangles_ptr->color_rgba = color;            triangles_ptr++;
+   triangles_ptr->x = x - SHAPE_POINT_SIZE_L;    triangles_ptr->y = y + SHAPE_POINT_SIZE_L;
+   triangles_ptr->color_rgba = color;            triangles_ptr++;
 
-   vertices[0] = -SHAPE_POINT_SIZE_L;
-   vertices[1] = -SHAPE_POINT_SIZE_L;
-   vertices[2] = SHAPE_POINT_SIZE_L;
-   vertices[3] = -SHAPE_POINT_SIZE_L;
-   vertices[4] = SHAPE_POINT_SIZE_L;
-   vertices[5] = SHAPE_POINT_SIZE_L;
-   vertices[6] = -SHAPE_POINT_SIZE_L;
-   vertices[7] = SHAPE_POINT_SIZE_L;
-
-// glEnableClientState(GL_VERTEX_ARRAY);
-   glVertexPointer (2, GL_FLOAT, 0, vertices);
-// glEnableClientState(GL_COLOR_ARRAY);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-   glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-
-   glPopMatrix ();
-
-  cy = y - CORE_HEIGHT*2.5f;
-
-   prepareDrawRing ();
+   cy = y - CORE_HEIGHT*2.5f;
+   prepareDrawRings ();
+   color = (64 << 24) | (b << 16) | (g << 8) | r;
    for ( i=0 ; i<4 ; i++, cy+=CORE_HEIGHT ) {
-      drawRing(x, cy, (cnt*(4+i))&1023, (sctbl[(cnt*(5+i))&1023]/4)&1023, r, g, b);
+      drawRing(x, cy, (cnt*(4+i))&1023, (sctbl[(cnt*(5+i))&1023]/4)&1023, color);
    }
 }
 #endif //FIXEDMATH
@@ -3359,6 +2666,7 @@ void drawCore (GLfloat x, GLfloat y, int cnt, int r, int g, int b)
 //  glPopMatrix();
 //}
 #ifdef FIXEDMATH
+//senquack TODO: adapt my older fixed point code to the new interleaved form below
 void drawShipShape (GLfixed x, GLfixed y, float d, int inv)
 {
    int i;
@@ -3428,6 +2736,7 @@ void drawShipShape (GLfixed x, GLfixed y, float d, int inv)
    glPopMatrix ();
 }
 #else
+//senquack - optimized GLES version:
 void drawShipShape (GLfloat x, GLfloat y, float d, int inv)
 {
    glPushMatrix ();
@@ -3485,23 +2794,8 @@ void drawShipShape (GLfloat x, GLfloat y, float d, int inv)
 }
 #endif //FIXEDMATH
 
-//senquack - Converted to interleaved GLES line strip for speed.
-//void drawBomb(GLfloat x, GLfloat y, GLfloat width, int cnt) {
-//  int i, d, od, c;
-//  GLfloat x1, y1, x2, y2;
-//  d = cnt*48; d &= 1023;
-//  c = 4+(cnt>>3); if ( c > 16 ) c = 16;
-//  od = 1024/c;
-//  x1 = (sctbl[d]    *width)/256 + x;
-//  y1 = (sctbl[d+256]*width)/256 + y;
-//  for ( i=0 ; i<c ; i++ ) {
-//    d += od; d &= 1023;
-//    x2 = (sctbl[d]    *width)/256 + x;
-//    y2 = (sctbl[d+256]*width)/256 + y;
-//    drawLine(x1, y1, 0, x2, y2, 0, 255, 255, 255, 255);
-//    x1 = x2; y1 = y2;
-//  }
 #ifdef FIXEDMATH
+// My older fixed-style code that needs updating
 void drawBomb (GLfixed x, GLfixed y, GLfixed width, int cnt)
 {
    int i, d, od, c;
@@ -3543,6 +2837,7 @@ void drawBomb (GLfixed x, GLfixed y, GLfixed width, int cnt)
    glDrawArrays (GL_LINE_STRIP, 0, 1 + c);
 }
 #else
+//senquack - optimized GLES float version
 void drawBomb (GLfloat x, GLfloat y, GLfloat width, int cnt)
 {
    int i, d, od, c;
@@ -3576,34 +2871,8 @@ void drawBomb (GLfloat x, GLfloat y, GLfloat width, int cnt)
 }
 #endif //FIXEDMATH
 
-//senquack - converted to 2D OpenGLES
-// TODO: maybe optimize
-//void drawCircle(GLfloat x, GLfloat y, GLfloat width, int cnt,
-//    int r1, int g1, int b1, int r2, int b2, int g2) {
-//  int i, d;
-//  GLfloat x1, y1, x2, y2;
-//  if ( (cnt&1) == 0 ) {
-//    glColor4i(r1, g1, b1, 64);
-//  } else {
-//    glColor4i(255, 255, 255, 64);
-//  }
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(x, y, 0);
-//  d = cnt*48; d &= 1023;
-//  x1 = (sctbl[d]    *width)/256 + x;
-//  y1 = (sctbl[d+256]*width)/256 + y;
-//  glColor4i(r2, g2, b2, 150);
-//  for ( i=0 ; i<16 ; i++ ) {
-//    d += 64; d &= 1023;
-//    x2 = (sctbl[d]    *width)/256 + x;
-//    y2 = (sctbl[d+256]*width)/256 + y;
-//    glVertex3f(x1, y1, 0);
-//    glVertex3f(x2, y2, 0);
-//    x1 = x2; y1 = y2;
-//  }
-//  glEnd();
-//}
 #ifdef FIXEDMATH
+//senquack - TODO: adapt my older fixed-point code to my more optimized code in the float version below
 void drawCircle (GLfixed x, GLfixed y, GLfixed width, int cnt,
                    int r1, int g1, int b1, int r2, int b2, int g2)
 {
@@ -3652,6 +2921,7 @@ void drawCircle (GLfixed x, GLfixed y, GLfixed width, int cnt,
    glDrawArrays (GL_TRIANGLE_FAN, 0, 33);
 }
 #else
+//senquack - Optimized GLES float version
 void drawCircle (GLfloat x, GLfloat y, GLfloat width, int cnt,
                    int r1, int g1, int b1, int r2, int b2, int g2)
 {
@@ -3688,7 +2958,6 @@ void drawCircle (GLfloat x, GLfloat y, GLfloat width, int cnt,
    glDrawArrays (GL_TRIANGLE_FAN, 0, 33);
 }
 #endif //FIXEDMATH
-
 
 #ifdef FIXEDMATH
 /*senquack - Original GLES Wiz port code is below, and it has NOT been optimized fully. Currently broken
@@ -3893,8 +3162,6 @@ void drawShape (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, in
 #else
 
 /* senquack - HIGHLY OPTIMIZED POST-WIZ-PORT BATCH-DRAWN SHAPE CODE BEGINS HERE: */
-
-
 void prepareDrawBatch (void)
 {
    triangles_ptr = &triangles[0];
@@ -3904,8 +3171,6 @@ void prepareDrawBatch (void)
 void finishDrawBatch (void)
 {
    int num_vertices;
-
-//   glEnable (GL_BLEND);
 
    //First, draw the triangles:
    num_vertices = ((unsigned int)triangles_ptr - (unsigned int)(&triangles[0])) / sizeof(gl_vertex);
@@ -3950,7 +3215,7 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
    switch (type) {
       case 0: /* CASE 0 : SMALL TRIANGLE SHAPE */
          sz = size * 0.5f; sz2 = size * 0.75f;
-         shiftx = SIN_LOOKUP(d) * size * 0.25f;   shifty = COS_LOOKUP(d) * size * 0.25f;
+         shiftx = -SIN_LOOKUP(d) * size * 0.25f;   shifty = COS_LOOKUP(d) * size * 0.25f;
          color = (150 << 24) | base_color;
          vertices[0].x = x + X_ROT(-sz, -sz2, d) + shiftx; vertices[0].y = y + Y_ROT(-sz, -sz2, d) + shifty; 
          vertices[0].color_rgba = color;
@@ -4140,7 +3405,7 @@ void drawShape (GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, in
          /* CASE 5 - BIG TRIANGLE SHAPE */
          sz = size * (2.0f/3.0f);
          sz2 = size * 0.2f;
-         shiftx = SIN_LOOKUP(d) * sz2;   shifty = COS_LOOKUP(d) * sz2;
+         shiftx = -SIN_LOOKUP(d) * sz2;   shifty = COS_LOOKUP(d) * sz2;
          color = (150 << 24) | base_color;
          vertices[0].x = x + X_ROT(-sz, -sz, d) + shiftx; vertices[0].y = y + Y_ROT(-sz, -sz, d) + shifty; 
          vertices[0].color_rgba = color;
@@ -4233,71 +3498,9 @@ static int ikaClr[2][3][3] = {
    {{0, 0, 0}, {200, 0, 0}, {100, 0, 0}},
 };
 
-// senquack - original OpenGL 1.2 code, converted to optimized GLES below
-//void drawShapeIka(GLfloat x, GLfloat y, GLfloat size, int d, int cnt, int type, int c) {
-//  GLfloat sz, sz2, sz3;
-//  glPushMatrix();
-//  glTranslatef(x, y, 0);
-//  glColor4ub(ikaClr[c][0][0], ikaClr[c][0][1], ikaClr[c][0][2], 255);
-//  glDisable(GL_BLEND);
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(-SHAPE_POINT_SIZE, -SHAPE_POINT_SIZE,  0);
-//  glVertex3f( SHAPE_POINT_SIZE, -SHAPE_POINT_SIZE,  0);
-//  glVertex3f( SHAPE_POINT_SIZE,  SHAPE_POINT_SIZE,  0);
-//  glVertex3f(-SHAPE_POINT_SIZE,  SHAPE_POINT_SIZE,  0);
-//  glEnd();
-//  glColor4ub(ikaClr[c][0][0], ikaClr[c][0][1], ikaClr[c][0][2], 255);
-//  switch ( type ) {
-//  case 0:
-//    sz = size/2; sz2 = sz/3; sz3 = size*2/3;
-//    glRotatef((float)d*360/1024, 0, 0, 1);
-//    glBegin(GL_LINE_LOOP);
-//    glVertex3f(-sz, -sz3,  0);
-//    glVertex3f( sz, -sz3,  0);
-//    glVertex3f( sz2, sz3,  0);
-//    glVertex3f(-sz2, sz3,  0);
-//    glEnd();
-//    glEnable(GL_BLEND);
-//    glColor4ub(ikaClr[c][1][0], ikaClr[c][1][1], ikaClr[c][1][2], 250);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex3f(-sz, -sz3,  0);
-//    glVertex3f( sz, -sz3,  0);
-//    glColor4ub(ikaClr[c][2][0], ikaClr[c][2][1], ikaClr[c][2][2], 250);
-//    glVertex3f( sz2, sz3,  0);
-//    glVertex3f(-sz2, sz3,  0);
-//    glEnd();
-//    break;
-//  case 1:
-//    sz = size/2;
-//    glRotatef((float)((cnt*53)&1023)*360/1024, 0, 0, 1);
-//    glBegin(GL_LINE_LOOP);
-//    glVertex3f(-sz/2, -sz,  0);
-//    glVertex3f( sz/2, -sz,  0);
-//    glVertex3f( sz,  -sz/2,  0);
-//    glVertex3f( sz,   sz/2,  0);
-//    glVertex3f( sz/2,  sz,  0);
-//    glVertex3f(-sz/2,  sz,  0);
-//    glVertex3f(-sz,   sz/2,  0);
-//    glVertex3f(-sz,  -sz/2,  0);
-//    glEnd();
-//    glEnable(GL_BLEND);
-//    glColor4ub(ikaClr[c][1][0], ikaClr[c][1][1], ikaClr[c][1][2], 250);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex3f(-sz/2, -sz,  0);
-//    glVertex3f( sz/2, -sz,  0);
-//    glVertex3f( sz,  -sz/2,  0);
-//    glVertex3f( sz,   sz/2,  0);
-//    glColor4ub(ikaClr[c][2][0], ikaClr[c][2][1], ikaClr[c][2][2], 250);
-//    glVertex3f( sz/2,  sz,  0);
-//    glVertex3f(-sz/2,  sz,  0);
-//    glVertex3f(-sz,   sz/2,  0);
-//    glVertex3f(-sz,  -sz/2,  0);
-//    glEnd();
-//    break;
-//  }
-//  glPopMatrix();
-//}
+
 #ifdef FIXEDMATH
+//senquack - my old fixed-point code below needs updating after major optimization overhaul
 void drawShapeIka (GLfixed x, GLfixed y, GLfixed size, int d, int cnt, int type, int c)
 {
    printf("ERROR: Call to currently-broken drawShapeIka(). Needs code-merge with newer float GLES code.\n");
@@ -4602,30 +3805,8 @@ static int shtClr[3][3][3] = {
 };
 
 //senquack - converted to batch-drawn GLES by replacing glRotate w/ pre-rotated coordinates
-//void drawShot(GLfloat x, GLfloat y, GLfloat d, int c, float width, float height) {
-//  glPushMatrix();
-//  glTranslatef(x, y, 0);
-//  glRotatef(d, 0, 0, 1);
-//  glColor4i(shtClr[c][0][0], shtClr[c][0][1], shtClr[c][0][2], 240);
-//  glDisable(GL_BLEND);
-//  glBegin(GL_LINES);
-//  glVertex3f(-width, -height, 0);
-//  glVertex3f(-width,  height, 0);
-//  glVertex3f( width, -height, 0);
-//  glVertex3f( width,  height, 0);
-//  glEnd();
-//  glEnable(GL_BLEND);
-//
-//  glColor4i(shtClr[c][1][0], shtClr[c][1][1], shtClr[c][1][2], 240);
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(-width, -height, 0);
-//  glVertex3f( width, -height, 0);
-//  glColor4i(shtClr[c][2][0], shtClr[c][2][1], shtClr[c][2][2], 240);
-//  glVertex3f( width,  height, 0);
-//  glVertex3f(-width,  height, 0);
-//  glEnd();
-//  glPopMatrix();
-//}
+//          NOTE: sometimes at angles like 40deg or -40deg or so, shots can overshoot the
+//             boss's shape, but the original game did this too. TODO: maybe correct this.
 void drawShot (GLfloat x, GLfloat y, GLfloat d, int c, float width, float height)
 {
    uint32_t color;
@@ -5788,7 +4969,8 @@ void drawTitleBoard ()
    glDisable (GL_TEXTURE_2D);
 
    glDisable (GL_BLEND);
-   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE);   // original rr code had this
 
 
    colors[0] = colors[1] = colors[2] =

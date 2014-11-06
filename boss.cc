@@ -1756,35 +1756,29 @@ checkHitUpside ()
 //  }
 //}
 
-typedef struct {
-#ifdef FIXEDMATH
-   GLfixed x,y;
-#else
-   GLfloat x,y;
-#endif //FIXEDMATH
-   GLubyte r,g,b,a;
-} wingvertice;
    
-static wingvertice wingverticedata[700];       //Never seems to go much above 400, so 700 to be extra safe
-static wingvertice *wingverticeptr;
+static gl_vertex wing_vertices[700];       //Never seems to go much above 400, so 700 to be extra safe
+static gl_vertex *wing_vertex_ptr;
 
 //senquack - new function called once before a series of calls to drawShape (for openglES speedup)
 void prepareDrawBossWings (void)
 {
-   wingverticeptr = &wingverticedata[0];
+   wing_vertex_ptr = &wing_vertices[0];
 }
 
 void finishDrawBossWings (void)
 {
-   glEnable (GL_BLEND);
+//   glEnable (GL_BLEND);
 #ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, sizeof(wingvertice), &wingverticedata[0].x);
+   glVertexPointer (2, GL_FIXED, sizeof(gl_vertex), &wing_vertices[0].x);
 #else
-   glVertexPointer (2, GL_FLOAT, sizeof(wingvertice), &wingverticedata[0].x);
+   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &wing_vertices[0].x);
 #endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(wingvertice), &wingverticedata[0].r);
-   int numwingvertices = ((unsigned int) wingverticeptr - (unsigned int) (&wingverticedata[0])) / sizeof(wingvertice);
-   glDrawArrays (GL_TRIANGLES, 0, numwingvertices);
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &wing_vertices[0].r);
+   int numvertices = ((unsigned int) wing_vertex_ptr - (unsigned int) (&wing_vertices[0])) / sizeof(gl_vertex);
+   if (numvertices >= 2) {
+      glDrawArrays (GL_TRIANGLES, 0, numvertices);
+   }
 //   printf("printing wings with %d vertices\n", numwingvertices);
 }
 
@@ -1803,7 +1797,8 @@ static void drawBossWing (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWi
    GLfloat tmpx, tmpy;
 #endif //FIXEDMATH
 
-   GLubyte r = boss.r, g = boss.g, b = boss.b;
+//   GLubyte r = boss.r, g = boss.g, b = boss.b;
+   uint32_t color = (64 << 24) | (boss.b << 16) | (boss.g << 8) | boss.r;
 
    for (i = 0; i < wg->wingNum; i++) {
 #ifdef FIXEDMATH
@@ -1814,28 +1809,23 @@ static void drawBossWing (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWi
       tmpy = y1 + wg->y[i][0] * sz;
 #endif //FIXEDMATH
 
-      wingverticeptr->x = x2;       wingverticeptr->y = y2;
-      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
-      wingverticeptr++;
-      wingverticeptr->x = x1;       wingverticeptr->y = y1;
-      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
-      wingverticeptr++;
-      wingverticeptr->x = tmpx;     wingverticeptr->y = tmpy;
-      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
-      wingverticeptr++;
-      wingverticeptr->x = x1;       wingverticeptr->y = y1;
-      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
-      wingverticeptr++;
-      wingverticeptr->x = tmpx;     wingverticeptr->y = tmpy;
-      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
-      wingverticeptr++;
+      wing_vertex_ptr->x = x2;       wing_vertex_ptr->y = y2;      wing_vertex_ptr->color_rgba = color;
+      wing_vertex_ptr++;
+      wing_vertex_ptr->x = x1;       wing_vertex_ptr->y = y1;      wing_vertex_ptr->color_rgba = color;
+      wing_vertex_ptr++;
+      wing_vertex_ptr->x = tmpx;     wing_vertex_ptr->y = tmpy;    wing_vertex_ptr->color_rgba = color;
+      wing_vertex_ptr++;
+      wing_vertex_ptr->x = x1;       wing_vertex_ptr->y = y1;      wing_vertex_ptr->color_rgba = color;
+      wing_vertex_ptr++;
+      wing_vertex_ptr->x = tmpx;     wing_vertex_ptr->y = tmpy;    wing_vertex_ptr->color_rgba = color;
+      wing_vertex_ptr++;
 #ifdef FIXEDMATH
-      wingverticeptr->x = x2 + FMUL(wg->x[i][1], sz);   wingverticeptr->y = y2 + FMUL(wg->y[i][1], sz);
+      wing_vertex_ptr->x = x2 + FMUL(wg->x[i][1], sz);   wing_vertex_ptr->y = y2 + FMUL(wg->y[i][1], sz);
 #else
-      wingverticeptr->x = x2 + wg->x[i][1] * sz;   wingverticeptr->y = y2 + wg->y[i][1] * sz;
+      wing_vertex_ptr->x = x2 + wg->x[i][1] * sz;   wing_vertex_ptr->y = y2 + wg->y[i][1] * sz;
 #endif //FIXEDMATH
-      wingverticeptr->r = r; wingverticeptr->g = g; wingverticeptr->b = b; wingverticeptr->a = 64;
-      wingverticeptr++;
+      wing_vertex_ptr->color_rgba = color;
+      wing_vertex_ptr++;
    }
 }
 
@@ -1848,16 +1838,13 @@ static void drawBossWing (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWi
 //  int crBpn, crBpl;
 //  int bpn;
 //  crBpn = crBpl = 0;
-//
 //  x =  (float)boss.x / FIELD_SCREEN_RATIO;
 //  y = -(float)boss.y / FIELD_SCREEN_RATIO;
-//
 //  if ( bossShape.diffuse > 0  && boss.state < DESTROIED ) {
 //    df = bossShape.diffuse;
 //    drawStar(1, x, y, 0, df, df, df, (float)(df+256)/500.0f);
 //    drawStar(1, x, y, 0, df, df, df, (float)(df+randN(256))/500.0f);
 //  }
-//  
 //  for ( i=0 ; i<boss.batteryGroupNum ; i++ ) {
 //    BossTree *bt = &(bossShape.tree[i]);
 //    bpn = bt->posNum-1;
@@ -1867,29 +1854,86 @@ static void drawBossWing (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, BossWi
 //    case CHANGE:
 //      crBpn = (bpn+1)*(BOSS_PATTERN_CHANGE_CNT-boss.stateCnt-1)/BOSS_PATTERN_CHANGE_CNT;
 //      crBpl = 255 - 
-// (boss.stateCnt%(BOSS_PATTERN_CHANGE_CNT/(bpn+1))*256)/(BOSS_PATTERN_CHANGE_CNT/(bpn+1));
+//	(boss.stateCnt%(BOSS_PATTERN_CHANGE_CNT/(bpn+1))*256)/(BOSS_PATTERN_CHANGE_CNT/(bpn+1));
 //      break;
 //    }
 //    for ( j=0 ; j<bpn ; j++ ) {
-//
 //      x2 =  x + bt->x[j+1];
 //      y2 =  y - bt->y[j+1];
 //      z2 =  bt->z[j+1];
-//
 //      switch ( boss.state ) {
 //      case ATTACKING:
 //      case LAST_ATTACK:
 //      case DESTROIED:
-// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
-//  glColor4hack(bossShape.r, bossShape.g, bossShape.b, 240);
-//  glBegin(GL_LINE_LOOP);
-//  glVertex3f(x1, y1, z1);
-//  glVertex3f(x2, y2, z2);
-//  glEnd();
-//
-void drawBoss ()
-{
+//	drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
+//	drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
+//	break;
+//      case CREATING:
+//	if ( j == crBpn ) {
+//	  drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240, crBpl);
+//	} else if ( j < crBpn ) {
+//	  drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
+//	}
+//	if ( crBpn == bpn ) {
+//	  bt->wing[j].size = (float)crBpl/255;
+//	  drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
+//	}
+//	break;
+//      case CHANGE:
+//	drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
+//	if ( crBpn == bpn ) {
+//	  bt->wing[j].size = (float)crBpl/128;
+//	  drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
+//	}
+//	break;
+//      }
+//      if ( bt->diffuse > 0 && boss.state != CHANGE && boss.state < DESTROIED ) {
+//	df = bt->diffuse;
+//	drawStar(0, x2, y2, z2, df, df, df, (float)(df+256)/900.0f);
+//	drawStar(0, x2, y2, z2, df, df, df, (float)(df+randN(256))/900.0f);
+//      }
+//      x1 = x2; y1 = y2; z1 = z2;
+//    }
+//    x1 = x + bt->x[bpn];
+//    y1 = y - bt->y[bpn];
+//    z1 = bt->z[bpn];
+//    for ( j=0 ; j<bt->epNum ; j++ ) {
+//      x2 = x + bt->ex[j];
+//      y2 = y - bt->ey[j];
+//      z2 = bt->ez[j];
+//      switch ( boss.state ) {
+//      case ATTACKING:
+//      case LAST_ATTACK:
+//      case DESTROIED:
+//	drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
+//	drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+//	break;
+//      case CREATING:
+//	if ( crBpn == bpn ) {
+//	  drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
+//	  bt->eWing[j].size = (float)crBpl/255;
+//	  drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+//	}
+//	break;
+//      case CHANGE:
+//	drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
+//	if ( crBpn == bpn ) {
+//	  bt->eWing[j].size = (float)crBpl/128;
+//	  drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+//	}
+//	break;
+//      }
+//      if ( bt->diffuse > 0 && boss.state != CHANGE && boss.state < DESTROIED ) {
+//	df = bt->diffuse;
+//	drawStar(1, x2, y2, z2, df, df, df, (float)(df+256)/640.0f);
+//	drawStar(1, x2, y2, z2, df, df, df, (float)(df+randN(256))/640.0f);
+//      }
+//    }
+//  }
+//  drawCore(x, y, boss.cnt, boss.r, boss.g, boss.b);
+//}
 #ifdef FIXEDMATH
+void drawBoss () {
    prepareDrawBossWings();
 
 //  float x, y;
@@ -2090,11 +2134,14 @@ void drawBoss ()
 //  drawCore(x, y, boss.cnt, boss.r, boss.g, boss.b);
 //  drawCorex(f2x(x), f2x(y), boss.cnt, boss.r, boss.g, boss.b);
    drawCore (fx, fy, boss.cnt, boss.r, boss.g, boss.b);
+}
 #else
+// senquack - optimized GLES float version:
+void drawBoss () 
+{
    prepareDrawBossWings();
-  float x, y;
-  // senquack - converted to 2D for speedup:
-//  float x1, y1, z1, x2, y2, z2;
+   prepareDrawStars();
+   float x, y;
    float x1, y1, x2, y2;
 
    int i, j;
@@ -2103,134 +2150,126 @@ void drawBoss ()
    int bpn;
    crBpn = crBpl = 0;
 
-   x =  (float)boss.x / FIELD_SCREEN_RATIO;
-   y = -(float)boss.y / FIELD_SCREEN_RATIO;
+//   x =  (float)boss.x / FIELD_SCREEN_RATIO;
+//   y = -(float)boss.y / FIELD_SCREEN_RATIO;
+   x =  (float)boss.x * (1.0f / FIELD_SCREEN_RATIO);
+   y = -(float)boss.y * (1.0f / FIELD_SCREEN_RATIO);
 
    if (bossShape.diffuse > 0 && boss.state < DESTROIED) {
       df = bossShape.diffuse;
-      // converted to 2D:
-//    drawStar(1, x, y, 0, df, df, df, (float)(df+256)/500.0f);
-//    drawStar(1, x, y, 0, df, df, df, (float)(df+randN(256))/500.0f);
-      drawStar(1, x, y, df, df, df, (float)(df+256)/500.0f);
-      drawStar(1, x, y, df, df, df, (float)(df+randN(256))/500.0f);
+//      drawStar(1, x, y, df, df, df, (float)(df+256)/500.0f);
+//      drawStar(1, x, y, df, df, df, (float)(df+randN(256))/500.0f);
+      drawStar(1, x, y, df, df, df, (float)(df+256) * (1.0f/500.0f));
+      drawStar(1, x, y, df, df, df, (float)(df+randN(256)) * (1.0f/500.0f));
    }
 
    for (i = 0; i < boss.batteryGroupNum; i++) {
       BossTree *bt = &(bossShape.tree[i]);
       bpn = bt->posNum - 1;
-//    x1 = x; y1 = y; z1 = 0;
       x1 = x; y1 = y;
       switch (boss.state) {
-      case CREATING:
-      case CHANGE:
-         crBpn = (bpn + 1) * (BOSS_PATTERN_CHANGE_CNT - boss.stateCnt -
-                         1) / BOSS_PATTERN_CHANGE_CNT;
-         crBpl = 255 - (boss.stateCnt % (BOSS_PATTERN_CHANGE_CNT / (bpn + 1)) * 256) /
-            (BOSS_PATTERN_CHANGE_CNT / (bpn + 1));
-         break;
+         case CREATING:
+         case CHANGE:
+            crBpn = (bpn + 1) * (BOSS_PATTERN_CHANGE_CNT - boss.stateCnt - 1) / BOSS_PATTERN_CHANGE_CNT;
+            crBpl = 255 - (boss.stateCnt % (BOSS_PATTERN_CHANGE_CNT / (bpn + 1)) * 256) /
+               (BOSS_PATTERN_CHANGE_CNT / (bpn + 1));
+            break;
       }
       for (j = 0; j < bpn; j++) {
 
-      x2 =  x + bt->x[j+1];
-      y2 =  y - bt->y[j+1];
-//      z2 =  bt->z[j+1];
+         x2 =  x + bt->x[j+1];
+         y2 =  y - bt->y[j+1];
 
          switch (boss.state) {
-         case ATTACKING:
-         case LAST_ATTACK:
-         case DESTROIED:
-// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
-            drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240);
-
-// drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
-            drawBossWing(x1, y1, x2, y2, &(bt->wing[j]));
-            break;
-         case CREATING:
-            if (j == crBpn) {
-//   drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240, crBpl);
-               drawLinePart(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240, crBpl);
-            } else if (j < crBpn) {
-//   drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 240);
+            case ATTACKING:
+            case LAST_ATTACK:
+            case DESTROIED:
                drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240);
-            }
-            if (crBpn == bpn) {
-               //senquack TODO: can we optimize this by shifting crBpl before divide?:
-               bt->wing[j].size = (float)crBpl/255;
-//   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->wing[j]));
+
                drawBossWing(x1, y1, x2, y2, &(bt->wing[j]));
-            }
-            break;
-         case CHANGE:
-            break;
+               break;
+            case CREATING:
+               if (j == crBpn) {
+                  drawLinePart(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240, crBpl);
+               } else if (j < crBpn) {
+                  drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240);
+               }
+               if (crBpn == bpn) {
+                  //senquack TODO: can we optimize this by shifting crBpl before divide?:
+//                  bt->wing[j].size = (float)crBpl/255;
+                  bt->wing[j].size = (float)crBpl * (1.0f / 255.0f);
+                  drawBossWing(x1, y1, x2, y2, &(bt->wing[j]));
+               }
+               break;
+            case CHANGE:
+               drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 240);
+               if ( crBpn == bpn ) {
+//                  bt->wing[j].size = (float)crBpl/128;
+                  bt->wing[j].size = (float)crBpl * (1.0f / 128.0f);
+                  drawBossWing(x1, y1, x2, y2, &(bt->wing[j]));
+               }
+               // END missing stuff
+               break;
          }
          if (bt->diffuse > 0 && boss.state != CHANGE && boss.state < DESTROIED) {
             df = bt->diffuse;
-            //senquack TODO: why did I leave these two commented-out for Wiz port? I re-enabled them again:
-//            drawStar(0, x2, y2, z2, df, df, df, (float)(df+256)/900.0f);
-//            drawStar(0, x2, y2, z2, df, df, df, (float)(df+randN(256))/900.0f);
-            drawStar(0, x2, y2, df, df, df, (float)(df+256)/900.0f);
-            drawStar(0, x2, y2, df, df, df, (float)(df+randN(256))/900.0f);
+            //               drawStar(0, x2, y2, df, df, df, (float)(df+256)/900.0f);
+            //               drawStar(0, x2, y2, df, df, df, (float)(df+randN(256))/900.0f);
+            drawStar(0, x2, y2, df, df, df, (float)(df+256) * (1.0f / 900.0f));
+            drawStar(0, x2, y2, df, df, df, (float)(df+randN(256)) * (1.0f / 900.0f));
          }
-//      x1 = x2; y1 = y2; z1 = z2;
          x1 = x2; y1 = y2; 
       }
 
       x1 = x + bt->x[bpn];
       y1 = y - bt->y[bpn];
-//    z1 = bt->z[bpn];
 
       for (j = 0; j < bt->epNum; j++) {
          x2 = x + bt->ex[j];
          y2 = y - bt->ey[j];
-//      z2 = bt->ez[j];
 
          switch (boss.state) {
-         case ATTACKING:
-         case LAST_ATTACK:
-         case DESTROIED:
-// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
-            drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220);
-
-// drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
-            drawBossWing(x1, y1, x2, y2, &(bt->eWing[j]));
-            break;
-         case CREATING:
-            if (crBpn == bpn) {
-//   drawLinePart(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
-               drawLinePart(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
-               //senquack TODO: possible optimization:
-               bt->eWing[j].size = (float)crBpl/255;
-
-//   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
+            case ATTACKING:
+            case LAST_ATTACK:
+            case DESTROIED:
+               drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220);
                drawBossWing(x1, y1, x2, y2, &(bt->eWing[j]));
-            }
-            break;
-         case CHANGE:
-// drawLine(x1, y1, z1, x2, y2, z2, bossShape.r, bossShape.g, bossShape.b, 220);
-            drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220);
+               break;
+            case CREATING:
+               if (crBpn == bpn) {
+                  drawLinePart(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220, crBpl);
+                  //senquack TODO: possible optimization:
+//                  bt->eWing[j].size = (float)crBpl/255;
+                  bt->eWing[j].size = (float)crBpl * (1.0f / 255.0f);
 
-            if (crBpn == bpn) {
-               bt->eWing[j].size = (float)crBpl/128;
-//   drawBossWing(x1, y1, z1, x2, y2, z2, &(bt->eWing[j]));
-               drawBossWing(x1, y1, x2, y2, &(bt->eWing[j]));
-            }
-            break;
+                  drawBossWing(x1, y1, x2, y2, &(bt->eWing[j]));
+               }
+               break;
+            case CHANGE:
+               drawLine(x1, y1, x2, y2, bossShape.r, bossShape.g, bossShape.b, 220);
+
+               if (crBpn == bpn) {
+//                  bt->eWing[j].size = (float)crBpl/128;
+                  bt->eWing[j].size = (float)crBpl * (1.0f / 128.0f);
+                  drawBossWing(x1, y1, x2, y2, &(bt->eWing[j]));
+               }
+               break;
          }
-         if (bt->diffuse > 0 && boss.state != CHANGE
-             && boss.state < DESTROIED) {
+         if (bt->diffuse > 0 && boss.state != CHANGE && boss.state < DESTROIED) {
             df = bt->diffuse;
-// drawStar(1, x2, y2, z2, df, df, df, (float)(df+256)/640.0f);
-// drawStar(1, x2, y2, z2, df, df, df, (float)(df+randN(256))/640.0f);
-            drawStar(1, x2, y2, df, df, df, (float)(df+256)/640.0f);
-            drawStar(1, x2, y2, df, df, df, (float)(df+randN(256))/640.0f);
+//            drawStar(1, x2, y2, df, df, df, (float)(df+256)/640.0f);
+//            drawStar(1, x2, y2, df, df, df, (float)(df+randN(256))/640.0f);
+            drawStar(1, x2, y2, df, df, df, (float)(df+256) * (1.0f/640.0f));
+            drawStar(1, x2, y2, df, df, df, (float)(df+randN(256)) * (1.0f/640.0f));
          }
       }
    }
+   finishDrawStars();
    finishDrawBossWings();
 
    drawCore(x, y, boss.cnt, boss.r, boss.g, boss.b);
-#endif //FIXEDMATH
 }
+#endif //FIXEDMATH
 
 
 //senquack - some fixed point

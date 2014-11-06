@@ -94,6 +94,7 @@ typedef struct portcfg_settings
    int extra_bombs;           // Cheat which adds up to 6 extra bomb at start 
                               // (but disables ability to save new high scores)
    int no_wait;               // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
+   int show_fps;              // Show FPS counter
    struct {
       int move;      //Movement mapping
       int btn1;      //Laser mapping

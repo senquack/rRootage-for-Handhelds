@@ -96,6 +96,7 @@ portcfg_settings settings = {
    .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
                                                        //   (but disables ability to save new high scores)
    .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
+   .show_fps               = 0,                        // Show FPS counter
    .map                    = {
       .move     = MAP_DPAD,
       .btn1     = MAP_R,      //Laser mapping
@@ -157,7 +158,6 @@ int clamp (int x, int min, int max)
       return max;
    } else
       return x;
-
 }
 
 //senquack
@@ -676,7 +676,6 @@ static void draw ()
 //      //printf("draw(): Drawing TITLE - endDrawBoards\n");
       endDrawBoards ();
 //      //printf("draw(): Drawing TITLE - drawTestPoly\n");
-////    drawTestPoly();
       break;
    case IN_GAME:
    case STAGE_CLEAR:

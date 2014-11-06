@@ -3997,78 +3997,55 @@ void drawShipShape (GLfixed x, GLfixed y, float d, int inv)
 #else
 void drawShipShape (GLfloat x, GLfloat y, float d, int inv)
 {
-   int i;
    glPushMatrix ();
    glTranslatef (x, y, 0);
+   
+   int i;
+   uint32_t color;
+   gl_vertex_3d vertices[5];
+   gl_vertex_3d *vertex_ptr = &vertices[0];
 
-   //senquack - working around bug on etnaviv, have to use LINE_STRIP instead of LINE_LOOP:
-//   GLubyte colors[4 * 4];
-//   GLfloat vertices[4 * 3];
-   GLubyte colors[5 * 4];
-   GLfloat vertices[5 * 3];
-   colors[0] = colors[4] = colors[8] = colors[12] = 255;
-   colors[1] = colors[5] = colors[9] = colors[13] = colors[2] = colors[6] = colors[10] = colors[14] = 100;
-   colors[3] = colors[7] = colors[11] = colors[15] = 255;
+   color = (255 << 24) | (100 << 16) | (100 << 8) | 255;
+   vertex_ptr->x = -SHAPE_POINT_SIZE_L; vertex_ptr->y = -SHAPE_POINT_SIZE_L; vertex_ptr->z = 0;
+   vertex_ptr->color_rgba = color; vertex_ptr++;
+   vertex_ptr->x = SHAPE_POINT_SIZE_L; vertex_ptr->y = -SHAPE_POINT_SIZE_L; vertex_ptr->z = 0;
+   vertex_ptr->color_rgba = color; vertex_ptr++;
+   vertex_ptr->x = SHAPE_POINT_SIZE_L; vertex_ptr->y = SHAPE_POINT_SIZE_L; vertex_ptr->z = 0;
+   vertex_ptr->color_rgba = color; vertex_ptr++;
+   vertex_ptr->x = -SHAPE_POINT_SIZE_L; vertex_ptr->y = SHAPE_POINT_SIZE_L; vertex_ptr->z = 0;
+   vertex_ptr->color_rgba = color; vertex_ptr++;
 
-   vertices[0] = -SHAPE_POINT_SIZE_L;
-   vertices[1] = -SHAPE_POINT_SIZE_L;
-   vertices[2] = 0;
-   vertices[3] = SHAPE_POINT_SIZE_L;
-   vertices[4] = -SHAPE_POINT_SIZE_L;
-   vertices[5] = 0;
-   vertices[6] = SHAPE_POINT_SIZE_L;
-   vertices[7] = SHAPE_POINT_SIZE_L;
-   vertices[8] = 0;
-   vertices[9] = -SHAPE_POINT_SIZE_L;
-   vertices[10] = SHAPE_POINT_SIZE_L;
-   vertices[11] = 0;
-
-// glEnableClientState(GL_VERTEX_ARRAY);
-   glVertexPointer (3, GL_FLOAT, 0, vertices);
-// glEnableClientState(GL_COLOR_ARRAY);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
+   glVertexPointer (3, GL_FLOAT, sizeof(gl_vertex_3d), &vertices[0].x);
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex_3d), &vertices[0].r);
    glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
 
    if (inv) {
       glPopMatrix ();
       return;
    }
-// glRotatex(d, 0, INT2FNUM(1), 0);
-   glRotatef (d, 0, 1, 0);
 
-//    glColor4i(120, 220, 100, 150);
+   //senquack - working around bug on etnaviv, have to use LINE_STRIP instead of LINE_LOOP (1 extra vertex needed)
+   glRotatef (d, 0, 1.0f, 0);
+   //    glColor4i(120, 220, 100, 150);
+   color = (150 << 24) | (100 << 16) | (220 << 8) | 120;
+   vertex_ptr = &vertices[0];
+   vertex_ptr->x = -SHIP_DRUM_WIDTH;   vertex_ptr->y = -SHIP_DRUM_HEIGHT;  vertex_ptr->z = SHIP_DRUM_R;
+   vertex_ptr->color_rgba = color;  vertex_ptr++;
+   vertex_ptr->x =  SHIP_DRUM_WIDTH;   vertex_ptr->y = -SHIP_DRUM_HEIGHT;  vertex_ptr->z = SHIP_DRUM_R;
+   vertex_ptr->color_rgba = color;  vertex_ptr++;
+   vertex_ptr->x =  SHIP_DRUM_WIDTH;   vertex_ptr->y =  SHIP_DRUM_HEIGHT;  vertex_ptr->z = SHIP_DRUM_R;
+   vertex_ptr->color_rgba = color;  vertex_ptr++;
+   vertex_ptr->x = -SHIP_DRUM_WIDTH;   vertex_ptr->y =  SHIP_DRUM_HEIGHT;  vertex_ptr->z = SHIP_DRUM_R;
+   vertex_ptr->color_rgba = color;  vertex_ptr++;
+   vertex_ptr->x = -SHIP_DRUM_WIDTH;   vertex_ptr->y = -SHIP_DRUM_HEIGHT;  vertex_ptr->z = SHIP_DRUM_R;
+   vertex_ptr->color_rgba = color;  vertex_ptr++;
 
-   //senquack - working around bug on etnaviv, have to use LINE_STRIP instead of LINE_LOOP:
-   //       (had to add one more vertex to complete the rectangle)
+   glVertexPointer (3, GL_FLOAT, sizeof(gl_vertex_3d), &vertices[0].x);
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex_3d), &vertices[0].r);
 
-   //senquack - moved these outside the loop
-   colors[0] = colors[4] = colors[8] = colors[12] = colors[16] = 120;
-   colors[1] = colors[5] = colors[9] = colors[13] = colors[17] = 220;
-   colors[2] = colors[6] = colors[10] = colors[14] = colors[18] = 100;
-   colors[3] = colors[7] = colors[11] = colors[15] = colors[19] = 150;
-
-   vertices[0] = -SHIP_DRUM_WIDTH;
-   vertices[1] = -SHIP_DRUM_HEIGHT;
-   vertices[2] = SHIP_DRUM_R;
-   vertices[3] = SHIP_DRUM_WIDTH;
-   vertices[4] = -SHIP_DRUM_HEIGHT;
-   vertices[5] = SHIP_DRUM_R;
-   vertices[6] = SHIP_DRUM_WIDTH;
-   vertices[7] = SHIP_DRUM_HEIGHT;
-   vertices[8] = SHIP_DRUM_R;
-   vertices[9] = -SHIP_DRUM_WIDTH;
-   vertices[10] = SHIP_DRUM_HEIGHT;
-   vertices[11] = SHIP_DRUM_R;
-   vertices[12] = -SHIP_DRUM_WIDTH;
-   vertices[13] = -SHIP_DRUM_HEIGHT;
-   vertices[14] = SHIP_DRUM_R;
-
-//  for ( i=0 ; i<8 ; i++ ) {
-   for (i = 8; i > 0; i--) {
-// glRotatex(INT2FNUM(45), 0, INT2FNUM(1), 0);
-      glRotatef (45, 0, 1, 0);
-//      glDrawArrays (GL_LINE_LOOP, 0, 4);
-      glDrawArrays (GL_LINE_STRIP, 0, 5);
+   for ( i=0 ; i<8 ; i++ ) {
+      glRotatef (45.0f, 0, 1.0f, 0);
+      glDrawArrays (GL_LINE_STRIP, 0 , 5);
    }
 
    glPopMatrix ();

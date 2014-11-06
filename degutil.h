@@ -79,24 +79,29 @@ unsigned fpsqrt (unsigned n);
 // Note: range is -256..256   
 //       domain is 0..(1024+256), where 1024 represents 2 * pi
 #define COS_LOOKUP(degree) ((float)(sctbl[(degree) + 256]) * (1.0f/256.0f))
-#define SIN_LOOKUP(degree) ((float)(-sctbl[(degree)]) * (1.0f/256.0f))      /* Need this to return negative, as
+#define SIN_LOOKUP(degree) ((float)(sctbl[(degree)]) * (1.0f/256.0f))      /* Need this to return negative, as
                                                                                rrootage uses opposite of OpenGL */
+//Was using this for a while, but I feel it is wrong and changed to above. 
+//    That meant also going to the counter-clockwise rotation routine.
+//#define SIN_LOOKUP(degree) ((float)(-sctbl[(degree)]) * (1.0f/256.0f))      /* Need this to return negative, as
+//                                                                               rrootage uses opposite of OpenGL */
 // libm version of above (for testing & verification):
 //#define COS_LOOKUP_LIBM(degree) cosf(((float)-(degree) / 1024.0f * 2.0f * (float)M_PI ))
 //#define SIN_LOOKUP_LIBM(degree) sinf(((float)-(degree) / 1024.0f * 2.0f * (float)M_PI ))
 
-// Convenience macros for 2D polygon rotation:
-#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) + y * SIN_LOOKUP(degree))
-#define Y_ROT(x,y,degree) (-x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
+// CLOCKWISE: was using this for awhile, but after correcting SIN_LOOKUP above, switched to counter-clockwise.
+//#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) + y * SIN_LOOKUP(degree))
+//#define Y_ROT(x,y,degree) (-x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
 
 // libm version of above (for testing & verification):
 //#define X_ROT_LIBM(x,y,degree) (x * COS_LOOKUP_LIBM(degree) + y * SIN_LOOKUP_LIBM(degree))
 //#define Y_ROT_LIBM(x,y,degree) (-x * SIN_LOOKUP_LIBM(degree) + y * COS_LOOKUP_LIBM(degree))
 
-//COUNTERCLOCKWISE: (not what we're looking for)
-//#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) - y * SIN_LOOKUP(degree))
-//#define Y_ROT(x,y,degree) (x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
-////senquack - the famous Quake square root, for speed in our gluLookat implementation
+//COUNTERCLOCKWISE:
+#define X_ROT(x,y,degree) (x * COS_LOOKUP(degree) - y * SIN_LOOKUP(degree))
+#define Y_ROT(x,y,degree) (x * SIN_LOOKUP(degree) + y * COS_LOOKUP(degree))
+
+////senquack - the famous Quake square root, for speed in our gluLookat implementation on certain platforms
 //float magic_sqrt (float number);
 
 void initDegutil ();

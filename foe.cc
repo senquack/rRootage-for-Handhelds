@@ -359,8 +359,10 @@ clearFoeShape (Foe * fe, int shape)
    int d;
    if ( fe->spc == BATTERY ) return;
 //senquack TODO: poss. optimization w/ inverse:
-   x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
-   y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+//   x =  (float)fe->pos.x / FIELD_SCREEN_RATIO;
+//   y = -(float)fe->pos.y / FIELD_SCREEN_RATIO;
+   x =  (float)fe->pos.x * (1.0f / FIELD_SCREEN_RATIO);
+   y = -(float)fe->pos.y * (1.0f / FIELD_SCREEN_RATIO);
    d = (fe->d * fe->xReverse)&1023;
    if ( shape ) {
       addShapeFrag(x, y, fe->bulletSize[fe->shapeType], d, fe->cnt, 

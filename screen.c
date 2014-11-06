@@ -4347,37 +4347,6 @@ void drawBomb (GLfixed x, GLfixed y, GLfixed width, int cnt)
    glDrawArrays (GL_LINE_STRIP, 0, 1 + c);
 }
 #else
-//void drawBomb (GLfloat x, GLfloat y, GLfloat width, int cnt)
-//{
-//   int i, d, od, c;
-//   GLfloat x1, y1, x2, y2;
-//   GLfloat vertices[2 * 17];
-//   GLfloat *vertptr = &(vertices[0]);
-//   GLubyte colors[4 * 17];
-//   glVertexPointer (2, GL_FLOAT, 0, vertices);
-//   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
-//   memset (&(colors[0]), 255, 4 * 17);
-//
-//   d = cnt * 48;
-//   d &= 1023;
-//   c = 4 + (cnt >> 3);
-//   if (c > 16)
-//      c = 16;
-//   od = 1024 / c;
-//   x1 = (sctbl[d]    *width)/256 + x;
-//   y1 = (sctbl[d+256]*width)/256 + y;
-//   *vertptr++ = x1;
-//   *vertptr++ = y1;
-//   for (i = 0; i < c; i++) {
-//      d += od;
-//      d &= 1023;
-//      x2 = (sctbl[d]    *width)/256 + x;
-//      y2 = (sctbl[d+256]*width)/256 + y;
-//      *vertptr++ = x2;
-//      *vertptr++ = y2;
-//   }
-//   glDrawArrays (GL_LINE_STRIP, 0, 1 + c);
-//}
 void drawBomb (GLfloat x, GLfloat y, GLfloat width, int cnt)
 {
    int i, d, od, c;

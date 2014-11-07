@@ -2317,22 +2317,23 @@ drawBossState ()
    } else {
       wd = boss.shield * 300 / BOSS_SHIELD_MAX;
    }
-#ifdef FIXEDMATH
-   drawBox(INT2FNUM (180 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1),
-             INT2FNUM (6), 240, 240, 210);
-#else
-//   drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
-   drawBox((float)(180+wd/2), 24.0, (float)(wd/2), 6.0, 240, 240, 210);
-#endif //FIXEDMATH
 
-//senquack TODO: investigate why I changed 176+wd to 165 here: (probably to allow more stuff displayed up top at low-res)
-//  drawNumCenter(boss.shield, 176+wd, 10, 6, 210, 210, 240);
-   drawNumCenter (boss.shield, 165 + wd, 10, 6, 210, 210, 240);
+#if SCREEN_WIDTH < 640
+//   drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
+#ifdef FIXEDMATH
+   drawBox(INT2FNUM (164 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1), INT2FNUM (6), 240, 240, 210);
+#else
+   // On low-res screens, draw this closer to edge of screen because we no longer draw the shield numbers.
+   drawBox((float)(164+wd/2), 10.0, (float)(wd/2), 6.0, 240, 240, 210);
+#endif //FIXEDMATH
+#else
+   drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
+   drawNumCenter(boss.shield, 176+wd, 10, 6, 210, 210, 240);
    cwd = boss.patternChangeShield * 300 / BOSS_SHIELD_MAX;
    if (wd > cwd) {
-//    drawNumCenter(boss.patternChangeShield, 176+cwd, 10, 6, 240, 210, 210);
-      drawNumCenter (boss.patternChangeShield, 165 + cwd, 10, 6, 240, 210, 210);
+      drawNumCenter(boss.patternChangeShield, 176+cwd, 10, 6, 240, 210, 210);
    }
+#endif // SCREEN_WIDTH < 640
 }
 
 void
@@ -2357,20 +2358,31 @@ drawBossState_rotated ()
    } else {
       wd = boss.shield * 300 / BOSS_SHIELD_MAX;
    }
-#ifdef FIXEDMATH
-   drawBox(INT2FNUM (180 + (wd >> 1)), INT2FNUM (24), INT2FNUM (wd >> 1),
-             INT2FNUM (6), 240, 240, 210);
-#else
-//  drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
-   drawBox((float)(180+wd/2), 24.0, (float)(wd/2), 6.0, 240, 240, 210);
-#endif //FIXEDMATH
 
-//senquack TODO: investigate why I changed 176+wd to 165 here: (probably to allow more stuff displayed up top at low-res)
-//  drawNumCenter(boss.shield, 176+wd, 10, 6, 210, 210, 240);
-   drawNumCenter (boss.shield, 165 + wd, 10, 6, 210, 210, 240);
+#if SCREEN_WIDTH < 640
+      // On low-res screens, draw this closer to edge of screen because we no longer draw the shield numbers.
+//   drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
+#ifdef FIXEDMATH
+   if (settings.rotated) {
+      // When rotated, nudge it down a tad because we zoom a little farther in than horizontal view
+      drawBox(INT2FNUM (162 + (wd >> 1)), INT2FNUM (16), INT2FNUM (wd >> 1), INT2FNUM (6), 240, 240, 210);
+   } else {
+      drawBox(INT2FNUM (162 + (wd >> 1)), INT2FNUM (10), INT2FNUM (wd >> 1), INT2FNUM (6), 240, 240, 210);
+   }
+#else
+   if (settings.rotated) {
+      // When rotated, nudge it down a tad because we zoom a little farther in than horizontal view
+      drawBox((float)(162+wd/2), 16.0, (float)(wd/2), 6.0, 240, 240, 210);
+   } else {
+      drawBox((float)(162+wd/2), 10.0, (float)(wd/2), 6.0, 240, 240, 210);
+   }
+#endif //FIXEDMATH
+#else
+   drawBox(180+wd/2, 24, wd/2, 6, 240, 240, 210);
+   drawNumCenter(boss.shield, 176+wd, 10, 6, 210, 210, 240);
    cwd = boss.patternChangeShield * 300 / BOSS_SHIELD_MAX;
    if (wd > cwd) {
-//    drawNumCenter(boss.patternChangeShield, 176+cwd, 10, 6, 240, 210, 210);
-      drawNumCenter (boss.patternChangeShield, 165 + cwd, 10, 6, 240, 210, 210);
+      drawNumCenter(boss.patternChangeShield, 176+cwd, 10, 6, 240, 210, 210);
    }
+#endif // SCREEN_WIDTH < 640
 }

@@ -61,35 +61,12 @@ static const char *base_prefs_filename = "rr.bin";    // This is where we store 
 char *full_prefs_filename = NULL;               // Fully-qualified prefs filename (used in attractmanager.c)
 
 // portcfg holds our default settings until the config file is read:
-//DEBUG
-//portcfg_settings settings = {    
-//   .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
-//   .rotated                = SCREEN_HORIZ,                // Is screen rotated? Assigned to one of: 
-//                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
-//   .music                  = 1,                           // Is music enabled?
-//   .analog_deadzone        = 8000,                        // Analog joystick deadzone
-//   .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
-//   .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
-//                                                       //   (but disables ability to save new high scores)
-//   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
-//                                                       //   (but disables ability to save new high scores)
-//   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
-//   .map                    = {
-//      .move     = MAP_DPAD,   //Movement mapping
-//      .btn1     = MAP_X,      //Laser mapping
-//      .btn2     = MAP_B,      //Bomb mapping
-//      .btn1_alt = MAP_A,      //Laser alternate mapping
-//      .btn2_alt = MAP_R,      //Bomb alternate mapping
-//      .pause    = MAP_START,  //Pause mapping
-//      .exit     = MAP_SELECT  //Exit to menu mapping 
-//   }
-//};     
 portcfg_settings settings = {    
-   .laser_on_by_default    = 1,                        // Is laser on by default? (more comfortable on handhelds) 
-   .rotated                = SCREEN_ROTATED_RIGHT,     // Is screen rotated? Assigned to one of: 
-                                                       //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
-   .music                  = 1,                        // Is music enabled?
-   .analog_deadzone        = 8000,                     // Analog joystick deadzone
+   .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
+   .rotated                = SCREEN_HORIZ,                // Is screen rotated? Assigned to one of: 
+                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
+   .music                  = 1,                           // Is music enabled?
+   .analog_deadzone        = 8000,                        // Analog joystick deadzone
    .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
    .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
                                                        //   (but disables ability to save new high scores)
@@ -98,29 +75,38 @@ portcfg_settings settings = {
    .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
    .show_fps               = 0,                        // Show FPS counter
    .map                    = {
-      .move     = MAP_DPAD,
-      .btn1     = MAP_R,      //Laser mapping
-      .btn2     = MAP_ANALOG, //Bomb mapping
-      .btn1_alt = MAP_Y,      //Laser alternate mapping
-      .btn2_alt = MAP_A,      //Bomb alternate mapping
+      .move     = MAP_DPAD,   //Movement mapping
+      .btn1     = MAP_X,      //Laser mapping
+      .btn2     = MAP_B,      //Bomb mapping
+      .btn1_alt = MAP_A,      //Laser alternate mapping
+      .btn2_alt = MAP_R,      //Bomb alternate mapping
       .pause    = MAP_START,  //Pause mapping
       .exit     = MAP_SELECT  //Exit to menu mapping 
    }
 };     
-
-//senquack - TODO: clean up crufty old Wiz port settings code, adapt it to new portcfg code:
-//#if defined(GP2X) || defined(WIZ)
-//const portcfg_settings default_settings = {
-//   1, 1, 700, 1, 1,
-//   // non-rotated button defs:
-//   {GP2X_BUTTON_B, GP2X_BUTTON_Y, GP2X_BUTTON_X, GP2X_BUTTON_A,
-//    GP2X_BUTTON_START, GP2X_BUTTON_SELECT, GP2X_BUTTON_VOLDOWN,
-//    GP2X_BUTTON_VOLUP},
-//   // rotated button defs: //19 means disabled
-//   {GP2X_BUTTON_START, GP2X_BUTTON_X, GP2X_BUTTON_R, GP2X_BUTTON_A,
-//    GP2X_BUTTON_Y, GP2X_BUTTON_SELECT, GP2X_BUTTON_VOLDOWN, GP2X_BUTTON_VOLUP}
-//};
-//#endif // GP2X/Wiz
+//portcfg_settings settings = {    
+//   .laser_on_by_default    = 1,                        // Is laser on by default? (more comfortable on handhelds) 
+//   .rotated                = SCREEN_ROTATED_RIGHT,     // Is screen rotated? Assigned to one of: 
+//                                                       //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
+//   .music                  = 1,                        // Is music enabled?
+//   .analog_deadzone        = 8000,                     // Analog joystick deadzone
+//   .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
+//   .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
+//                                                       //   (but disables ability to save new high scores)
+//   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
+//                                                       //   (but disables ability to save new high scores)
+//   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
+//   .show_fps               = 0,                        // Show FPS counter
+//   .map                    = {
+//      .move     = MAP_DPAD,
+//      .btn1     = MAP_R,      //Laser mapping
+//      .btn2     = MAP_ANALOG, //Bomb mapping
+//      .btn1_alt = MAP_Y,      //Laser alternate mapping
+//      .btn2_alt = MAP_A,      //Bomb alternate mapping
+//      .pause    = MAP_START,  //Pause mapping
+//      .exit     = MAP_SELECT  //Exit to menu mapping 
+//   }
+//};     
 
 //senquack
 // Create the specified directory if it doesn't yet exist. Returns 1 on success, 0 on error.
@@ -478,209 +464,25 @@ move ()
 }
 
 
-//NOTE - senquack - when I disable everything but drawBackground here it will not freeze:
-// ANOTHER NOTE: simply disabling the calls to drawBoss here allow it to run much longer:
-//senquack - tried tweaking this to fix hang:
-//static void draw() {
-//  switch ( status ) {
-//  case TITLE:
-//    //printf("draw(): Drawing TITLE\n");
-//    //printf("draw(): Drawing TITLE - drawBackground\n");
-//    drawBackground();
-//    //printf("draw(): Drawing TITLE - drawBoss\n");
-//    drawBoss();
-//    //printf("draw(): Drawing TITLE - drawBulletsWake\n");
-//    drawBulletsWake();
-//    
-//    //TODO: FIX CRASH IN drawBulletsWake() !!!!!!!!!!!!!!!!! **********
-//    // When drawBulletsWake used (or buttons pushed), it crashes?
-//    
-//    
-//    //printf("draw(): Drawing TITLE - drawBullets\n");
-//    drawBullets();
-//    //printf("draw(): Drawing TITLE - startDrawBoards\n");
-//    startDrawBoards();
-//    //printf("draw(): Drawing TITLE - drawSideBoards\n");
-//    drawSideBoards();
-//    //printf("draw(): Drawing TITLE - drawTitle\n");
-//    drawTitle();
-//    //printf("draw(): Drawing TITLE - endDrawBoards\n");
-//    endDrawBoards();
-//    //printf("draw(): Drawing TITLE - drawTestPoly\n");
-//    //drawTestPoly();
-//    break;
-//  case IN_GAME:
-//  case STAGE_CLEAR:
-//    printf("draw(): Drawing STAGE_CLEAR\n");
-//    drawBackground();
-//    drawBoss();
-//    drawLasers();
-//    drawShots();
-//    drawBulletsWake();
-//    drawFrags();
-//    drawShip();
-//    drawBullets();
-//    startDrawBoards();
-//    drawSideBoards();
-//    drawBossState();
-//    endDrawBoards();
-//    break;
-//  case GAMEOVER:
-//    printf("draw(): Drawing GAMEOVER\n");
-//    drawBackground();
-//    drawBoss();
-//    drawBulletsWake();
-//    drawFrags();
-//    drawBullets();
-//    startDrawBoards();
-//    drawSideBoards();
-//    drawGameover();
-//    endDrawBoards();
-//    break;
-//  case PAUSE:
-//    printf("draw(): Drawing PAUSE\n");
-//    drawBackground();
-//    drawBoss();
-//    drawLasers();
-//    drawShots();
-//    drawBulletsWake();
-//    drawFrags();
-//    drawShip();
-//    drawBullets();
-//    startDrawBoards();
-//    drawSideBoards();
-//    drawBossState();
-//    drawPause();
-//    endDrawBoards();
-//    break;
-//  }
-//}
-//senquack - DEBUGGING GCW:
-//static void draw ()
-//{
-//   switch (status) {
-//   case TITLE:
-//      //printf("draw(): Drawing TITLE\n");
-//      //printf("draw(): Drawing TITLE - drawBackground\n");
-//      drawBackground ();
-//      //printf("draw(): Drawing TITLE - drawBoss\n");
-//      drawBoss ();
-//      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
-//      drawBulletsWake ();
-//      //printf("draw(): Drawing TITLE - drawBullets\n");
-//      drawBullets ();
-//      //printf("draw(): Drawing TITLE - startDrawBoards\n");
-//      startDrawBoards ();
-//      //printf("draw(): Drawing TITLE - drawSideBoards\n");
-//      drawSideBoards ();
-//      //printf("draw(): Drawing TITLE - drawTitle\n");
-//// if (screenRotated) 
-//      if (settings.rotated)
-//         drawTitle_rotated ();
-//      else
-//         drawTitle ();
-//
-//      //printf("draw(): Drawing TITLE - endDrawBoards\n");
-//      endDrawBoards ();
-//      //printf("draw(): Drawing TITLE - drawTestPoly\n");
-////    drawTestPoly();
-//      break;
-//   case IN_GAME:
-//   case STAGE_CLEAR:
-//      //senquack
-////    printf("draw(): Drawing STAGE_CLEAR\n");
-//      drawBackground ();
-//      drawBoss ();
-//      drawLasers ();
-//      drawShots ();
-//      drawBulletsWake ();
-//      drawFrags ();
-//      drawShip ();
-//      drawBullets ();
-//      startDrawBoards ();
-//      drawSideBoards ();
-////senquack - support rotated screen:
-////  drawBossState();
-////    if (screenRotated) 
-//      if (settings.rotated)
-//         drawBossState_rotated ();
-//      else
-//         drawBossState ();
-//      endDrawBoards ();
-//      break;
-//   case GAMEOVER:
-//      //senquack
-////    printf("draw(): Drawing GAMEOVER\n");
-//      drawBackground ();
-//      drawBoss ();
-//      drawBulletsWake ();
-//      drawFrags ();
-//      drawBullets ();
-//      startDrawBoards ();
-//      drawSideBoards ();
-//      drawGameover ();
-//      endDrawBoards ();
-//      break;
-//   case PAUSE:
-//      //senquack
-////    printf("draw(): Drawing PAUSE\n");
-//      drawBackground ();
-//      drawBoss ();
-//      drawLasers ();
-//      drawShots ();
-//      drawBulletsWake ();
-//      drawFrags ();
-//      drawShip ();
-//      drawBullets ();
-//      startDrawBoards ();
-//      drawSideBoards ();
-////senquack - support rotated screen:
-////  drawBossState();
-////    if (screenRotated) 
-//      if (settings.rotated)
-//         drawBossState_rotated ();
-//      else
-//         drawBossState ();
-//      drawPause ();
-//      endDrawBoards ();
-//      break;
-//   }
-//}
 static void draw ()
 {
    switch (status) {
    case TITLE:
-      //printf("draw(): Drawing TITLE\n");
-      //printf("draw(): Drawing TITLE - drawBackground\n");
       prepareDrawBatch();
       drawBackground ();
-//      //printf("draw(): Drawing TITLE - drawBoss\n");
       drawBoss ();
-////      //printf("draw(): Drawing TITLE - drawBulletsWake\n");
       drawBulletsWake ();
-////      //printf("draw(): Drawing TITLE - drawBullets\n");
       finishDrawBatch();
       prepareDrawBatch();
       drawBullets ();
-////      //printf("draw(): Drawing TITLE - startDrawBoards\n");
       finishDrawBatch();
-      startDrawBoards ();
-//      //printf("draw(): Drawing TITLE - drawSideBoards\n");
+      startDrawBoards();
       drawSideBoards ();
-//      //printf("draw(): Drawing TITLE - drawTitle\n");
-      if (settings.rotated)
-         drawTitle_rotated ();
-      else
-         drawTitle ();
-//
-//      //printf("draw(): Drawing TITLE - endDrawBoards\n");
+      drawTitle ();
       endDrawBoards ();
-//      //printf("draw(): Drawing TITLE - drawTestPoly\n");
       break;
    case IN_GAME:
    case STAGE_CLEAR:
-      //senquack
-//    printf("draw(): Drawing STAGE_CLEAR\n");
       prepareDrawBatch();
       drawBackground ();
       drawBoss ();
@@ -695,9 +497,6 @@ static void draw ()
       finishDrawBatch();
       startDrawBoards ();
       drawSideBoards ();
-////senquack - support rotated screen:
-//  drawBossState();
-//    if (screenRotated) 
       if (settings.rotated)
          drawBossState_rotated ();
       else
@@ -705,8 +504,6 @@ static void draw ()
       endDrawBoards ();
       break;
    case GAMEOVER:
-      //senquack
-//    printf("draw(): Drawing GAMEOVER\n");
       prepareDrawBatch();
       drawBackground ();
       drawBoss ();
@@ -722,8 +519,6 @@ static void draw ()
       endDrawBoards ();
       break;
    case PAUSE:
-      //senquack
-//    printf("draw(): Drawing PAUSE\n");
       prepareDrawBatch();
       drawBackground ();
       drawBoss ();
@@ -738,9 +533,6 @@ static void draw ()
       finishDrawBatch();
       startDrawBoards ();
       drawSideBoards ();
-//senquack - support rotated screen:
-//  drawBossState();
-//    if (screenRotated) 
       if (settings.rotated)
          drawBossState_rotated ();
       else
@@ -874,150 +666,7 @@ int main (int argc, char *argv[])
    initFirst ();
    initTitle ();
 
-   //senquack
-//printf("Init title done\n");
-//fflush(stdout);
-
    while (!done) {
-      //TEMP DEBUGGING:
-      // Quit if button/key pressed:
-//      while(SDL_PollEvent(&event)){
-//         switch (event.type) {
-//            case SDL_KEYDOWN:
-//            case SDL_KEYUP:
-//               done = 1;
-//               break;
-//            default:
-//               break;
-//
-//         }
-//      }
-
-//      SDL_PollEvent (&event);
-//    keys = SDL_GetKeyState(NULL);
-
-//    Uint8 *keys = SDL_GetKeyState(NULL);
-//
-//
-//      //senquack - all this button handling sure is a ugly mess, let's just hack it and try to forget
-//    if ( keys[SDLK_ESCAPE] == SDL_PRESSED || event.type == SDL_QUIT ) done = 1;
-
-////    if ( keys[SDLK_p] == SDL_PRESSED ) {
-////      if ( !pPrsd ) {
-////       if ( status == IN_GAME ) {
-////         status = PAUSE;
-////       } else if ( status == PAUSE ) {
-////         status = IN_GAME;
-////       }
-////      }
-////      pPrsd = 1;
-////    } else {
-////      pPrsd = 0;
-////    }
-//
-//      //senquack - Quitting is handled from the main menu.  The quit button merely exits to the
-//      //            main menu and that logic is handled elsewhere now.
-//      //senquack - adding support for rotated screen for Wiz:
-////    if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_START)) {
-////      if ( !pPrsd ) {
-////       if ( status == IN_GAME ) {
-////         status = PAUSE;
-////       } else if ( status == PAUSE ) {
-////         status = IN_GAME;
-////       }
-////      }
-////      pPrsd = 1;
-////    } else {
-////      pPrsd = 0;
-////    }
-////
-////  //senquack
-////  if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
-////     initGameover();
-////  }
-//
-////  if (screenRotated) {
-////     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_A) ||
-////          SDL_JoystickGetButton(stick, GP2X_BUTTON_B) ||  
-////          SDL_JoystickGetButton(stick, GP2X_BUTTON_X) ||
-////          SDL_JoystickGetButton(stick, GP2X_BUTTON_Y) )
-////     {
-////          if ( !pPrsd ) {
-////          if ( status == IN_GAME ) {
-////            status = PAUSE;
-////          } else if ( status == PAUSE ) {
-////            status = IN_GAME;
-////          }
-////          }
-////          pPrsd = 1;
-////     } else {
-////          pPrsd = 0;
-////     }
-////
-////     //senquack
-////     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
-////        initGameover();
-////     }
-////  } else {
-////     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_START)) {
-////       if ( !pPrsd ) {
-////          if ( status == IN_GAME ) {
-////            status = PAUSE;
-////          } else if ( status == PAUSE ) {
-////            status = IN_GAME;
-////          }
-////       }
-////       pPrsd = 1;
-////     } else {
-////       pPrsd = 0;
-////     }
-////
-////     //senquack
-////     if ( SDL_JoystickGetButton(stick, GP2X_BUTTON_SELECT) && status == IN_GAME) {
-////        initGameover();
-////     }
-////  }
-//
-////  if (screenRotated) {
-//      if (settings.rotated) {
-//         if (SDL_JoystickGetButton (stick, settings.rbuttons[PAUSE_IDX])) {
-//            if (!pPrsd) {
-//               if (status == IN_GAME) {
-//                  status = PAUSE;
-//               } else if (status == PAUSE) {
-//                  status = IN_GAME;
-//               }
-//            }
-//            pPrsd = 1;
-//         } else {
-//            pPrsd = 0;
-//         }
-//
-//         //senquack
-//         if (SDL_JoystickGetButton (stick, settings.rbuttons[EXIT_IDX])
-//             && status == IN_GAME) {
-//            initGameover ();
-//         }
-//      } else {
-//         if (SDL_JoystickGetButton (stick, settings.buttons[PAUSE_IDX])) {
-//            if (!pPrsd) {
-//               if (status == IN_GAME) {
-//                  status = PAUSE;
-//               } else if (status == PAUSE) {
-//                  status = IN_GAME;
-//               }
-//            }
-//            pPrsd = 1;
-//         } else {
-//            pPrsd = 0;
-//         }
-//
-//         //senquack
-//         if (SDL_JoystickGetButton (stick, settings.buttons[EXIT_IDX])
-//             && status == IN_GAME) {
-//            initGameover ();
-//         }
-//      }
 
 //senquack TODO: adapt this newer control handling to the older Wiz port stuff:
 #ifdef GCW

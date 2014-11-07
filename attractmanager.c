@@ -244,14 +244,17 @@ void drawScore() {
 
    } else {
       if (status != TITLE)
-         drawNumHoriz(score, 310, 65, 6, 210, 210, 240);
+//         drawNumHoriz(score, 310, 65, 6, 210, 210, 240);
+//         drawNumHoriz(score, 167, 52, 6, 210, 210, 240);
+         drawNumHoriz(score, 167, 50, 6, 210, 210, 240);
    }
 }
 
 #define SCENE_STAT_X 77
 #define SCENE_STAT_SIZE 9
 
-static char *lStr = "LEFT", *bStr = "BOMB", *okStr="OK";
+//senquack - added FPS reporting
+static char *lStr = "LEFT", *bStr = "BOMB", *okStr="OK", *fpsStr="FPS";
 
 //senquack - some conversion to fixed point
 //void drawRPanel() {
@@ -287,10 +290,16 @@ static char *lStr = "LEFT", *bStr = "BOMB", *okStr="OK";
 //  y += 24*1.7f;
 //  drawNumRight(scene+1, 124+480, y, 24, 200, 200, 222);
 //}
-//senquack - allow rotated screen
 void drawRPanel() {
    int y;
    int ml;
+
+   // Show FPS 
+   if (settings.show_fps) { 
+     drawString(fpsStr, 10, 430, 10, 0, 200, 200, 200);
+     drawNumHoriz(fps(), 10, 460, 10, 200, 200, 200);
+   }
+
    if ( left >= 0 ) {
       drawString(lStr, 40+480, 280, 18, 1, 200, 200, 222);
       drawLetter(left, 40+480, 420, 18, 1, 230, 180, 150);
@@ -335,24 +344,26 @@ void drawRPanel_rotated() {
    int y;
    int ml;
 
+   // Show FPS 
+   if (settings.show_fps) { 
+     drawString(fpsStr, 167, 68, 6, 0, 200, 200, 200);
+     drawNumHoriz(fps(), 200, 68, 6, 200, 200, 200);
+   }
+
    if ( left >= 0 ) {
       //orig; had to be adjusted below to support screen-rotation:
       //    drawString(lStr, 40+480, 280, 18, 1, 200, 200, 222);
       //    drawLetter(left, 40+480, 420, 18, 1, 230, 180, 150);
-//      drawString(lStr, 175, 45, 6, 0, 200, 200, 222);
-//      drawLetter(left, 220, 45, 6, 0, 230, 180, 150);
-      drawString(lStr, 165, 45, 6, 0, 200, 200, 222);
-      drawLetter(left, 210, 45, 6, 0, 230, 180, 150);
+      drawString(lStr, 168, 33, 6, 0, 200, 200, 222);
+      drawLetter(left, 213, 33, 6, 0, 230, 180, 150);
 
       switch ( mode ) {
          case NORMAL_MODE:
             //orig; had to be adjusted below to support screen-rotation:
             //      drawString(bStr, 90+480, 280, 18, 1, 200, 200, 222);
             //      drawLetter(bomb, 90+480, 420, 18, 1, 230, 180, 150);
-//            drawString(bStr, 235, 45, 6, 0, 200, 200, 222);
-//            drawLetter(bomb, 280, 45, 6, 0, 230, 180, 150);
-            drawString(bStr, 225, 45, 6, 0, 200, 200, 222);
-            drawLetter(bomb, 270, 45, 6, 0, 230, 180, 150);
+            drawString(bStr, 228, 33, 6, 0, 200, 200, 222);
+            drawLetter(bomb, 273, 33, 6, 0, 230, 180, 150);
             break;
          case PSY_MODE:
             ml = ship.grzCnt/40;
@@ -360,11 +371,11 @@ void drawRPanel_rotated() {
             //      drawBox(550, 460, 50, 8, 120, 120, 120);
             //      drawBox(500+ml, 460, ml, 8, 210, 210, 240);
 #ifdef FIXEDMATH
-            drawBox(INT2FNUM(430), INT2FNUM(15), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
-            drawBox(INT2FNUM(380+ml), INT2FNUM(15), INT2FNUM(ml), INT2FNUM(8), 210, 210, 240);
+            drawBox(INT2FNUM(425), INT2FNUM(20), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
+            drawBox(INT2FNUM(375+ml), INT2FNUM(20), INT2FNUM(ml), INT2FNUM(8), 210, 210, 240);
 #else
-            drawBox(430, 15, 50, 8, 120, 120, 120);
-            drawBox(380+ml, 15, ml, 8, 210, 210, 240);
+            drawBox(425, 20, 50, 8, 120, 120, 120);
+            drawBox(375+ml, 20, ml, 8, 210, 210, 240);
 #endif //FIXEDMATH
             break;
          case GW_MODE:
@@ -373,17 +384,17 @@ void drawRPanel_rotated() {
             //      drawBox(550, 460, 50, 8, 120, 120, 120);
             //      drawBox(500+ml, 460, ml, 8, 210, 240, 210);
 #ifdef FIXEDMATH
-            drawBox(INT2FNUM(430), INT2FNUM(15), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
-            drawBox(INT2FNUM(380+ml), INT2FNUM(15), INT2FNUM(ml), INT2FNUM(8), 210, 240, 210);
+            drawBox(INT2FNUM(425), INT2FNUM(20), INT2FNUM(50), INT2FNUM(8), 120, 120, 120);
+            drawBox(INT2FNUM(375+ml), INT2FNUM(20), INT2FNUM(ml), INT2FNUM(8), 210, 240, 210);
 #else
-            drawBox(430, 15, 50, 8, 120, 120, 120);
-            drawBox(380+ml, 15, ml, 8, 210, 240, 210);
+            drawBox(425, 20, 50, 8, 120, 120, 120);
+            drawBox(375+ml, 20, ml, 8, 210, 240, 210);
 #endif //FIXEDMATH
 
             if ( ml >= 50 ) {
                //	drawString(okStr, 540, 460, 10, 0, 230, 240, 230);
             //orig; had to be adjusted below to support screen-rotation:
-               drawString(okStr, 420, 15, 10, 0, 230, 240, 230);
+               drawString(okStr, 415, 20, 10, 0, 230, 240, 230);
             }
             break;
       }
@@ -399,12 +410,16 @@ void drawRPanel_rotated() {
 
    if (status != TITLE)
    {
-//      drawString(stageStr, 295, 45, 6, 0, 200, 200, 222);
-//      drawLetter(38, 312, 45, 6, 0, 200, 200, 222);
-//      drawNumCenter(scene+1, 319, 45, 6, 200, 200, 222);
-      drawString(stageStr, 285, 45, 6, 0, 200, 200, 222);
-      drawLetter(38, 302, 45, 6, 0, 200, 200, 222);
-      drawNumCenter(scene+1, 309, 45, 6, 200, 200, 222);
+      if (mode == NORMAL_MODE) {
+         drawString(stageStr, 288, 33, 6, 0, 200, 200, 222);
+         drawLetter(38, 305, 33, 6, 0, 200, 200, 222);
+         drawNumCenter(scene+1, 312, 33, 6, 200, 200, 222);
+      } else {
+         // Draw this farther to left since we're not displaying bomb amount in these modes
+         drawString(stageStr, 228, 33, 6, 0, 200, 200, 222);
+         drawLetter(38, 245, 33, 6, 0, 200, 200, 222);
+         drawNumCenter(scene+1, 252, 33, 6, 200, 200, 222);
+      }
    }
 
 }
@@ -597,15 +612,22 @@ void drawTitle() {
          if ( i < 0 ) {
             int md = MODE_NUM+i;
             drawString(mdChr[md], mdChrX[md], 133, 12, 0, 150, 150, 200);
+
+            // letter at top N/P/G/I
             drawLetter(mdIni[md]-'A'+10, sx, sy, sz, 0, 150, 150, 240);
          } else if ( i < QUIT_STAGE_NUM  ) {
             makeStageStr(i);
+
+            // 2-char stage ID below (1a, 2a, etc)
             drawString(stageStr, sx-sz, sy, sz, 0, 210, 210, 240);
+
             drawString(stgChr, 330, 133, 12, 0, 210, 210, 240);
             drawString(stageStr, 445, 133, 12, 0, 210, 210, 240);
             drawNumCenter(hiScore.score[mode][i], 466, 168, 12, 210, 210, 240);
          } else {
+            // "q" for quit
             drawLetter('Q'-'A'+10, sx, sy, sz, 0, 210, 210, 240);
+
             drawString(quitChr, 410, 133, 12, 0, 210, 210, 240);
          }
       } else {
@@ -617,134 +639,14 @@ void drawTitle() {
       }
    }
    drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
-}
-////senquack - this was what I adapted for the Wiz, but I went back to the default for the GCW port
-//void drawTitle_rotated() {
-//   int i;
-//   int r, g, b;
-//   int sx, sy;
-//   char *stgChr = "STAGE";
-//   char *quitChr = "QUIT";
-//   char *mdChr[] = {"NORMAL MODE", "PSY MODE", "IKA MODE", "GW MODE"};
-//   //senquack - move these over a bit on rotated screen
-//   //  int mdChrX[] = {270, 330, 330, 350};
-//   int mdChrX[] = {280, 340, 340, 360};
-//   char mdIni[] = {'N', 'P', 'I', 'G'};
-//   drawTitleBoard();
-//
-//   for ( i=-MODE_NUM ; i<STAGE_NUM+1 ; i++ ) {
-//      if ( i < 0 ) {
-//         if ( 4+i == mode ) {
-//            r = 100; g = 100; b = 240;
-//         } else {
-//            r = 150; g = 150; b = 200;
-//         }
-//      } else if ( i < QUIT_STAGE_NUM && hiScore.cleard[mode][i] ) {
-//         r = 240; g = 180; b = 180;
-//      } else {
-//         r = 210; g = 210; b = 240;
-//      }
-//      sx = stageX[i+MODE_NUM]; sy = stageY[i+MODE_NUM];
-//      //senquack - move everything over a tiny bit when screen is rotated:
-//      sx += 10;
-//
-//      if ( i == slcStg ) {
-//         int sz = STG_BOX_SIZE*3/2;
-//         if ( titleCnt < 16 ) sz = sz*titleCnt/16;
-//#ifdef FIXEDMATH
-//         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(sz), INT2FNUM(sz), r, g, b);
-//#else
-//         drawBox(sx, sy, sz, sz, r, g, b);
-//#endif //FIXEDMATH
-//         sz = sz*3/5;
-//         if ( i < 0 ) {
-//            int md = MODE_NUM+i;
-//            drawString(mdChr[md], mdChrX[md], 133, 12, 0, 150, 150, 200);
-//            drawLetter(mdIni[md]-'A'+10, sx, sy, sz, 0, 150, 150, 240);
-//         } else if ( i < QUIT_STAGE_NUM  ) {
-//            makeStageStr(i);
-//            drawString(stageStr, sx-sz, sy, sz, 0, 210, 210, 240);
-//            //senquack - move everything over a tiny bit when screen is rotated:
-//            //	drawString(stgChr, 330, 133, 12, 0, 210, 210, 240);
-//            //	drawString(stageStr, 445, 133, 12, 0, 210, 210, 240);
-//            //	drawNumCenter(hiScore.score[mode][i], 466, 168, 12, 210, 210, 240);
-//            drawString(stgChr, 340, 133, 12, 0, 210, 210, 240);
-//            drawString(stageStr, 455, 133, 12, 0, 210, 210, 240);
-//            drawNumCenter(hiScore.score[mode][i], 476, 168, 12, 210, 210, 240);
-//         } else {
-//            drawLetter('Q'-'A'+10, sx, sy, sz, 0, 210, 210, 240);
-//            //senquack - move everything over a tiny bit when screen is rotated:
-//            //	drawString(quitChr, 410, 133, 12, 0, 210, 210, 240);
-//            drawString(quitChr, 420, 133, 12, 0, 210, 210, 240);
-//         }
-//      } else {
-//#ifdef FIXEDMATH
-//         drawBox(INT2FNUM(sx), INT2FNUM(sy), INT2FNUM(STG_BOX_SIZE)/2, INT2FNUM(STG_BOX_SIZE)/2, r*2/3, g*2/3, b*2/3);
-//#else
-//         drawBox(sx, sy, STG_BOX_SIZE/2, STG_BOX_SIZE/2, r*2/3, g*2/3, b*2/3);
-//#endif //FIXEDMATH
-//      }
-//   }
-//   drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
-//}
-void drawTitle_rotated() {
-  int i;
-  int r, g, b;
-  int sx, sy;
-  char *stgChr = "STAGE";
-  char *quitChr = "QUIT";
-  char *mdChr[] = {"NORMAL MODE", "PSY MODE", "IKA MODE", "GW MODE"};
-  int mdChrX[] = {270, 330, 330, 350};
-  char mdIni[] = {'N', 'P', 'I', 'G'};
-  drawTitleBoard();
-  
-  for ( i=-MODE_NUM ; i<STAGE_NUM+1 ; i++ ) {
-    if ( i < 0 ) {
-      if ( 4+i == mode ) {
-	r = 100; g = 100; b = 240;
-      } else {
-	r = 150; g = 150; b = 200;
-      }
-    } else if ( i < QUIT_STAGE_NUM && hiScore.cleard[mode][i] ) {
-      r = 240; g = 180; b = 180;
-    } else {
-      r = 210; g = 210; b = 240;
-    }
-    sx = stageX[i+MODE_NUM]; sy = stageY[i+MODE_NUM];
-    if ( i == slcStg ) {
-      int sz = STG_BOX_SIZE*3/2;
-      if ( titleCnt < 16 ) sz = sz*titleCnt/16;
-      drawBox(sx, sy, sz, sz, r, g, b);
-      sz = sz*3/5;
-      if ( i < 0 ) {
-	int md = MODE_NUM+i;
-	drawString(mdChr[md], mdChrX[md], 133, 12, 0, 150, 150, 200);
-	drawLetter(mdIni[md]-'A'+10, sx, sy, sz, 0, 150, 150, 240);
-      } else if ( i < QUIT_STAGE_NUM  ) {
-	makeStageStr(i);
-	drawString(stageStr, sx-sz, sy, sz, 0, 210, 210, 240);
-	drawString(stgChr, 330, 133, 12, 0, 210, 210, 240);
-	drawString(stageStr, 445, 133, 12, 0, 210, 210, 240);
-	drawNumCenter(hiScore.score[mode][i], 466, 168, 12, 210, 210, 240);
-      } else {
-	drawLetter('Q'-'A'+10, sx, sy, sz, 0, 210, 210, 240);
-	drawString(quitChr, 410, 133, 12, 0, 210, 210, 240);
-      }
-    } else {
-      drawBox(sx, sy, STG_BOX_SIZE/2, STG_BOX_SIZE/2, r*2/3, g*2/3, b*2/3);
-    }
-  }
-  drawString(mdChr[mode], mdChrX[mode], 455, 12, 0, 150, 150, 200);
 
-  // senquack - visual indicator for added cheats (they disable saving of high-scores however)
-  if (settings.extra_lives > 0 || settings.extra_bombs > 0) {
-     char *cheat_str = "CHEAT";
-     drawString(cheat_str, 285, 230, 12, 0, 255, 100, 100);
-     cheat_str = "MODE";
-     drawString(cheat_str, 295, 270, 12, 0, 255, 100, 100);
-  }
-//drawString (char *str, int lx, int ly, int ltSize, int d, int r, int g, int b)
-
+   // senquack - visual indicator for added cheats (they disable saving of high-scores however)
+   if (settings.extra_lives > 0 || settings.extra_bombs > 0) {
+      char *cheat_str = "CHEAT";
+      drawString(cheat_str, 285, 230, 12, 0, 255, 100, 100);
+      cheat_str = "MODE";
+      drawString(cheat_str, 295, 270, 12, 0, 255, 100, 100);
+   }
 }
 
 static int goCnt;

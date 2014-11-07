@@ -19,6 +19,13 @@
 // For joystick
 #include "SDL.h"
 
+#define SCREEN_WIDTH    320
+#define SCREEN_HEIGHT   240
+#define SCREEN_BPP      16
+#define SCREEN_FLAGS    (SDL_FULLSCREEN)
+//#define LOWRES_SCREEN_WIDTH 320
+//#define LOWRES_SCREEN_HEIGHT 240
+
 //Original rrootage code:
 #define PAD_UP 1
 #define PAD_DOWN 2
@@ -112,6 +119,9 @@ typedef struct {
    };
 } gl_vertex_3d;
 
+//senquack - returns FPS as integer. Called once per frame.
+int fps();
+
 int getPadState ();
 int getButtonState ();
 
@@ -140,19 +150,19 @@ void gluPerspective (GLfloat fovy, GLfloat ratio, GLfloat near, GLfloat far);
 void setScreenShake (int type, int cnt);
 void moveScreenShake ();
 
+//senquack - both fixed and float versions now:
 #ifdef FIXEDMATH
 void drawBox(GLfixed fx, GLfixed fy, GLfixed fwidth, GLfixed fheight, int r, int g, int b);
 #else
 void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, int b);
 #endif //FIXEDMATH
 
-//senquack - added these to support batch drawing of boxes:
-void prepareDrawBoxes (void);
-void finishDrawBoxes (void);
-
-////senquack - added these to support batch drawing of boxes:
-//void prepareDrawLines();
-//void finishDrawLines();
+//senquack - new function to draw boxes with no outline, i.e. for tiny text on handhelds
+#ifdef FIXEDMATH
+void drawBoxNoOutline(GLfixed x, GLfixed y, GLfixed width, GLfixed height, int r, int g, int b);
+#else
+void drawBoxNoOutline(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, int b);
+#endif
 
 //senquack - converted to 2D (no need for z coordinate)
 //void drawLine(GLfloat x1, GLfloat y1, GLfloat z1,

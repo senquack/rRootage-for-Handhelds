@@ -32,12 +32,6 @@
 
 #define FAR_PLANE 720
 
-#define SCREEN_WIDTH    320
-#define SCREEN_HEIGHT   240
-#define SCREEN_BPP      16
-#define SCREEN_FLAGS    (SDL_FULLSCREEN)
-//#define LOWRES_SCREEN_WIDTH 320
-//#define LOWRES_SCREEN_HEIGHT 240
 #define SHARE_LOC "rr_share/"
 
 typedef struct eglConnection {
@@ -57,7 +51,7 @@ static eglConnection egl_screen = {
 SDL_Surface * conv_surf_gl (SDL_Surface * s, int want_alpha);
 
 // fps() returns the current FPS as an integer. Meant to be called once every frame.
-static int fps()
+int fps()
 {
    static int frames_drawn = 0; // Frame counter (resets after recording new FPS value)
    static int current_fps = 0;  // Current FPS
@@ -88,9 +82,11 @@ void swapGLScene ()
 {
    if (eglSwapBuffers(egl_screen.display, egl_screen.surface) != GL_TRUE) {
       printf("OpenGLES: eglSwapBuffers failed!\n");
-   } else {
-      printf("FPS: %d\n", fps());
    }
+   //debug
+//   } else {
+//      printf("FPS: %d\n", fps());
+//   }
 }
 
 //OpenGLES-related:
@@ -321,8 +317,7 @@ int initGLES()
    glEnable(GL_LINE_SMOOTH);
    glEnable (GL_BLEND);
 //   glBlendFunc(GL_SRC_ALPHA, GL_ONE);   // original rr code had this
-// senquack - for some reason I changed it to this for Wiz/GP2X (opengl docs say it is better for transparency)
-   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    // GL docs say is best for transparency
    glDisable (GL_LIGHTING);
    glDisable (GL_CULL_FACE);
    glDisable (GL_DEPTH_TEST);
@@ -1375,178 +1370,18 @@ static gl_vertex *lines_ptr = NULL;
 // NOTE
 //senquack - disabling these next 3-4 functions allowed program to run longer before hang:
 
-// 2/11 - new efforts to convert all triangle fans to something else:
-//  //senquack - tried tweaking this to fix hang:
-//void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
-//      int r, int g, int b) {
-////  glPushMatrix();
-////  glTranslatef(x, y, 0);
-////  glColor4i(r, g, b, 128);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(-width, -height,  0);
-////  glVertex3f( width, -height,  0);
-////  glVertex3f( width,  height,  0);
-////  glVertex3f(-width,  height,  0);
-////  glEnd();
-////  glColor4i(r, g, b, 255);
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(-width, -height,  0);
-////  glVertex3f( width, -height,  0);
-////  glVertex3f( width,  height,  0);
-////  glVertex3f(-width,  height,  0);
-////  glEnd();
-////  glPopMatrix();
-//}
-  //senquack - tried tweaking this to fix hang:
 //void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height,
 //      int r, int g, int b) {
 //  glPushMatrix();
 //  glTranslatef(x, y, 0);
 //  glColor4i(r, g, b, 128);
-////  glColor4f(r, g, b, 0.5);
-//
-//  //senquack - added disabling of gl_blend to fix diagonal lines
-////    glDisable(GL_BLEND);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(-width, -height,  0);
-////  glVertex3f( width, -height,  0);
-////  glVertex3f( width,  height,  0);
-////  glVertex3f(-width,  height,  0);
-////  glEnd();
-//
-////  glBegin(GL_TRIANGLES);
-////  glVertex3f(-width, -height,  0);
-////  glVertex3f( width, -height,  0);
-////  glVertex3f( width,  height,  0);
-////  glEnd();
-////  glBegin(GL_TRIANGLES);
-////  glVertex3f(-width, -height,  0);
-////  glVertex3f( width,  height,  0);
-////  glVertex3f(-width,  height,  0);
-////  glEnd();
-//  glBegin(GL_QUADS);
-//  glVertex3f(-width, -height,0);
-//  glVertex3f( width, -height,0);
-//  glVertex3f( width,  height,0);
-//  glVertex3f(-width,  height,0);
-//  glEnd();
-//
-//  glColor4i(r, g, b, 255);
-////  glColor4f(r, g, b, 1.0);
-//
-//  //senquack
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(-width, -height,  0);
-////  glVertex3f( width, -height,  0);
-////  glVertex3f( width,  height,  0);
-////  glVertex3f(-width,  height,  0);
-////  glEnd();
-//  //senquack - 1st try:
-////  glBegin(GL_QUADS);
-////  glVertex3f(-width, -height,  0);
-////  glVertex3f( width, -height,  0);
-////  glVertex3f( width,  height,  0);
-////  glVertex3f(-width,  height,  0);
-////  glEnd();
-//  //senquack - 2nd try:
-//
-////  glBegin(GL_LINES);
-////  glVertex3f(-width, -height,  0);
-////  glVertex3f( width, -height,  0);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex3f( width, -height,  0);
-////  glVertex3f( width,  height,  0);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex3f( width,  height,  0);
-////  glVertex3f(-width,  height,  0);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex3f(-width,  height,  0);
-////  glVertex3f(-width, -height,  0);
-////  glEnd();
-//
-//  //senquack - 3rd try:
-////  glBegin(GL_LINES);
-////  glVertex2f(-width, -height);
-////  glVertex2f( width, -height);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f( width, -height);
-////  glVertex2f( width,  height);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f( width,  height);
-////  glVertex2f(-width,  height);
-////  glEnd();
-//
-//  //senquack -if I just leave this one enabled it STILL causes the vertical problem
-////  glBegin(GL_LINES);
-////  glVertex2f(-width,  height);
-////  glVertex2f(-width, -height);
-////  glEnd();
-//
-////  glBegin(GL_LINE_LOOP);
-////  glVertex2f(-width, -height);
-////  glVertex2f( width, -height);
-////  glVertex2f( width,  height);
-////  glVertex2f(-width,  height);
-////  glVertex2f(-width, -height);
-////  glEnd();
-//
-//  glPopMatrix();
-//}
-
-typedef struct {
-#ifdef FIXEDMATH
-   GLfixed x,y;
-#else
-   GLfloat x,y;
-#endif //FIXEDMATH
-   GLubyte r,g,b,a;
-} boxvertice;
-   
-static boxvertice boxverticedata[2000];       
-static boxvertice *boxverticeptr;
-
-void prepareDrawBoxes (void)
-{
-   boxverticeptr = &boxverticedata[0];
-}
-
-void finishDrawBoxes (void)
-{
-   glEnable (GL_BLEND);
-#ifdef FIXEDMATH
-   glVertexPointer (2, GL_FIXED, sizeof(boxvertice), &boxverticedata[0].x);
-#else
-   glVertexPointer (2, GL_FLOAT, sizeof(boxvertice), &boxverticedata[0].x);
-#endif //FIXEDMATH
-   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(boxvertice), &boxverticedata[0].r);
-   int numboxvertices = ((unsigned int) boxverticeptr - (unsigned int) (&boxverticedata[0])) / sizeof(boxvertice);
-   glDrawArrays (GL_TRIANGLES, 0, numboxvertices);
-//    printf("printing boxes with %d vertices\n", numboxvertices);
-   //senquack - never seemed to go above 1500 vertices here (higher when using non-rotated mode)
-}
-
-//void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, 
-//	     int r, int g, int b) {
-//  glPushMatrix();
-//  glTranslatef(x, y, 0);
-//  glColor4ub(r, g, b, 128);
 //  glBegin(GL_TRIANGLE_FAN);
 //  glVertex3f(-width, -height,  0);
 //  glVertex3f( width, -height,  0);
 //  glVertex3f( width,  height,  0);
 //  glVertex3f(-width,  height,  0);
 //  glEnd();
-//  glColor4ub(r, g, b, 255);
+//  glColor4i(r, g, b, 255);
 //  glBegin(GL_LINE_LOOP);
 //  glVertex3f(-width, -height,  0);
 //  glVertex3f( width, -height,  0);
@@ -1555,32 +1390,8 @@ void finishDrawBoxes (void)
 //  glEnd();
 //  glPopMatrix();
 //}
-//void drawBoxx(GLfixed fx, GLfixed fy, GLfixed fwidth, GLfixed fheight,
-//      int r, int g, int b) {
-//  glPushMatrix();
-//  glTranslatex(fx, fy, 0);
-//
-//    GLubyte colors[4*4]; 
-// GLfixed vertices[4*2];
-// colors[0] = colors[4] = colors[8] = colors[12] = r;
-// colors[1] = colors[5] = colors[9] = colors[13] = g;
-// colors[2] = colors[6] = colors[10] = colors[14] = b;
-// colors[3] = colors[7] = colors[11] = colors[15] = 128;
-//
-// vertices[0] = -fwidth;  vertices[1] = -fheight;
-// vertices[2] = fwidth;      vertices[3] = -fheight;
-// vertices[4] = fwidth;      vertices[5] = fheight;
-// vertices[6] = -fwidth;  vertices[7] = fheight;
-//
-////  glEnableClientState(GL_VERTEX_ARRAY);
-// glVertexPointer(2, GL_FIXED, 0, vertices);
-////  glEnableClientState(GL_COLOR_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-// glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-//
-//  glPopMatrix();
-//}
-//senquack TODO: interleave
+//senquack - boxes are now drawn via batch-interleaved GLES.
+//             New parameter "outlined" tells if it should have a outline.
 #ifdef FIXEDMATH
 void drawBox(GLfixed x, GLfixed y, GLfixed width, GLfixed height, int r, int g, int b)
 {
@@ -1588,37 +1399,52 @@ void drawBox(GLfixed x, GLfixed y, GLfixed width, GLfixed height, int r, int g, 
 void drawBox(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, int b)
 {
 #endif //FIXEDMATH
-//   //TRIANGLES:
-//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-//   *boxcolptr++ = r; *boxcolptr++ = g; *boxcolptr++ = b; *boxcolptr++ = 128;
-//   *boxvertptr++ = x - width; *boxvertptr++ = y - height;
-//   *boxvertptr++ = x - width; *boxvertptr++ = y + height;
-//   *boxvertptr++ = x + width; *boxvertptr++ = y - height;
-//   *boxvertptr++ = x - width; *boxvertptr++ = y + height;
-//   *boxvertptr++ = x + width; *boxvertptr++ = y + height;
-//   *boxvertptr++ = x + width; *boxvertptr++ = y - height;
-   boxverticeptr->x = x - width; boxverticeptr->y = y - height;
-   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
-   boxverticeptr++;
-   boxverticeptr->x = x - width; boxverticeptr->y = y + height;
-   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
-   boxverticeptr++;
-   boxverticeptr->x = x + width; boxverticeptr->y = y - height;
-   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
-   boxverticeptr++;
-   boxverticeptr->x = x - width; boxverticeptr->y = y + height;
-   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
-   boxverticeptr++;
-   boxverticeptr->x = x + width; boxverticeptr->y = y + height;
-   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
-   boxverticeptr++;
-   boxverticeptr->x = x + width; boxverticeptr->y = y - height;
-   boxverticeptr->r = r; boxverticeptr->g = g; boxverticeptr->b = b; boxverticeptr->a = 128;
-   boxverticeptr++;
+   gl_vertex vertices[4];
+   uint32_t color;
+   color = (128 << 24) | (b << 16) | (g << 8) | r;
+   vertices[0].x = x - width;     vertices[0].y = y - height;    vertices[0].color_rgba = color;
+   vertices[1].x = x - width;     vertices[1].y = y + height;    vertices[1].color_rgba = color;
+   vertices[2].x = x + width;     vertices[2].y = y + height;    vertices[2].color_rgba = color;
+   vertices[3].x = x + width;     vertices[3].y = y - height;    vertices[3].color_rgba = color;
+   *triangles_ptr++ = vertices[0];
+   *triangles_ptr++ = vertices[1];
+   *triangles_ptr++ = vertices[2];
+   *triangles_ptr++ = vertices[0];
+   *triangles_ptr++ = vertices[2];
+   *triangles_ptr++ = vertices[3];
+
+   //      color = (255 << 24) | (b << 16) | (g << 8) | r;
+   color &= 0x00FFFFFF;    color |= (255 << 24);
+   vertices[0].color_rgba = vertices[1].color_rgba = vertices[2].color_rgba = vertices[3].color_rgba = color;
+   *lines_ptr++ = vertices[0];
+   *lines_ptr++ = vertices[1];
+   *lines_ptr++ = vertices[1];
+   *lines_ptr++ = vertices[2];
+   *lines_ptr++ = vertices[2];
+   *lines_ptr++ = vertices[3];
+   *lines_ptr++ = vertices[3];
+   *lines_ptr++ = vertices[0];
+}
+
+//senquack - new routine for drawing boxes with no outline, i.e., for tiny text on handhelds
+#ifdef FIXEDMATH
+void drawBoxNoOutline(GLfixed x, GLfixed y, GLfixed width, GLfixed height, int r, int g, int b)
+#else
+void drawBoxNoOutline(GLfloat x, GLfloat y, GLfloat width, GLfloat height, int r, int g, int b)
+#endif
+{
+   gl_vertex vertices[4];
+   uint32_t color = (128 << 24) | (b << 16) | (g << 8) | r;
+   vertices[0].x = x - width;     vertices[0].y = y - height;    vertices[0].color_rgba = color;
+   vertices[1].x = x - width;     vertices[1].y = y + height;    vertices[1].color_rgba = color;
+   vertices[2].x = x + width;     vertices[2].y = y + height;    vertices[2].color_rgba = color;
+   vertices[3].x = x + width;     vertices[3].y = y - height;    vertices[3].color_rgba = color;
+   *triangles_ptr++ = vertices[0];
+   *triangles_ptr++ = vertices[1];
+   *triangles_ptr++ = vertices[2];
+   *triangles_ptr++ = vertices[0];
+   *triangles_ptr++ = vertices[2];
+   *triangles_ptr++ = vertices[3];
 }
 
 //senquack - converted to GLES and now lines are drawn in one huge batch
@@ -3934,6 +3760,7 @@ void startDrawBoards() {
       glTranslatef(-210.0f, -645.0f, 0.0f); 
       glScalef(1.41f,1.36f,1.0f); 
    }
+
 }
 #endif //FIXEDMATH
 
@@ -3945,8 +3772,10 @@ void startDrawBoards() {
 void
 endDrawBoards ()
 {
-   //senquack - box drawing is now done as a batch:
-   finishDrawBoxes ();
+   glBlendFunc (GL_SRC_ALPHA, GL_DST_COLOR); // best choice for letter rendering overall
+   finishDrawBatch();     
+
+   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    // GL docs say is best for transparency
 
    glMatrixMode(GL_MODELVIEW);   // senquack - just to be sure we're in modelview
    glPopMatrix ();
@@ -4007,36 +3836,16 @@ static void drawBoard (int x, int y, int width, int height)
 #else
 static void drawBoard (int x, int y, int width, int height)
 {
-//  glColor4i(0, 0, 0, 255);
+   gl_vertex vertices[4];
+   uint32_t color = 0xFF000000;
 
-   //senquack
-//  glBegin(GL_QUADS);
-//  glVertex2f(x,y);
-//  glVertex2f(x+width,y);
-//  glVertex2f(x+width,y+height);
-//  glVertex2f(x,y+height);
-//  glEnd();
-   GLubyte colors[4 * 4];
-   GLfloat vertices[4 * 2];
-   colors[0] = colors[4] = colors[8] = colors[12] = 0;
-   colors[1] = colors[5] = colors[9] = colors[13] = 0;
-   colors[2] = colors[6] = colors[10] = colors[14] = 0;
-   colors[3] = colors[7] = colors[11] = colors[15] = 255;
+   vertices[0].x = x;            vertices[0].y = y;            vertices[0].color_rgba = color;
+   vertices[1].x = x + width;    vertices[1].y = y;            vertices[1].color_rgba = color;
+   vertices[2].x = x + width;    vertices[2].y = y + height;   vertices[2].color_rgba = color;
+   vertices[3].x = x;            vertices[3].y = y + height;   vertices[3].color_rgba = color;
 
-   vertices[0] = x;
-   vertices[1] = y;
-   vertices[2] = x + width;
-   vertices[3] = y;
-   vertices[4] = x + width;
-   vertices[5] = y + height;
-   vertices[6] = x;
-   vertices[7] = y + height;
-
-
-// glEnableClientState(GL_VERTEX_ARRAY);
-   glVertexPointer (2, GL_FLOAT, 0, vertices);
-// glEnableClientState(GL_COLOR_ARRAY);
-   glColorPointer (4, GL_UNSIGNED_BYTE, 0, colors);
+   glVertexPointer (2, GL_FLOAT, sizeof(gl_vertex), &vertices[0].x);
+   glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(gl_vertex), &vertices[0].r);
    glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
 }
 #endif //FIXEDMATH
@@ -4062,683 +3871,28 @@ static void drawBoard (int x, int y, int width, int height)
 void
 drawSideBoards ()
 {
+      prepareDrawBatch();
 // if (screenRotated) {
    if (settings.rotated) {
-
+      drawScore();
+      drawRPanel_rotated ();
       glDisable (GL_BLEND);
       // We only need very slender sideboards when rotated:
       drawBoard (140, 0, 19, 480);
       drawBoard (480, 0, 20, 480);
       glEnable (GL_BLEND);
-      //senquack - box drawing is now done as a batch:
-      prepareDrawBoxes ();
-      drawScore();
-      drawRPanel_rotated ();
    } else {
+      drawScore ();
+      drawRPanel ();
       glDisable (GL_BLEND);
       drawBoard (0, 0, 160, 480);
       drawBoard (480, 0, 160, 480);
       glEnable (GL_BLEND);
-
-      //senquack - box drawing is now done as a batch:
-      prepareDrawBoxes ();
-
-      drawScore ();
-      drawRPanel ();
    }
 }
 
-// 2/11 - new efforts to convert all triangle fans and line loops to something else:
-//senquack
-//void drawTitleBoard() {
-//  
-// //senquack
-//////  printf("drawTitleBoard() start\n");
-////  //glEnable(GL_TEXTURE_2D);
-////  printf("*");
-////  //glBindTexture(GL_TEXTURE_2D, titleTexture);
-////  printf("*");
-////  glColor4i(255, 255, 255, 255);
-////  printf("*");
-////  glBegin(GL_TRIANGLE_FAN);
-////  glTexCoord2f(0.0f, 0.0f);
-////  glVertex3f(350, 78,  0);
-////  glTexCoord2f(1.0f, 0.0f);
-////  glVertex3f(470, 78,  0);
-////  glTexCoord2f(1.0f, 1.0f);
-////  glVertex3f(470, 114,  0);
-////  glTexCoord2f(0.0f, 1.0f);
-////  glVertex3f(350, 114,  0);
-////  printf("*");
-////  glEnd();
-//  
-//  //glDisable(GL_TEXTURE_2D); //TODO: Make sure to uncomment this line if I fix texturing....
-//  printf("*");
-//  glColor4i(200, 200, 200, 255);
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(350, 30, 0);
-//  glVertex3f(400, 30, 0);
-//  glVertex3f(380, 56, 0);
-//  glVertex3f(380, 80, 0);
-//  glVertex3f(350, 80, 0);
-//  glEnd();
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(404, 80, 0);
-//  glVertex3f(404, 8, 0);
-//  glVertex3f(440, 8, 0);
-//  glVertex3f(440, 44, 0);
-//  glVertex3f(465, 80, 0);
-//  glEnd();
-//  glColor4i(255, 255, 255, 255);
-//  glBegin(GL_LINE_LOOP);
-//  glVertex3f(350, 30, 0);
-//  glVertex3f(400, 30, 0);
-//  glVertex3f(380, 56, 0);
-//  glVertex3f(380, 80, 0);
-//  glVertex3f(350, 80, 0);
-//  glEnd();
-//  glBegin(GL_LINE_LOOP);
-//  glVertex3f(404, 80, 0);
-//  glVertex3f(404, 8, 0);
-//  glVertex3f(440, 8, 0);
-//  glVertex3f(440, 44, 0);
-//  glVertex3f(465, 80, 0);
-//  glEnd();
-//  //senquack
-////  printf("Done drawing drawTitleBoard\n"); fflush(stdout);
-//}
-//senquack - 2nd try
-//void drawTitleBoard() {
-//  
-// //senquack
-////  printf("drawTitleBoard() start\n");
-//  //glEnable(GL_TEXTURE_2D);
-//  printf("*");
-//  //glBindTexture(GL_TEXTURE_2D, titleTexture);
-//  printf("*");
-//  glColor4i(255, 255, 255, 255);
-//  printf("*");
-//  glBegin(GL_TRIANGLE_FAN);
-//  glTexCoord2f(0.0f, 0.0f);
-//  glVertex3f(350, 78,  0);
-//  glTexCoord2f(1.0f, 0.0f);
-//  glVertex3f(470, 78,  0);
-//  glTexCoord2f(1.0f, 1.0f);
-//  glVertex3f(470, 114,  0);
-//  glTexCoord2f(0.0f, 1.0f);
-//  glVertex3f(350, 114,  0);
-//  printf("*");
-//  glEnd();
-//  
-//  //glDisable(GL_TEXTURE_2D); //TODO: Make sure to uncomment this line if I fix texturing....
-//  printf("*");
-//  glColor4i(200, 200, 200, 255);
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(350, 30, 0);
-//  glVertex3f(400, 30, 0);
-//  glVertex3f(380, 56, 0);
-//  glVertex3f(380, 80, 0);
-//  glVertex3f(350, 80, 0);
-//  glEnd();
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(404, 80, 0);
-//  glVertex3f(404, 8, 0);
-//  glVertex3f(440, 8, 0);
-//  glVertex3f(440, 44, 0);
-//  glVertex3f(465, 80, 0);
-//  glEnd();
-//  glColor4i(255, 255, 255, 255);
-//
-//  //senquack
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(400, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glVertex3f(380, 80, 0);
-////  glVertex3f(350, 80, 0);
-////  glEnd();
-//  glBegin(GL_LINES);
-//  glVertex3f(350, 30, 0);
-//  glVertex3f(400, 30, 0);
-//
-//  glVertex3f(400, 30, 0);
-//  glVertex3f(380, 56, 0);
-//
-//  glVertex3f(380, 56, 0);
-//  glVertex3f(380, 80, 0);
-//
-//  glVertex3f(380, 80, 0);
-//  glVertex3f(350, 80, 0);
-//
-//  glVertex3f(350, 80, 0);
-//  glVertex3f(350, 30, 0);
-//  glEnd();
-//
-//  //senquack
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(404, 8, 0);
-////  glVertex3f(440, 8, 0);
-////  glVertex3f(440, 44, 0);
-////  glVertex3f(465, 80, 0);
-////  glEnd();
-//  glBegin(GL_LINES);
-//  glVertex3f(404, 80, 0);
-//  glVertex3f(404, 8, 0);
-//
-//  glVertex3f(404, 8, 0);
-//  glVertex3f(440, 8, 0);
-//
-//  glVertex3f(440, 8, 0);
-//  glVertex3f(440, 44, 0);
-//
-//  glVertex3f(440, 44, 0);
-//  glVertex3f(465, 80, 0);
-//
-//  glVertex3f(465, 80, 0);
-//  glVertex3f(404, 80, 0);
-//  glEnd();
-//  //senquack
-////  printf("Done drawing drawTitleBoard\n"); fflush(stdout);
-//}
-////senquack - 3rd try (lines are OK, triangles are way off)
-//void drawTitleBoard() {
-//  
-// //senquack
-////  printf("drawTitleBoard() start\n");
-//  //glEnable(GL_TEXTURE_2D);
-//  //glBindTexture(GL_TEXTURE_2D, titleTexture);
-////  glColor4i(255, 255, 255, 255);
-//
-//  //senquack - enabling this causes dozens of vertical stripes to appear instead of anything intelligible
-////  glBegin(GL_TRIANGLE_FAN);
-////  glTexCoord2f(0.0f, 0.0f);
-////  glVertex3f(350, 78,  0);
-////  glTexCoord2f(1.0f, 0.0f);
-////  glVertex3f(470, 78,  0);
-////  glTexCoord2f(1.0f, 1.0f);
-////  glVertex3f(470, 114,  0);
-////  glTexCoord2f(0.0f, 1.0f);
-////  glVertex3f(350, 114,  0);
-////  printf("*");
-////  glEnd();
-//  //senquack - changing it to this is no help at all, still has vertical stripes:
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(350, 78,  0);
-////  glVertex3f(470, 78,  0);
-////  glVertex3f(470, 114,  0);
-////  glVertex3f(350, 114,  0);
-////  glEnd();
-//  
-//  //glDisable(GL_TEXTURE_2D); //TODO: Make sure to uncomment this line if I fix texturing....
-//  glColor4i(200, 200, 200, 255);
-//
-//  //senquack - these two don't cause vertical stripes but the triangles are alllll messed up
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(350, 30, 0);
-//  glVertex3f(400, 30, 0);
-//  glVertex3f(380, 56, 0);
-//  glVertex3f(380, 80, 0);
-//  glVertex3f(350, 80, 0);
-//  glEnd();
-//  glColor4i(200, 200, 200, 255);
-//  glBegin(GL_TRIANGLE_FAN);
-//  glVertex3f(404, 80, 0);
-//  glVertex3f(404, 8, 0);
-//  glVertex3f(440, 8, 0);
-//  glVertex3f(440, 44, 0);
-//  glVertex3f(465, 80, 0);
-//  glEnd();
-//
-//  //senquack - test conversions here:
-////  glBegin(GL_TRIANGLES);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(400, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glEnd();
-////
-////  glBegin(GL_TRIANGLES);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glVertex3f(380, 80, 0);
-////  glEnd();
-////
-////  glBegin(GL_TRIANGLES);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(380, 80, 0);
-////  glVertex3f(350, 80, 0);
-////  glEnd();
-//
-////  glBegin(GL_TRIANGLES);
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(404, 8, 0);
-////  glVertex3f(440, 8, 0);
-////
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(440, 8, 0);
-////  glVertex3f(440, 44, 0);
-////
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(440, 44, 0);
-////  glVertex3f(465, 80, 0);
-////  glEnd();
-//
-//  glColor4i(255, 255, 255, 255);
-//
-//  //senquack
-//  glBegin(GL_LINE_LOOP);
-//  glVertex2f(350, 30);
-//  glVertex2f(400, 30);
-//  glVertex2f(380, 56);
-//  glVertex2f(380, 80);
-//  glVertex2f(350, 80);
-//  glVertex2f(350, 30);
-//  glEnd();
-////  glBegin(GL_LINES);
-////  glVertex2f(350, 30);
-////  glVertex2f(400, 30);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f(400, 30);
-////  glVertex2f(380, 56);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f(380, 56);
-////  glVertex2f(380, 80);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f(380, 80);
-////  glVertex2f(350, 80);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f(350, 80);
-////  glVertex2f(350, 30);
-////  glEnd();
-//
-//  //senquack
-//  glBegin(GL_LINE_LOOP);
-//  glVertex2f(404, 80);
-//  glVertex2f(404, 8);
-//  glVertex2f(440, 8);
-//  glVertex2f(440, 44);
-//  glVertex2f(465, 80);
-//  glVertex2f(404, 80);
-//  glEnd();
-////  glBegin(GL_LINES);
-////  glVertex2f(404, 80);
-////  glVertex2f(404, 8);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f(404, 8);
-////  glVertex2f(440, 8);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f(440, 8);
-////  glVertex2f(440, 44);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f(440, 44);
-////  glVertex2f(465, 80);
-////  glEnd();
-////
-////  glBegin(GL_LINES);
-////  glVertex2f(465, 80);
-////  glVertex2f(404, 80);
-////  glEnd();
-//  //senquack
-////  printf("Done drawing drawTitleBoard\n"); fflush(stdout);
-//}
-////senquack - converted to openGLES
-//void drawTitleBoard() {
-//  
-//
-////  glColor4i(255, 255, 255, 255);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glTexCoord2f(0.0f, 0.0f);
-////  glVertex3f(350, 78,  0);
-////  glTexCoord2f(1.0f, 0.0f);
-////  glVertex3f(470, 78,  0);
-////  glTexCoord2f(1.0f, 1.0f);
-////  glVertex3f(470, 114,  0);
-////  glTexCoord2f(0.0f, 1.0f);
-////  glVertex3f(350, 114,  0);
-////  glEnd();
-//
-//    GLubyte colors[5*4]; 
-// GLfixed vertices[5*2];
-////  GLfixed texvertices[4*2];
-//
-////  glEnable(GL_TEXTURE_2D);
-////  glBindTexture(GL_TEXTURE_2D, titleTexture);
-////
-////  memset(colors,255,4*4);
-////  vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(78);
-////  vertices[2] = INT2FNUM(470);  vertices[3] = INT2FNUM(78);
-////  vertices[4] = INT2FNUM(470);  vertices[5] = INT2FNUM(114);
-////  vertices[6] = INT2FNUM(350);  vertices[7] = INT2FNUM(114);
-////  texvertices[0] = 0;              texvertices[1] = 0;
-////  texvertices[2] = INT2FNUM(1);    texvertices[3] = 0;
-////  texvertices[4] = INT2FNUM(1);    texvertices[5] = INT2FNUM(1);
-////  texvertices[6] = 0;              texvertices[7] = INT2FNUM(1);
-////
-//////   glEnableClientState(GL_VERTEX_ARRAY);
-////  glVertexPointer(2, GL_FIXED, 0, vertices);
-//////   glEnableClientState(GL_COLOR_ARRAY);
-////  glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-////  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-////  glTexCoordPointer(2, GL_FIXED, 0, texvertices);
-////  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-////  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-////  glDisable(GL_TEXTURE_2D); 
-//
-////  glColor4i(200, 200, 200, 255);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(400, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glVertex3f(380, 80, 0);
-////  glVertex3f(350, 80, 0);
-////  glEnd();
-//
-// colors[0] = colors[1] = colors[2] =
-// colors[4] = colors[5] = colors[6] =
-// colors[8] = colors[9] = colors[10] =
-// colors[12] = colors[13] = colors[14] =
-// colors[16] = colors[17] = colors[18] = 200;
-// colors[3] = colors[7] = colors[11] = colors[15] = 255;
-//
-// vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(30);
-// vertices[2] = INT2FNUM(400);  vertices[3] = INT2FNUM(30);
-// vertices[4] = INT2FNUM(380);  vertices[5] = INT2FNUM(56);
-// vertices[6] = INT2FNUM(380);  vertices[7] = INT2FNUM(80);
-// vertices[8] = INT2FNUM(350);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
-//
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(404, 8, 0);
-////  glVertex3f(440, 8, 0);
-////  glVertex3f(440, 44, 0);
-////  glVertex3f(465, 80, 0);
-////  glEnd();
-//
-// vertices[0] = INT2FNUM(404);  vertices[1] = INT2FNUM(80);
-// vertices[2] = INT2FNUM(404);  vertices[3] = INT2FNUM(8);
-// vertices[4] = INT2FNUM(440);  vertices[5] = INT2FNUM(8);
-// vertices[6] = INT2FNUM(440);  vertices[7] = INT2FNUM(44);
-// vertices[8] = INT2FNUM(465);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
-//
-//  glColor4i(255, 255, 255, 255);
-//  memset(colors,255,20);
-//
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(400, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glVertex3f(380, 80, 0);
-////  glVertex3f(350, 80, 0);
-////  glEnd();
-// vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(30);
-// vertices[2] = INT2FNUM(400);  vertices[3] = INT2FNUM(30);
-// vertices[4] = INT2FNUM(380);  vertices[5] = INT2FNUM(56);
-// vertices[6] = INT2FNUM(380);  vertices[7] = INT2FNUM(80);
-// vertices[8] = INT2FNUM(350);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_LINE_LOOP, 0, 5);
-//
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(404, 8, 0);
-////  glVertex3f(440, 8, 0);
-////  glVertex3f(440, 44, 0);
-////  glVertex3f(465, 80, 0);
-////  glEnd();
-// vertices[0] = INT2FNUM(404);  vertices[1] = INT2FNUM(80);
-// vertices[2] = INT2FNUM(404);  vertices[3] = INT2FNUM(8);
-// vertices[4] = INT2FNUM(440);  vertices[5] = INT2FNUM(8);
-// vertices[6] = INT2FNUM(440);  vertices[7] = INT2FNUM(44);
-// vertices[8] = INT2FNUM(465);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_LINE_LOOP, 0, 5);
-//}
-//senquack - converted to openGLES
-//void drawTitleBoard() {
-//  
-//
-////  glColor4i(255, 255, 255, 255);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glTexCoord2f(0.0f, 0.0f);
-////  glVertex3f(350, 78,  0);
-////  glTexCoord2f(1.0f, 0.0f);
-////  glVertex3f(470, 78,  0);
-////  glTexCoord2f(1.0f, 1.0f);
-////  glVertex3f(470, 114,  0);
-////  glTexCoord2f(0.0f, 1.0f);
-////  glVertex3f(350, 114,  0);
-////  glEnd();
-//
-//    GLubyte colors[5*4]; 
-// GLfixed vertices[5*2];
-////  GLfixed texvertices[4*2];
-//
-////  glEnable(GL_TEXTURE_2D);
-////  glBindTexture(GL_TEXTURE_2D, titleTexture);
-////
-////  memset(colors,255,4*4);
-////  vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(78);
-////  vertices[2] = INT2FNUM(470);  vertices[3] = INT2FNUM(78);
-////  vertices[4] = INT2FNUM(470);  vertices[5] = INT2FNUM(114);
-////  vertices[6] = INT2FNUM(350);  vertices[7] = INT2FNUM(114);
-////  texvertices[0] = 0;              texvertices[1] = 0;
-////  texvertices[2] = INT2FNUM(1);    texvertices[3] = 0;
-////  texvertices[4] = INT2FNUM(1);    texvertices[5] = INT2FNUM(1);
-////  texvertices[6] = 0;              texvertices[7] = INT2FNUM(1);
-////
-//////   glEnableClientState(GL_VERTEX_ARRAY);
-// glVertexPointer(2, GL_FIXED, 0, vertices);
-//////   glEnableClientState(GL_COLOR_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-////  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-////  glTexCoordPointer(2, GL_FIXED, 0, texvertices);
-////  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-////  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-////  glDisable(GL_TEXTURE_2D); 
-//
-////  glColor4i(200, 200, 200, 255);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(400, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glVertex3f(380, 80, 0);
-////  glVertex3f(350, 80, 0);
-////  glEnd();
-//
-// colors[0] = colors[1] = colors[2] =
-// colors[4] = colors[5] = colors[6] =
-// colors[8] = colors[9] = colors[10] =
-// colors[12] = colors[13] = colors[14] =
-// colors[16] = colors[17] = colors[18] = 200;
-// colors[3] = colors[7] = colors[11] = colors[15] = 255;
-//
-//////   vertices[0] = f2x(350); vertices[1] = f2x(30);
-//////   vertices[2] = f2x(400); vertices[3] = f2x(30);
-//////   vertices[4] = f2x(380); vertices[5] = f2x(56);
-//////   vertices[6] = f2x(380); vertices[7] = f2x(80);
-//////   vertices[8] = f2x(350); vertices[9] = f2x(80);
-////  vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(30);
-////  vertices[2] = INT2FNUM(400);  vertices[3] = INT2FNUM(30);
-////  vertices[4] = INT2FNUM(380);  vertices[5] = INT2FNUM(56);
-////  vertices[6] = INT2FNUM(380);  vertices[7] = INT2FNUM(80);
-////  vertices[8] = INT2FNUM(350);  vertices[9] = INT2FNUM(80);
-////  glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
-//
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(404, 8, 0);
-////  glVertex3f(440, 8, 0);
-////  glVertex3f(440, 44, 0);
-////  glVertex3f(465, 80, 0);
-////  glEnd();
-//
-// vertices[0] = INT2FNUM(404);  vertices[1] = INT2FNUM(80);
-// vertices[2] = INT2FNUM(404);  vertices[3] = INT2FNUM(8);
-// vertices[4] = INT2FNUM(440);  vertices[5] = INT2FNUM(8);
-// vertices[6] = INT2FNUM(440);  vertices[7] = INT2FNUM(44);
-// vertices[8] = INT2FNUM(465);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
-//
-////  glColor4i(255, 255, 255, 255);
-//  memset(colors,255,20);
-//
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(400, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glVertex3f(380, 80, 0);
-////  glVertex3f(350, 80, 0);
-////  glEnd();
-// vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(30);
-// vertices[2] = INT2FNUM(400);  vertices[3] = INT2FNUM(30);
-// vertices[4] = INT2FNUM(380);  vertices[5] = INT2FNUM(56);
-// vertices[6] = INT2FNUM(380);  vertices[7] = INT2FNUM(80);
-// vertices[8] = INT2FNUM(350);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_LINE_LOOP, 0, 5);
-//
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(404, 8, 0);
-////  glVertex3f(440, 8, 0);
-////  glVertex3f(440, 44, 0);
-////  glVertex3f(465, 80, 0);
-////  glEnd();
-// vertices[0] = INT2FNUM(404);  vertices[1] = INT2FNUM(80);
-// vertices[2] = INT2FNUM(404);  vertices[3] = INT2FNUM(8);
-// vertices[4] = INT2FNUM(440);  vertices[5] = INT2FNUM(8);
-// vertices[6] = INT2FNUM(440);  vertices[7] = INT2FNUM(44);
-// vertices[8] = INT2FNUM(465);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_LINE_LOOP, 0, 5);
-//}
-//senquack - converted to openGLES
-//senquack - adding texturing back in:
-//void drawTitleBoard() {
-//  
-//
-////  glColor4i(255, 255, 255, 255);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glTexCoord2f(0.0f, 0.0f);
-////  glVertex3f(350, 78,  0);
-////  glTexCoord2f(1.0f, 0.0f);
-////  glVertex3f(470, 78,  0);
-////  glTexCoord2f(1.0f, 1.0f);
-////  glVertex3f(470, 114,  0);
-////  glTexCoord2f(0.0f, 1.0f);
-////  glVertex3f(350, 114,  0);
-////  glEnd();
-//
-//    GLubyte colors[5*4]; 
-// GLfixed vertices[5*2];
-////  GLfixed texvertices[4*2];
-//
-////  glEnable(GL_TEXTURE_2D);
-////  glBindTexture(GL_TEXTURE_2D, titleTexture);
-////
-////  memset(colors,255,4*4);
-////  vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(78);
-////  vertices[2] = INT2FNUM(470);  vertices[3] = INT2FNUM(78);
-////  vertices[4] = INT2FNUM(470);  vertices[5] = INT2FNUM(114);
-////  vertices[6] = INT2FNUM(350);  vertices[7] = INT2FNUM(114);
-////  texvertices[0] = 0;              texvertices[1] = 0;
-////  texvertices[2] = INT2FNUM(1);    texvertices[3] = 0;
-////  texvertices[4] = INT2FNUM(1);    texvertices[5] = INT2FNUM(1);
-////  texvertices[6] = 0;              texvertices[7] = INT2FNUM(1);
-////
-//////   glEnableClientState(GL_VERTEX_ARRAY);
-// glVertexPointer(2, GL_FIXED, 0, vertices);
-//////   glEnableClientState(GL_COLOR_ARRAY);
-// glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-////  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-////  glTexCoordPointer(2, GL_FIXED, 0, texvertices);
-////  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-////  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-////  glDisable(GL_TEXTURE_2D); 
-//
-////  glColor4i(200, 200, 200, 255);
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(400, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glVertex3f(380, 80, 0);
-////  glVertex3f(350, 80, 0);
-////  glEnd();
-//
-// colors[0] = colors[1] = colors[2] =
-// colors[4] = colors[5] = colors[6] =
-// colors[8] = colors[9] = colors[10] =
-// colors[12] = colors[13] = colors[14] =
-// colors[16] = colors[17] = colors[18] =
-// colors[20] = colors[21] = colors[22] = 200;
-// colors[3] = colors[7] = colors[11] = colors[15] = colors[19] = 255;
-//
-// vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(30);
-// vertices[2] = INT2FNUM(400);  vertices[3] = INT2FNUM(30);
-// vertices[4] = INT2FNUM(380);  vertices[5] = INT2FNUM(56);
-// vertices[6] = INT2FNUM(380);  vertices[7] = INT2FNUM(80);
-// vertices[8] = INT2FNUM(350);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
-//
-////  glBegin(GL_TRIANGLE_FAN);
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(404, 8, 0);
-////  glVertex3f(440, 8, 0);
-////  glVertex3f(440, 44, 0);
-////  glVertex3f(465, 80, 0);
-////  glEnd();
-//
-// vertices[0] = INT2FNUM(404);  vertices[1] = INT2FNUM(80);
-// vertices[2] = INT2FNUM(404);  vertices[3] = INT2FNUM(8);
-// vertices[4] = INT2FNUM(440);  vertices[5] = INT2FNUM(8);
-// vertices[6] = INT2FNUM(440);  vertices[7] = INT2FNUM(44);
-// vertices[8] = INT2FNUM(465);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
-//
-////  glColor4i(255, 255, 255, 255);
-//  memset(colors,255,20);
-//
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(350, 30, 0);
-////  glVertex3f(400, 30, 0);
-////  glVertex3f(380, 56, 0);
-////  glVertex3f(380, 80, 0);
-////  glVertex3f(350, 80, 0);
-////  glEnd();
-// vertices[0] = INT2FNUM(350);  vertices[1] = INT2FNUM(30);
-// vertices[2] = INT2FNUM(400);  vertices[3] = INT2FNUM(30);
-// vertices[4] = INT2FNUM(380);  vertices[5] = INT2FNUM(56);
-// vertices[6] = INT2FNUM(380);  vertices[7] = INT2FNUM(80);
-// vertices[8] = INT2FNUM(350);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_LINE_LOOP, 0, 5);
-//
-////  glBegin(GL_LINE_LOOP);
-////  glVertex3f(404, 80, 0);
-////  glVertex3f(404, 8, 0);
-////  glVertex3f(440, 8, 0);
-////  glVertex3f(440, 44, 0);
-////  glVertex3f(465, 80, 0);
-////  glEnd();
-// vertices[0] = INT2FNUM(404);  vertices[1] = INT2FNUM(80);
-// vertices[2] = INT2FNUM(404);  vertices[3] = INT2FNUM(8);
-// vertices[4] = INT2FNUM(440);  vertices[5] = INT2FNUM(8);
-// vertices[6] = INT2FNUM(440);  vertices[7] = INT2FNUM(44);
-// vertices[8] = INT2FNUM(465);  vertices[9] = INT2FNUM(80);
-// glDrawArrays(GL_LINE_LOOP, 0, 5);
-//}
-//senquack BIG TODO: make sure no more than is necessary is drawn when screen is rotated
+//senquack -  converted to GLES fixed/float point
+//senquack TODO: make sure no more than is necessary is drawn when screen is rotated
 #ifdef FIXEDMATH
 void drawTitleBoard ()
 {
@@ -5075,6 +4229,8 @@ void drawTitleBoard ()
 //   //senquack - line loops appear to be broken under GCW's etnaviv driver, turned into line strips:
 ////   glDrawArrays (GL_LINE_LOOP, 0, 5);
 //   glDrawArrays (GL_LINE_STRIP, 0, 6);
+
+   glEnable (GL_BLEND);
 }
 #endif //FIXEDMATH
 
@@ -5091,17 +4247,44 @@ int drawNum (int n, int x, int y, int s, int r, int g, int b)
    return y;
 }
 
-//senquack - made a version to draw a number right-justified, horizontally)
+////senquack - made a version to draw a number right-justified, horizontally)
+//int drawNumHoriz (int n, int x, int y, int s, int r, int g, int b)
+//{
+//   for (;;) {
+//      drawLetter (n % 10, x, y, s, 0, r, g, b);
+//      x -= s * 1.7f;
+//      n /= 10;
+//      if (n <= 0)
+//         break;
+//   }
+//   return x;
+//}
+//senquack - made a version to draw a number left-justified, horizontally)
 int drawNumHoriz (int n, int x, int y, int s, int r, int g, int b)
 {
-   for (;;) {
-      drawLetter (n % 10, x, y, s, 0, r, g, b);
-      x -= s * 1.7f;
-      n /= 10;
-      if (n <= 0)
-         break;
+//   for (;;) {
+//      drawLetter (n % 10, x, y, s, 0, r, g, b);
+//      x -= s * 1.7f;
+//      n /= 10;
+//      if (n <= 0)
+//         break;
+//   }
+//   return x;
+   int d, nd, drawn = 0;
+   for (d = 100000000; d > 0; d /= 10) {
+      nd = (int) (n / d);
+      if (nd > 0 || drawn) {
+         n -= d * nd;
+         drawLetter (nd % 10, x, y, s, 0, r, g, b);
+         x += s * 1.7f;
+         drawn = 1;
+      }
    }
-   return y;
+   if (!drawn) {
+      drawLetter (0, x, y, s, 0, r, g, b);
+      x += s * 1.7f;
+   }
+   return x;
 }
 
 int drawNumRight (int n, int x, int y, int s, int r, int g, int b)

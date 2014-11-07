@@ -30,6 +30,9 @@
 ////senquack - added for gp2x volume control:
 #include "soundmanager.h"
 
+//senquack - holds our port-specific definitions
+#include "portcfg.h"
+
 #define FAR_PLANE 720
 
 #define SHARE_LOC "rr_share/"
@@ -3774,15 +3777,10 @@ endDrawBoards ()
 {
    glBlendFunc (GL_SRC_ALPHA, GL_DST_COLOR); // best choice for letter rendering overall
    finishDrawBatch();     
-
    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    // GL docs say is best for transparency
 
    glMatrixMode(GL_MODELVIEW);   // senquack - just to be sure we're in modelview
    glPopMatrix ();
-
-   //DEBUG
-//   glMatrixMode(GL_PROJECTION);
-//   glPopMatrix();
 
 //senquack TODO: make sure we really need to be calling this all the time like in the original code:
    screenResized ();

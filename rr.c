@@ -23,6 +23,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+//senquack - holds our port-specific definitions
+#include "portcfg.h"
 
 #include "rr.h"
 #include "screen.h"
@@ -61,35 +63,12 @@ static const char *base_prefs_filename = "rr.bin";    // This is where we store 
 char *full_prefs_filename = NULL;               // Fully-qualified prefs filename (used in attractmanager.c)
 
 // portcfg holds our default settings until the config file is read:
-portcfg_settings settings = {    
-   .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
-   .rotated                = SCREEN_HORIZ,                // Is screen rotated? Assigned to one of: 
-                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
-   .music                  = 1,                           // Is music enabled?
-   .analog_deadzone        = 8000,                        // Analog joystick deadzone
-   .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
-   .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
-                                                       //   (but disables ability to save new high scores)
-   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
-                                                       //   (but disables ability to save new high scores)
-   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
-   .show_fps               = 0,                        // Show FPS counter
-   .map                    = {
-      .move     = MAP_DPAD,   //Movement mapping
-      .btn1     = MAP_X,      //Laser mapping
-      .btn2     = MAP_B,      //Bomb mapping
-      .btn1_alt = MAP_A,      //Laser alternate mapping
-      .btn2_alt = MAP_R,      //Bomb alternate mapping
-      .pause    = MAP_START,  //Pause mapping
-      .exit     = MAP_SELECT  //Exit to menu mapping 
-   }
-};     
 //portcfg_settings settings = {    
-//   .laser_on_by_default    = 1,                        // Is laser on by default? (more comfortable on handhelds) 
-//   .rotated                = SCREEN_ROTATED_RIGHT,     // Is screen rotated? Assigned to one of: 
-//                                                       //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
-//   .music                  = 1,                        // Is music enabled?
-//   .analog_deadzone        = 8000,                     // Analog joystick deadzone
+//   .laser_on_by_default    = 1,                           // Is laser on by default? (more comfortable on handhelds) 
+//   .rotated                = SCREEN_HORIZ,                // Is screen rotated? Assigned to one of: 
+//                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
+//   .music                  = 1,                           // Is music enabled?
+//   .analog_deadzone        = 8000,                        // Analog joystick deadzone
 //   .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
 //   .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
 //                                                       //   (but disables ability to save new high scores)
@@ -98,15 +77,42 @@ portcfg_settings settings = {
 //   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
 //   .show_fps               = 0,                        // Show FPS counter
 //   .map                    = {
-//      .move     = MAP_DPAD,
-//      .btn1     = MAP_R,      //Laser mapping
-//      .btn2     = MAP_ANALOG, //Bomb mapping
-//      .btn1_alt = MAP_Y,      //Laser alternate mapping
-//      .btn2_alt = MAP_A,      //Bomb alternate mapping
+//      .move     = MAP_DPAD,   //Movement mapping
+//      .btn1     = MAP_X,      //Laser mapping
+//      .btn2     = MAP_B,      //Bomb mapping
+//      .btn1_alt = MAP_A,      //Laser alternate mapping
+//      .btn2_alt = MAP_R,      //Bomb alternate mapping
 //      .pause    = MAP_START,  //Pause mapping
 //      .exit     = MAP_SELECT  //Exit to menu mapping 
 //   }
 //};     
+portcfg_settings settings = {    
+   .laser_on_by_default    = 1,                        // Is laser on by default? (more comfortable on handhelds) 
+   .rotated                = SCREEN_ROTATED_RIGHT,     // Is screen rotated? Assigned to one of: 
+                                                       //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
+   .music                  = 1,                        // Is music enabled?
+   .analog_deadzone        = 8000,                     // Analog joystick deadzone
+   .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
+   .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
+                                                       //   (but disables ability to save new high scores)
+//   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
+//                                                       //   (but disables ability to save new high scores)
+   .extra_bombs            = 6,                        // Cheat which adds up to 6 extra bombs at start 
+                                                       //   (but disables ability to save new high scores)
+   .no_wait                = 1,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
+//   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
+   .show_fps               = 1,                        // Show FPS counter
+//   .show_fps               = 0,                        // Show FPS counter
+   .map                    = {
+      .move     = MAP_DPAD,
+      .btn1     = MAP_R,      //Laser mapping
+      .btn2     = MAP_ANALOG, //Bomb mapping
+      .btn1_alt = MAP_Y,      //Laser alternate mapping
+      .btn2_alt = MAP_A,      //Bomb alternate mapping
+      .pause    = MAP_START,  //Pause mapping
+      .exit     = MAP_SELECT  //Exit to menu mapping 
+   }
+};     
 
 //senquack
 // Create the specified directory if it doesn't yet exist. Returns 1 on success, 0 on error.

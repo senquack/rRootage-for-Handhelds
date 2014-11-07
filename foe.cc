@@ -637,7 +637,8 @@ moveFoes ()
                   inab * inab / inaa / inaa;
                //if ( hd >= 0 && hd < SHIP_HIT_WIDTH && vctSize(&bmv) < 1280 ) {
                if (hd >= 0 && hd < SHIP_HIT_WIDTH) {
-                  destroyShip ();
+                  //DEBUG
+//                  destroyShip ();
                   removeFoe (fe);
                   continue;
                }

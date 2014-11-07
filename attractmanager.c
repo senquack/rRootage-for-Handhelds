@@ -245,7 +245,6 @@ void drawScore() {
    } else {
       if (status != TITLE)
 //         drawNumHoriz(score, 310, 65, 6, 210, 210, 240);
-//         drawNumHoriz(score, 167, 52, 6, 210, 210, 240);
          drawNumHoriz(score, 167, 50, 6, 210, 210, 240);
    }
 }

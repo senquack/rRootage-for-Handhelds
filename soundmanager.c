@@ -277,7 +277,7 @@ initSound ()
    loadSounds ();
 
    //senquack - adjust volume to sensible level
-	Mix_Volume(-1,40);
+	Mix_Volume(-1,30);
 }
 
 // Play/Stop the music/chunk.
@@ -291,7 +291,7 @@ playMusic (int idx)
       return;
    Mix_PlayMusic (music[idx], -1);
    //senquack - adjust volume to sensible level
-   Mix_VolumeMusic(80);
+   Mix_VolumeMusic(30);
 }
 
 void

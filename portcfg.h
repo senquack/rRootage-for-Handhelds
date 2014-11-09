@@ -25,7 +25,7 @@
 enum {   SCREEN_HORIZ,
          SCREEN_ROTATED_LEFT,
          SCREEN_ROTATED_RIGHT,
-         NUM_SCREEN
+         NUM_ROTATIONS
 };
 
 enum {
@@ -34,7 +34,6 @@ enum {
    DRAW_OUTLINES_ALL,
    NUM_DRAW_OUTLINES
 };
-
 
 typedef struct portcfg_settings
 {
@@ -60,14 +59,13 @@ typedef struct portcfg_settings
       int exit;      //Exit to menu mapping 
    } map;
 
-#if defined(WIZ) || defined(GP2X)
-      // LEFTOVER CRUFT FROM WIZ PORT THAT MAYBE WILL EVENTUALLY BE MERGED BACK IN:
-   int cpu_freq;                // if this is 0, overclocking is disabled
-   int fast_ram;
-   int buttons[NUM_DEFS], rbuttons[NUM_DEFS];   //rbuttons is for rotated button definitions
-#endif //WIZ/GP2X
+//#if defined(WIZ) || defined(GP2X)
+//      // LEFTOVER CRUFT FROM WIZ PORT THAT MAYBE WILL EVENTUALLY BE MERGED BACK IN:
+//   int cpu_freq;                // if this is 0, overclocking is disabled
+//   int fast_ram;
+//   int buttons[NUM_DEFS], rbuttons[NUM_DEFS];   //rbuttons is for rotated button definitions
+//#endif //WIZ/GP2X
 } portcfg_settings;
-
 
 #ifdef GCW
 //senquack - new controls handling code:
@@ -96,21 +94,28 @@ enum {   // For accessing our internal controls state (order of these in list do
    CNUMCONTROLS
 };
 
-enum {   // For mapping internal to  externally-configurable controls (order of these in list does not matter)
-   MAP_NONE = CNONE,        
-   MAP_A = CA,               
-   MAP_B = CB,              
-   MAP_X = CX,
-   MAP_Y = CY,
-   MAP_START  = CSTART,
-   MAP_SELECT = CSELECT,
-   MAP_L = CL,
-   MAP_R = CR,
-   MAP_DPAD = C_ANY_DPAD,
-   MAP_ABXY = C_ANY_ABXY, 
-   MAP_ANALOG = C_ANY_ANALOG,
+
+enum {   // For mapping internal to  externally-configurable controls (order of these in list MATTERS)
+   MAP_NONE,
+   MAP_A,
+   MAP_B,
+   MAP_X,
+   MAP_Y,
+   MAP_START,
+   MAP_SELECT,
+   MAP_L,
+   MAP_R,
+   MAP_DPAD,
+   MAP_ABXY,
+   MAP_ANALOG,
    NUM_MAPS
 };
+
+#define ANALOG_DEADZONE_MAX   30000
+#define ANALOG_DEADZONE_MIN   1000
+#define ANALOG_DEADZONE_DEFAULT  8000
+#define MAX_EXTRA_LIVES 6
+#define MAX_EXTRA_BOMBS 6
 
 #endif //GCW
 

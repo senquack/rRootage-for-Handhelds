@@ -661,7 +661,7 @@ void moveGameover() {
    //senquack : make it so you can press either button 1 *or* 2 *or* the exit mapping to get back to main menu quicker
 //   if ( goCnt > 900 || (goCnt > 128 && mnp && (btn & PAD_BUTTON1)) ) {
    if ( goCnt > 900 || (goCnt > 128 && mnp && ((btn & PAD_BUTTON1) || (btn & PAD_BUTTON2) ||
-                                                control_state[settings.map.exit]))) {
+                                                control_state[ext_to_int_map[settings.map.exit]]))) {
       setHiScore(0);
       initTitle();
       return;

@@ -69,7 +69,7 @@ char *full_prefs_filename = NULL;               // Fully-qualified prefs filenam
 //                                                          //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
 //   .music                  = 1,                           // Is music enabled?
 //   .analog_deadzone        = 8000,                        // Analog joystick deadzone
-//   .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
+//   .draw_outlines          = ANALOG_DEADZONE_DEFAULT,     // Which mode of bullet-outline drawing to use
 //   .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
 //                                                       //   (but disables ability to save new high scores)
 //   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
@@ -91,24 +91,20 @@ portcfg_settings settings = {
    .rotated                = SCREEN_ROTATED_RIGHT,     // Is screen rotated? Assigned to one of: 
                                                        //    SCREEN_HORIZ, SCREEN_ROTATED_LEFT, SCREEN_ROTATED_RIGHT
    .music                  = 1,                        // Is music enabled?
-   .analog_deadzone        = 8000,                     // Analog joystick deadzone
+   .analog_deadzone        = ANALOG_DEADZONE_DEFAULT,  // Analog joystick deadzone
    .draw_outlines          = DRAW_OUTLINES_IKA,        // Which mode of bullet-outline drawing to use
    .extra_lives            = 0,                        // Cheat which adds up to 6 extra lives at start 
                                                        //   (but disables ability to save new high scores)
-//   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
-//                                                       //   (but disables ability to save new high scores)
-   .extra_bombs            = 6,                        // Cheat which adds up to 6 extra bombs at start 
+   .extra_bombs            = 0,                        // Cheat which adds up to 6 extra bombs at start 
                                                        //   (but disables ability to save new high scores)
-   .no_wait                = 1,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
-//   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
-   .show_fps               = 1,                        // Show FPS counter
-//   .show_fps               = 0,                        // Show FPS counter
+   .no_wait                = 0,                        // Enables the --nowait option, where automatic bullet slowdown (and fps limiting) is disabled
+   .show_fps               = 0,                        // Show FPS counter
    .map                    = {
       .move     = MAP_DPAD,
       .btn1     = MAP_R,      //Laser mapping
       .btn2     = MAP_ANALOG, //Bomb mapping
-      .btn1_alt = MAP_Y,      //Laser alternate mapping
-      .btn2_alt = MAP_A,      //Bomb alternate mapping
+      .btn1_alt = MAP_A,      //Laser alternate mapping
+      .btn2_alt = MAP_Y,      //Bomb alternate mapping
       .pause    = MAP_START,  //Pause mapping
       .exit     = MAP_SELECT  //Exit to menu mapping 
    }
@@ -217,11 +213,11 @@ int read_portcfg_settings (const char *filename)
       if (strcasecmp (str, "laser_on_by_default") == 0) {
          settings.laser_on_by_default = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "rotated") == 0) {
-         settings.rotated = clamp (atoi (param), 0, NUM_SCREEN-1);
+         settings.rotated = clamp (atoi (param), 0, NUM_ROTATIONS-1);
       } else if (strcasecmp (str, "music") == 0) {
          settings.music = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "analog_deadzone") == 0) {
-         settings.analog_deadzone = clamp (atoi (param), 1000, 30000);
+         settings.analog_deadzone = clamp (atoi (param), ANALOG_DEADZONE_MIN, ANALOG_DEADZONE_MAX);
       } else if (strcasecmp (str, "draw_outlines") == 0) {
          settings.draw_outlines = clamp (atoi (param), 0, NUM_DRAW_OUTLINES-1);
       } else if (strcasecmp (str, "extra_lives") == 0) {
@@ -231,6 +227,8 @@ int read_portcfg_settings (const char *filename)
       } else if (strcasecmp (str, "no_wait") == 0) {
          settings.no_wait = clamp (atoi (param), 0, 1);
          nowait = settings.no_wait;
+      } else if (strcasecmp (str, "show_fps") == 0) {
+         settings.show_fps = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "map_move") == 0) {
          settings.map.move = clamp(atoi (param), 0, NUM_MAPS-1);
       } else if (strcasecmp (str, "map_btn1") == 0) {
@@ -315,6 +313,20 @@ int read_portcfg_settings (const char *filename)
 
 //senquack - added control state abstractions
 int control_state[CNUMCONTROLS];    // Tracks state of each individual button/control on physical device
+int ext_to_int_map[NUM_MAPS] = {
+   CNONE,         //MAP_NONE
+   CA,            //MAP_A
+   CB,            //MAP_B
+   CX,            //MAP_X
+   CY,            //MAP_Y
+   CSTART,        //MAP_START
+   CSELECT,       //MAP_SELECT
+   CL,            //MAP_L
+   CR,            //MAP_R
+   C_ANY_DPAD,    //MAP_DPAD
+   C_ANY_ABXY,    //MAP_ABXY
+   C_ANY_ANALOG   //MAP_ANALOG
+};
 
 //senquack - added this hack function to fix power slider issues on GCW and when enabling/disabling gsensor/analog stick
 // Details: slider issues SDLK_PAUSE keypress before slider daemon
@@ -762,7 +774,7 @@ int main (int argc, char *argv[])
       control_state[C_ANY_ABXY] = control_state[CA] || control_state[CB] ||
                                     control_state[CX] || control_state[CY];
       // Handling pausing:
-      if (control_state[settings.map.pause]) {
+      if (control_state[ext_to_int_map[settings.map.pause]]) {
          if ( !pPrsd ) {
             if ( status == IN_GAME ) {
                status = PAUSE;
@@ -775,7 +787,7 @@ int main (int argc, char *argv[])
          pPrsd = 0;
 
          // Handle quitting current game (as long as we're not paused)
-         if (control_state[settings.map.exit] && (status == IN_GAME)) {    
+         if (control_state[ext_to_int_map[settings.map.exit]] && (status == IN_GAME)) {    
             initGameover();
          }
       }

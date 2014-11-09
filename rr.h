@@ -36,9 +36,6 @@ void initTitle ();
 void initGame ();
 void initGameover ();
 
-#define MAX_EXTRA_LIVES 6
-#define MAX_EXTRA_BOMBS 6
-
 //senquack - added this for custom port configuration:
 extern const char *settings_dir;    // Both the two files below will be written into this dir.
                                              //   This dir will normally exist in the $HOME dir,
@@ -53,6 +50,7 @@ extern const char *prefs_filename;    // This is where we store the standard set
 extern portcfg_settings settings;    //portcfg is our global "current-settings"
 extern char *full_prefs_filename;      // Fully-qualified prefs filename
 extern int control_state[CNUMCONTROLS];    // Tracks state of each individual button/control on physical device
+extern int ext_to_int_map[NUM_MAPS];  //Logical mapping between portcfg's external mapping to rrootage's internal
 
 int create_dir(const char *dir);
 #endif //RR_H

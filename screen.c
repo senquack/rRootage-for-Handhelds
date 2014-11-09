@@ -216,15 +216,14 @@ int initGLES()
 //      EGL_BLUE_SIZE,     6,
 //      EGL_GREEN_SIZE,    5,
 //      EGL_ALPHA_SIZE,    0,
-
 //      EGL_BUFFER_SIZE,   16,
-      EGL_BUFFER_SIZE,   SCREEN_BPP,
 //#endif
-      // senquack TODO - Do we really even need a depth buffer?
+
+      EGL_BUFFER_SIZE,   SCREEN_BPP,
       EGL_DEPTH_SIZE,    16,     
-////      EGL_DEPTH_SIZE,    0,
       EGL_STENCIL_SIZE,  0,
       EGL_SURFACE_TYPE,     EGL_WINDOW_BIT,
+// Don't really need this:
 //      EGL_RENDERABLE_TYPE,  EGL_OPENGL_ES_BIT,   // We want OpenGLES 1, not 2
       EGL_NONE           // This is important as it tells EGL when to stop looking in the array
    };
@@ -1364,10 +1363,10 @@ inline gl_point_3d rotate3d_z(gl_point_3d input, int d)
 // Most complicated shape (circle) requires 18 vertexes, and each point inside the shapes needs 6 vertexes:
 #define FOE_MAX 1024  // pulled from foe.cc
 //static gl_vertex triangles[FOE_MAX * 18 + FOE_MAX * 6]; 
-static gl_vertex triangles[50000];     // TODO: start with a huge number and we'll work down from here later
+static gl_vertex triangles[40000];     // 40000 should be more than enough, never see more than 20,000 it seems
 static gl_vertex *triangles_ptr = NULL;
 //static gl_vertex lines[FOE_MAX * 18];
-static gl_vertex lines[50000];
+static gl_vertex lines[30000];         // 30000 is way more than enough, never see close to 10000
 static gl_vertex *lines_ptr = NULL;
 
 // NOTE
@@ -4476,11 +4475,11 @@ int buttonReversed = 0;
 int getButtonState ()
 {
    int btn = 0;
-   if (control_state[settings.map.btn1] || control_state[settings.map.btn1_alt]) {
+   if (control_state[ext_to_int_map[settings.map.btn1]] || control_state[ext_to_int_map[settings.map.btn1_alt]]) {
       btn |= PAD_BUTTON1;
    }
 
-   if (control_state[settings.map.btn2] || control_state[settings.map.btn2_alt]) {
+   if (control_state[ext_to_int_map[settings.map.btn2]] || control_state[ext_to_int_map[settings.map.btn2_alt]]) {
       btn |= PAD_BUTTON2;
    }
    return btn;

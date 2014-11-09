@@ -4390,51 +4390,63 @@ int getPadState ()
 //      if (control_state[CY])       pad |= PAD_RIGHT;
 //   }
    if (settings.rotated == SCREEN_HORIZ) {
-      if (settings.map.move == MAP_DPAD) {
+      if (settings.map.move == MAP_DPAD || settings.map.move == MAP_DPAD_OR_ANALOG) {
          if (control_state[CUP])       pad |= PAD_UP;
          if (control_state[CDOWN])     pad |= PAD_DOWN;
          if (control_state[CLEFT])     pad |= PAD_LEFT;
          if (control_state[CRIGHT])    pad |= PAD_RIGHT;
-      } else if (settings.map.move == MAP_ANALOG) {
+      } 
+
+      if (settings.map.move == MAP_ANALOG || settings.map.move == MAP_DPAD_OR_ANALOG) {
          if (control_state[CANALOGUP])       pad |= PAD_UP;
          if (control_state[CANALOGDOWN])     pad |= PAD_DOWN;
          if (control_state[CANALOGLEFT])     pad |= PAD_LEFT;
          if (control_state[CANALOGRIGHT])    pad |= PAD_RIGHT;
-      } else if (settings.map.move == MAP_ABXY) {
+      } 
+      
+      if (settings.map.move == MAP_ABXY) {
          if (control_state[CY])    pad |= PAD_UP;
          if (control_state[CB])    pad |= PAD_DOWN;
          if (control_state[CX])    pad |= PAD_LEFT;
          if (control_state[CA])    pad |= PAD_RIGHT;
       }
    } else if (settings.rotated == SCREEN_ROTATED_RIGHT) {
-      if (settings.map.move == MAP_DPAD) {
+      if (settings.map.move == MAP_DPAD || settings.map.move == MAP_DPAD_OR_ANALOG) {
          if (control_state[CUP]    )  pad |= PAD_LEFT;  
          if (control_state[CDOWN]  )  pad |= PAD_RIGHT;
          if (control_state[CLEFT]  )  pad |= PAD_DOWN;
          if (control_state[CRIGHT] )  pad |= PAD_UP;
-      } else if (settings.map.move == MAP_ABXY) {
+      } 
+
+      if (settings.map.move == MAP_ABXY) {
          if (control_state[CA])    pad |= PAD_UP;
          if (control_state[CX])    pad |= PAD_DOWN;
          if (control_state[CY])    pad |= PAD_LEFT;
          if (control_state[CB])    pad |= PAD_RIGHT;
-      } else if (settings.map.move == MAP_ANALOG) {
+      } 
+      
+      if (settings.map.move == MAP_ANALOG || settings.map.move == MAP_DPAD_OR_ANALOG) {
          if (control_state[CANALOGUP]    )  pad |= PAD_LEFT;  
          if (control_state[CANALOGDOWN]  )  pad |= PAD_RIGHT;
          if (control_state[CANALOGLEFT]  )  pad |= PAD_DOWN;
          if (control_state[CANALOGRIGHT] )  pad |= PAD_UP;
       }
    } else { // Screen must be rotated left, then
-      if (settings.map.move == MAP_DPAD) {
+      if (settings.map.move == MAP_DPAD || settings.map.move == MAP_DPAD_OR_ANALOG) {
          if (control_state[CUP]    )  pad |= PAD_RIGHT;  
          if (control_state[CDOWN]  )  pad |= PAD_LEFT;
          if (control_state[CLEFT]  )  pad |= PAD_UP;
          if (control_state[CRIGHT] )  pad |= PAD_DOWN;
-      } else if (settings.map.move == MAP_ABXY) {
+      } 
+      
+      if (settings.map.move == MAP_ABXY) {
          if (control_state[CA])    pad |= PAD_DOWN;
          if (control_state[CX])    pad |= PAD_UP;
          if (control_state[CY])    pad |= PAD_RIGHT;
          if (control_state[CB])    pad |= PAD_LEFT;
-      } else if (settings.map.move == MAP_ANALOG) {
+      } 
+      
+      if (settings.map.move == MAP_ANALOG || settings.map.move == MAP_DPAD_OR_ANALOG) {
          if (control_state[CANALOGUP]    )  pad |= PAD_RIGHT;  
          if (control_state[CANALOGDOWN]  )  pad |= PAD_LEFT;
          if (control_state[CANALOGLEFT]  )  pad |= PAD_UP;

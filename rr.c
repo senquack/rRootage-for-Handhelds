@@ -230,7 +230,7 @@ int read_portcfg_settings (const char *filename)
       } else if (strcasecmp (str, "show_fps") == 0) {
          settings.show_fps = clamp (atoi (param), 0, 1);
       } else if (strcasecmp (str, "map_move") == 0) {
-         settings.map.move = clamp(atoi (param), 0, NUM_MAPS-1);
+         settings.map.move = clamp(atoi (param), MAP_DPAD, NUM_MAPS-1);
       } else if (strcasecmp (str, "map_btn1") == 0) {
          settings.map.btn1 = clamp(atoi (param), 0, NUM_MAPS-1);
       } else if (strcasecmp (str, "map_btn2") == 0) {
@@ -325,7 +325,8 @@ int ext_to_int_map[NUM_MAPS] = {
    CR,            //MAP_R
    C_ANY_DPAD,    //MAP_DPAD
    C_ANY_ABXY,    //MAP_ABXY
-   C_ANY_ANALOG   //MAP_ANALOG
+   C_ANY_ANALOG,        //MAP_ANALOG
+   C_ANY_DPAD_OR_ANALOG //MAP_DPAD_OR_ANALOG
 };
 
 //senquack - added this hack function to fix power slider issues on GCW and when enabling/disabling gsensor/analog stick
@@ -755,7 +756,7 @@ int main (int argc, char *argv[])
          state is not enough, so we'll do what little we can here to patch it up. 
             Also, this will help with using A/B/X/Y as a directional control, so game is never confused and gets
          signal to move up and down or left and right at the same time. */
-      if (settings.map.move == MAP_DPAD) {
+      if (settings.map.move == MAP_DPAD || settings.map.move == MAP_DPAD_OR_ANALOG) {
          if (control_state[CUP])       control_state[CDOWN] = 0;
          if (control_state[CDOWN])     control_state[CUP] = 0;
          if (control_state[CLEFT])     control_state[CRIGHT] = 0;
@@ -773,6 +774,9 @@ int main (int argc, char *argv[])
                                     control_state[CLEFT] || control_state[CRIGHT];
       control_state[C_ANY_ABXY] = control_state[CA] || control_state[CB] ||
                                     control_state[CX] || control_state[CY];
+
+      control_state[C_ANY_DPAD_OR_ANALOG] = control_state[C_ANY_DPAD] || control_state[C_ANY_ANALOG];
+
       // Handling pausing:
       if (control_state[ext_to_int_map[settings.map.pause]]) {
          if ( !pPrsd ) {

@@ -91,6 +91,7 @@ enum {   // For accessing our internal controls state (order of these in list do
    C_ANY_DPAD,       // This is for seeing if *any* direction of the DPAD is pressed
    C_ANY_ABXY,       // This is for seeing if *any* of the A/B/X/Y buttons are pressed
    C_ANY_ANALOG,     // This is for seeing if *any* direction of the analog stick is pressed
+   C_ANY_DPAD_OR_ANALOG,
    CNUMCONTROLS
 };
 
@@ -108,6 +109,7 @@ enum {   // For mapping internal to  externally-configurable controls (order of 
    MAP_DPAD,
    MAP_ABXY,
    MAP_ANALOG,
+   MAP_DPAD_OR_ANALOG,
    NUM_MAPS
 };
 

@@ -11,29 +11,29 @@ void settings_dec_move()
 {
    settings.map.move--;
    if (settings.map.move < MAP_DPAD) {
-      settings.map.move = MAP_ANALOG;
+      settings.map.move = NUM_MAPS-1;
    }
 }
 
 void settings_inc_move() 
 {
    settings.map.move++;
-   if (settings.map.move > MAP_ANALOG) {
+   if (settings.map.move >= NUM_MAPS) {
       settings.map.move = MAP_DPAD;
    }
 }
 
 char* settings_get_text_for_move()
 {
-   static char* text[3] = { "DPAD", "A/B/X/Y", "Analog stick" };
+   static char* text[] = { "DPAD", "A/B/X/Y", "Analog stick", "DPAD & Analog stick"};
    int i = settings.map.move - MAP_DPAD;
    return text[i];
 }
 
 char* settings_get_text_for_mapping(int mapping)
 {
-   static char* text[NUM_MAPS] = { "None", "A", "B", "X", "Y", "Start", "Select", "L Trigger", "R Trigger",
-                                    "DPAD", "A/B/X/Y", "Analog stick" };
+   static char* text[] = { "None", "A", "B", "X", "Y", "Start", "Select", "L Trigger", "R Trigger",
+                                    "DPAD", "A/B/X/Y", "Analog stick", "DPAD & Analog stick" };
    return text[mapping];
 }
 

@@ -228,7 +228,7 @@ int read_portcfg_settings(const char *filename)
 		else if ( strcasecmp(str, "show_fps") == 0 )
 			settings.show_fps = clamp(atoi(param), 0, 1);
 		else if ( strcasecmp(str, "map_move") == 0 )
-			settings.map.move = clamp(atoi(param), 0, NUM_MAPS-1);
+			settings.map.move = clamp(atoi(param), MAP_DPAD, NUM_MAPS-1);
 		else if ( strcasecmp(str, "map_btn1") == 0 )
 			settings.map.btn1 = clamp(atoi(param), 0, NUM_MAPS-1);
 		else if ( strcasecmp(str, "map_btn1_alt") == 0 )

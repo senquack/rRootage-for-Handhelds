@@ -54,10 +54,10 @@ portcfg_settings default_rotated_left_settings = {
       .move     = MAP_ABXY,   //Movement mapping
       .btn1     = MAP_SELECT, //Laser mapping
       .btn2     = MAP_START,  //Bomb mapping
-      .btn1_alt = MAP_A,      //Laser alternate mapping
-      .btn2_alt = MAP_R,      //Bomb alternate mapping
-      .pause    = MAP_START,  //Pause mapping
-      .exit     = MAP_SELECT  //Exit to menu mapping 
+      .btn1_alt = MAP_NONE,      //Laser alternate mapping
+      .btn2_alt = MAP_NONE,      //Bomb alternate mapping
+      .pause    = MAP_L,  //Pause mapping
+      .exit     = MAP_DPAD  //Exit to menu mapping 
    }
 };     
 

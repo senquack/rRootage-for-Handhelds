@@ -14,7 +14,7 @@ DEFS        +=
 CFLAGS       = -std=gnu99 -Wall -Wno-unused-variable -O2 $(DEFS) $(INCLUDE)
 #CFLAGS       = -std=gnu99 -Wall -Wno-unused-variable -O0 -g $(DEFS) $(INCLUDE)
 CFLAGS      += -DGCW
-LDFLAGS     := -L$(SYSROOT)/usr/lib -lSDL -lpthread -lSDL_gfx -lSDL_image -lpng -lz 
+LDFLAGS     := -L$(SYSROOT)/usr/lib -lSDL -lpthread -lSDL_gfx -lSDL_image -lz 
 
 .PHONY: all clean
 
